@@ -59,6 +59,11 @@ create_element = (tag, attrs, parent, namespace) => {
 // e.g. rect = svgel('rect', {x: 5, y: 5, width: 5, height: 5}, svg)
 svgel = (tag, attrs, parent) => create_element(tag, attrs, parent, 'http://www.w3.org/2000/svg');
 
+vadd = ([a, b], [c, d]) => [a+c, b+d];
+vsub = ([a, b], [c, d]) => [a-c, b-d];
+vdot = ([a, b], [c, d]) => a*c + b*d;
+vmul = (k, [a,b]) => [k*a, k*b];
+
 /* ### MAIN ### */
 
 // Mathcha SVG outputs simple shapes as paths and multiline text as separate text elements...
@@ -115,14 +120,34 @@ explodeRect = function(r) {
 
 dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
 
+dist2ToRect = function(bbox,[x,y]) {
+  // Thanks https://stackoverflow.com/a/18157551
+  // TODO: make it work when inside
+  const [l,r,t,b] = [bbox.x,bbox.x+bbox.width,bbox.y,bbox.y+bbox.height];
+  const dx = Math.max(l - x, 0, x - r);
+  const dy = Math.max(t - y, 0, y - b);
+  return dx*dx + dy*dy;
+}
+
 findClosestTextElt = function(origin) {
   const ts = document.querySelectorAll('text');
-  const bboxes = Array.from(ts, t => [t, explodeRect(t.getBBox())]);
-  const points = bboxes.flatMap(([t,pts]) => pts.map(p => ({
-    element: t, coords: p, dist2: dist2(origin,p)
-  })));
-  const closestPt = points.reduce((min,pt) => min.dist2 < pt.dist2 ? min : pt);
+  const bboxes = Array.from(ts, t => [t, t.getBBox()]);
+  const dist2s = bboxes.map(([t,bb]) => ({
+    element: t, dist2: dist2ToRect(bb,origin)
+  }));
+  const closestPt = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
   return closestPt;
+}
+
+// Arrows which Mathcha snaps to rect edges ought to count as "inside" the rect.
+// However, their coords are about 2px short.
+CONTAINS_PT_EPSILON = 3;
+containsPt = function([lx,ty,w,h],[x,y]) {
+  const [relx,rely] = [x-lx,y-ty];
+  const [propx,propy] = [relx/w,rely/h];
+  const ex = CONTAINS_PT_EPSILON/w;
+  const ey = CONTAINS_PT_EPSILON/h;
+  return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
 }
 
 main = function(){
@@ -137,15 +162,6 @@ telts = arrows.map(a => findClosestTextElt(a.origin));
 rects = Array.from(document.querySelectorAll('path.real'))
   .filter(r => !r.classList.contains('connection'))
   .map(path => ({element: path, params: extractRect(path), obj: {}}));
-
-CONTAINS_PT_EPSILON = 3;
-containsPt = function([lx,ty,w,h],[x,y]) {
-  const [relx,rely] = [x-lx,y-ty];
-  const [propx,propy] = [relx/w,rely/h];
-  const ex = CONTAINS_PT_EPSILON/w;
-  const ey = CONTAINS_PT_EPSILON/h;
-  return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
-}
 
 findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
 

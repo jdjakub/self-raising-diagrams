@@ -17,10 +17,12 @@ Some parts of the diagram are object-level: they're part of the intended output.
 # Current instructions
 Currently, we recognise a simple visual notation of boxes, arrows, and text labels. Arrows are labelled by the closest text element. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that.
 
-Insert the following into `diagram.svg`, below the top svg element:
+You need to insert the following into your SVG file, below the top svg element:
 
 ```html
 <script href="./misc.js"></script>
 ```
 
-Open `diagram.svg` in Firefox. In the Ctrl-Shift-I console, call `main()` and see if `objs` encodes the correct relationships.
+Example 1: Open `diagram.svg` in Firefox. In the Ctrl-Shift-I console, call `main()` and see if `objs` encodes the correct relationships.
+
+Example 2: Open `id-simple.svg`. Run `main()`. Verify `objs`. Note that I'm currently faking object names via very transparent arrows to a dummy target object. This means that in the console, you know that an object is supposed to be e.g. `Primitive` by checking if it has a key by that name.
