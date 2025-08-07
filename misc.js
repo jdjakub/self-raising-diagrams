@@ -102,6 +102,8 @@ extractRect = function(rectPathElt) {
 <g class="arrow-line">
   <path class="real" d=" Mxo,yo Lxt,yt" />
 </g>
+or
+d=" Mxo,yo L_,_ L_,_ L_,_ L_,_ (...) Lxt,yt"
 ---
 arrow's origin is [xo,yo]
 arrow's target is [xt,yt]
@@ -109,8 +111,9 @@ arrow's target is [xt,yt]
 extractArrow = function(arrowGroupElt) {
   const shaftPathElt = arrowGroupElt.querySelector('path.real');
   const [opcodes,xs,ys] = extractPathCmds(shaftPathElt);
-  if (opcodes !== 'ML') return;
-  const [xo,yo,xt,yt] = [xs[0],ys[0],xs[1],ys[1]];
+  if (opcodes[0] !== 'M') return;
+  for (let i=1; i<opcodes.length; i++) if (opcodes[i] !== 'L') return;
+  const [xo,yo,xt,yt] = [xs[0],ys[0],last(xs),last(ys)];
   return {origin: [xo,yo], target: [xt,yt]};
 }
 
