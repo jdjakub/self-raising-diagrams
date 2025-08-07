@@ -164,15 +164,15 @@ rectDist2ToRect = function(bbA,bbB) {
 
 rectInsideRect = function(bbIn,bbOut) {
   const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
-  return 0 < rinx  && bbIn.width < bbOut.width
-      && 0 < riny && bbIn.height < bbOut.height;
+  return 0 < rinx && rinx < bbOut.width  && bbIn.width < bbOut.width
+      && 0 < riny && riny < bbOut.height && bbIn.height < bbOut.height;
 }
 
 RECT_NAME_MAX_DISTANCE = 20;
 findClosestRectName = function(telts, bbox) {
   const dist2s = telts.map(t => ({
     element: t, dist2: rectDist2ToRect(t.getBBox(), bbox)
-  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2 && !rectInsideRect(d.element.getBBox(),bbox));
+  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2);
   if (dist2s.length === 0) return;
   const closest = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
   return closest.element;
@@ -183,6 +183,16 @@ nearestRectCorner = function(pt,bbox) {
     coords: c, dist2: dist2(pt,c)
   }));
   return corners.reduce((min,c) => min.dist2 < c.dist2 ? min : c).coords;
+}
+
+addSetAttr = function(obj, prop, newItem) {
+  if (obj[prop] === undefined) obj[prop] = ' ';
+  if (obj[prop].indexOf(' '+newItem+' ') === -1)
+    obj[prop] += newItem + ' ';
+}
+
+setAttrHas = function(obj, prop, item) {
+  return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
 }
 
 main = function() {
@@ -215,6 +225,14 @@ rects = Array.from(document.querySelectorAll('path.real'))
   .map(path => ({element: path, params: extractRect(path), obj: {}}));
 rects.forEach((r,i) => { r.element.id = 'r'+(i+1); });
 
+document.querySelectorAll('text').forEach(t => {
+  const container = rects.find(r => rectInsideRect(t.getBBox(), r.element.getBBox()));
+  if (container) {
+    addSetAttr(container.element.dataset, 'contains', t.id);
+    t.dataset.containedIn = container.element.id;
+  }
+});
+
 findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
 
 o_rects = arrows.map(a => findRectContainingPt(a.origin));
@@ -227,7 +245,7 @@ arrows.forEach((a,i) => {
   a.element.dataset.target = target.element.id;
 });
 
-box_telts = Array.from(document.querySelectorAll('text:not([data-label-for])'));
+box_telts = Array.from(document.querySelectorAll('text:not([data-label-for]):not([data-contained-in])'));
 rects.forEach(r => {
   const rbb = r.element.getBBox();
   const t = findClosestRectName(box_telts, rbb);

@@ -15,7 +15,7 @@ In this project, I draw in [Mathcha.io](https://www.mathcha.io/editor) and outpu
 Some parts of the diagram are object-level: they're part of the intended output. Other parts (perhaps in a designated meta-colour, like blue) are instructions to the next transformation pass to alter the diagram in some way (add stuff, remove stuff, etc). Sorta like macros.
 
 # Current instructions
-Currently, we recognise a simple visual notation of boxes, arrows, and text labels. Arrows are labelled by the closest text element. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that.
+Currently, we recognise a simple visual notation of boxes, arrows, and text labels. Arrows are labelled by the closest text element. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
 
 ![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](boxes-arrows-labels-overview.svg)
 
