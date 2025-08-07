@@ -63,6 +63,7 @@ vadd = ([a, b], [c, d]) => [a+c, b+d];
 vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
 vmul = (k, [a,b]) => [k*a, k*b];
+vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
 
 /* ### MAIN ### */
 
@@ -150,6 +151,40 @@ containsPt = function([lx,ty,w,h],[x,y]) {
   return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
 }
 
+rectDist2ToRect = function(bbA,bbB) {
+  // Thanks https://stackoverflow.com/a/65107290
+  const a_min = [bbA.x,bbA.y];
+  const a_max = [bbA.x+bbA.width, bbA.y+bbA.height];
+  const b_min = [bbB.x,bbB.y];
+  const b_max = [bbB.x+bbB.width, bbB.y+bbB.height];
+  const u = vmax(0, vsub(a_min,b_max));
+  const v = vmax(0, vsub(b_min,a_max));
+  return vdot(u,u)+vdot(v,v);
+}
+
+rectInsideRect = function(bbIn,bbOut) {
+  const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
+  return 0 < rinx  && bbIn.width < bbOut.width
+      && 0 < riny && bbIn.height < bbOut.height;
+}
+
+RECT_NAME_MAX_DISTANCE = 20;
+findClosestRectName = function(telts, bbox) {
+  const dist2s = telts.map(t => ({
+    element: t, dist2: rectDist2ToRect(t.getBBox(), bbox)
+  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2 && !rectInsideRect(d.element.getBBox(),bbox));
+  if (dist2s.length === 0) return;
+  const closest = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
+  return closest.element;
+}
+
+nearestRectCorner = function(pt,bbox) {
+  const corners = explodeRect(bbox).map(c => ({
+    coords: c, dist2: dist2(pt,c)
+  }));
+  return corners.reduce((min,c) => min.dist2 < c.dist2 ? min : c).coords;
+}
+
 main = function() {
 svg = document.documentElement;
 
@@ -157,7 +192,9 @@ arrows = Array.from(
   document.querySelectorAll('.arrow-line'),
   g => ({element: g, ...extractArrow(g)})
 );
+arrows.forEach((a,i) => { a.element.id = 'a'+(i+1); });
 
+document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
 telts = arrows.map(a => findClosestTextElt(a.origin));
 
 // Annotate with label/arrow linkages
@@ -169,16 +206,42 @@ telts.forEach((telt,i) => {
   const [x2,y2] = vmul(0.5, vadd(tl,br));
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
     t.parentElement);
+  a.element.dataset.label = t.id;
+  t.dataset.labelFor = a.element.id;
 });
 
 rects = Array.from(document.querySelectorAll('path.real'))
   .filter(r => !r.classList.contains('connection'))
   .map(path => ({element: path, params: extractRect(path), obj: {}}));
+rects.forEach((r,i) => { r.element.id = 'r'+(i+1); });
 
 findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
 
 o_rects = arrows.map(a => findRectContainingPt(a.origin));
 t_rects = arrows.map(a => findRectContainingPt(a.target));
+
+arrows.forEach((a,i) => {
+  const origin = o_rects[i];
+  const target = t_rects[i];
+  a.element.dataset.origin = origin.element.id;
+  a.element.dataset.target = target.element.id;
+});
+
+box_telts = Array.from(document.querySelectorAll('text:not([data-label-for])'));
+rects.forEach(r => {
+  const rbb = r.element.getBBox();
+  const t = findClosestRectName(box_telts, rbb);
+  if (t) {
+    r.element.dataset.label = t.id;
+    t.dataset.labelFor = r.element.id;
+    const [tl,tr,br,bl] = explodeRect(t.getBBox());
+    const [x1,y1] = vmul(0.5, vadd(tl,br));
+    const [x2,y2] = nearestRectCorner([x1,y1],rbb);
+    svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
+      t.parentElement);
+    r.obj.name = t.textContent;
+  }
+});
 
 telts.forEach((telt,i) => {
   const label = telt.element.textContent;
@@ -187,6 +250,9 @@ telts.forEach((telt,i) => {
   origin[label] = target;  
 });
 
-objs = rects.map(r => r.obj);
+objs = {};
+nextObj = 1;
+ensureName = str => str ? str : 'anon'+(nextObj++);
+rects.forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
 return objs;
 }
