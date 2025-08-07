@@ -46,7 +46,7 @@ nums = (arr) => arr.map(x => +x);
 attrs = (el, ...keys) => keys.map(k => attr(el, k));
 props = (o,  ...keys) => keys.map(k => o[k]);
 
-svg_parent = document.body; // Default parent for new SVG elements
+svg_parent = document.documentElement; // Default parent for new SVG elements
 
 create_element = (tag, attrs, parent, namespace) => {
   let elem = document.createElementNS(namespace, tag);
@@ -198,85 +198,118 @@ setAttrHas = function(obj, prop, item) {
   return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
 }
 
-main = function() {
-svg = document.documentElement;
+pass = {};
 
-arrows = Array.from(
-  document.querySelectorAll('.arrow-line'),
-  g => ({element: g, ...extractArrow(g)})
-);
+pass.idArrows = function() {
+  arrows = Array.from(
+    document.querySelectorAll('.arrow-line'),
+    g => ({element: g, ...extractArrow(g)})
+  );
+  arrows.forEach((a,i) => {
+    a.element.id = 'a'+(i+1);
+    // TODO: extracted info in dataset
+  });
+}
 
-// PASS: ID the arrows and text labels
-arrows.forEach((a,i) => { a.element.id = 'a'+(i+1); });
-document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
+pass.idLabels = function() {
+  document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
+}
 
-// PASS: Label each arrow
-telts = arrows.map(a => findClosestTextElt(a.origin));
+pass.labelArrows = function() {
+  telts = arrows.map(a => findClosestTextElt(a.origin));
 
-// Annotate with label/arrow linkages
-telts.forEach((telt,i) => {
-  const t = telt.element;
-  const a = arrows[i];
-  a.element.dataset.label = t.id;
-  t.dataset.labelFor = a.element.id;
-
-  // Visualise this pass
-  const [x1,y1] = a.origin;
-  const [tl,tr,br,bl] = explodeRect(t.getBBox());
-  const [x2,y2] = vmul(0.5, vadd(tl,br));
-  svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
-    t.parentElement);
-});
-
-// TODO: PASS: normalise rect paths (to rect elements)
-rects = Array.from(document.querySelectorAll('path.real'))
-  .filter(r => !r.classList.contains('connection'))
-  .map(path => ({element: path, params: extractRect(path), obj: {}}));
-// PASS: ID the rects
-rects.forEach((r,i) => { r.element.id = 'r'+(i+1); });
-
-// PASS: annotate box-text containment linkages
-document.querySelectorAll('text').forEach(t => {
-  const container = rects.find(r => rectInsideRect(t.getBBox(), r.element.getBBox()));
-  if (container) {
-    addSetAttr(container.element.dataset, 'contains', t.id);
-    t.dataset.containedIn = container.element.id;
-  }
-});
-
-// PASS: annotate arrow origin/target boxes
-findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
-
-o_rects = arrows.map(a => findRectContainingPt(a.origin));
-t_rects = arrows.map(a => findRectContainingPt(a.target));
-
-arrows.forEach((a,i) => {
-  const origin = o_rects[i];
-  const target = t_rects[i];
-  a.element.dataset.origin = origin.element.id;
-  a.element.dataset.target = target.element.id;
-});
-
-// PASS: annotate box/name linkages
-box_telts = Array.from(document.querySelectorAll('text:not([data-label-for]):not([data-contained-in])'));
-rects.forEach(r => {
-  const rbb = r.element.getBBox();
-  const t = findClosestRectName(box_telts, rbb);
-  if (t) {
-    r.element.dataset.label = t.id;
-    t.dataset.labelFor = r.element.id;
+  // Annotate with label/arrow linkages
+  telts.forEach((telt,i) => {
+    const t = telt.element;
+    const a = arrows[i];
+    a.element.dataset.label = t.id;
+    t.dataset.labelFor = a.element.id;
 
     // Visualise this pass
+    const [x1,y1] = a.origin;
     const [tl,tr,br,bl] = explodeRect(t.getBBox());
-    const [x1,y1] = vmul(0.5, vadd(tl,br));
-    const [x2,y2] = nearestRectCorner([x1,y1],rbb);
+    const [x2,y2] = vmul(0.5, vadd(tl,br));
     svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
       t.parentElement);
+  });
+}
 
-    // PASS: generate JS obj graph
-    r.obj.name = t.textContent;
-  }
-});
+pass.normalizeRects = function() {
+  // TODO: PASS: normalise rect paths (to rect elements) and ID them
+  rects = Array.from(document.querySelectorAll('path.real'))
+    .filter(r => !r.classList.contains('connection'));
+  rects = rects.map((pathRect,i) => {
+    const params = extractRect(pathRect);
+    // Create a <rect> to replace the <path>
+    const actualRect = svgel('rect', {
+      x: params[0], y: params[1], width: params[2], height: params[3]
+    });
+    actualRect.id = 'r'+(i+1); // ID each rect
+    // Copy all attributes (style etc.)
+    for (let j=pathRect.attributes.length-1; j>=0; j--)
+      actualRect.setAttributeNode(pathRect.attributes[j].cloneNode());
+    actualRect.attributes.removeNamedItem('d'); // ... except the path geom
+    pathRect.parentElement.replaceChild(actualRect,pathRect);
+    return { element: actualRect, params, obj: {} };
+  });
+}
+
+pass.annotateContainments = function() {
+  document.querySelectorAll('text').forEach(t => {
+    const container = rects.find(r => rectInsideRect(t.getBBox(), r.element.getBBox()));
+    if (container) {
+      addSetAttr(container.element.dataset, 'contains', t.id);
+      t.dataset.containedIn = container.element.id;
+    }
+  });
+}
+
+pass.annotateArrowConnections = function() {
+  findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
+
+  o_rects = arrows.map(a => findRectContainingPt(a.origin));
+  t_rects = arrows.map(a => findRectContainingPt(a.target));
+
+  arrows.forEach((a,i) => {
+    const origin = o_rects[i];
+    const target = t_rects[i];
+    a.element.dataset.origin = origin.element.id;
+    a.element.dataset.target = target.element.id;
+  });
+}
+
+pass.nameBoxesIfApplicable = function() {
+  box_telts = Array.from(document.querySelectorAll(
+    'text:not([data-label-for]):not([data-contained-in])'
+  ));
+  rects.forEach(r => {
+    const rbb = r.element.getBBox();
+    const t = findClosestRectName(box_telts, rbb);
+    if (t) {
+      r.element.dataset.label = t.id;
+      t.dataset.labelFor = r.element.id;
+
+      // Visualise this pass
+      const [tl,tr,br,bl] = explodeRect(t.getBBox());
+      const [x1,y1] = vmul(0.5, vadd(tl,br));
+      const [x2,y2] = nearestRectCorner([x1,y1],rbb);
+      svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
+        t.parentElement);
+
+      // PASS: generate JS obj graph
+      r.obj.name = t.textContent;
+    }
+  });
+}
+
+main = function() {
+  pass.idArrows();
+  pass.idLabels();
+  pass.labelArrows();
+  pass.normalizeRects();
+  pass.annotateContainments();
+  pass.annotateArrowConnections();
+  pass.nameBoxesIfApplicable();
 
 // PASS: generate JS obj graph
 telts.forEach((telt,i) => {
@@ -290,5 +323,18 @@ objs = {};
 nextObj = 1;
 ensureName = str => str ? str : 'anon'+(nextObj++);
 rects.forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
+
+// Test it
+assert = (c, s) => { if (!c) throw "Assertion failure: "+s; };
+if (rects.length > 4) { // assume it's id-simple.svg
+  const names = 'Object Vtable Primitive Number Boolean String Null Undefined'.split(' ');
+  names.forEach(n => assert(objs[n].name === n, n+'.name'));
+  names.forEach(n => assert(objs[n].vtable === objs.Vtable, n+'.vtable'))
+  assert(objs.Vtable.parent === objs.Object, 'Vtable.parent');
+  assert(objs.Primitive.parent === objs.Object);
+  names.forEach((n,i) => i > 2 ? assert(objs[n].parent === objs.Primitive, n+'.parent') : null);
+  assert(Object.keys(objs.Object.log).length === 0);
+  assert(Object.keys(objs.Primitive.log).length === 0);
+}
 return objs;
 }
