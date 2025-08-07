@@ -150,7 +150,8 @@ containsPt = function([lx,ty,w,h],[x,y]) {
   return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
 }
 
-main = function(){
+main = function() {
+svg = document.documentElement;
 
 arrows = Array.from(
   document.querySelectorAll('.arrow-line'),
@@ -158,6 +159,17 @@ arrows = Array.from(
 );
 
 telts = arrows.map(a => findClosestTextElt(a.origin));
+
+// Annotate with label/arrow linkages
+telts.forEach((telt,i) => {
+  const t = telt.element;
+  const a = arrows[i];
+  const [x1,y1] = a.origin;
+  const [tl,tr,br,bl] = explodeRect(t.getBBox());
+  const [x2,y2] = vmul(0.5, vadd(tl,br));
+  svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
+    t.parentElement);
+});
 
 rects = Array.from(document.querySelectorAll('path.real'))
   .filter(r => !r.classList.contains('connection'))
