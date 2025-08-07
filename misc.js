@@ -202,29 +202,37 @@ arrows = Array.from(
   document.querySelectorAll('.arrow-line'),
   g => ({element: g, ...extractArrow(g)})
 );
-arrows.forEach((a,i) => { a.element.id = 'a'+(i+1); });
 
+// PASS: ID the arrows and text labels
+arrows.forEach((a,i) => { a.element.id = 'a'+(i+1); });
 document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
+
+// PASS: Label each arrow
 telts = arrows.map(a => findClosestTextElt(a.origin));
 
 // Annotate with label/arrow linkages
 telts.forEach((telt,i) => {
   const t = telt.element;
   const a = arrows[i];
+  a.element.dataset.label = t.id;
+  t.dataset.labelFor = a.element.id;
+
+  // Visualise this pass
   const [x1,y1] = a.origin;
   const [tl,tr,br,bl] = explodeRect(t.getBBox());
   const [x2,y2] = vmul(0.5, vadd(tl,br));
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
     t.parentElement);
-  a.element.dataset.label = t.id;
-  t.dataset.labelFor = a.element.id;
 });
 
+// TODO: PASS: normalise rect paths (to rect elements)
 rects = Array.from(document.querySelectorAll('path.real'))
   .filter(r => !r.classList.contains('connection'))
   .map(path => ({element: path, params: extractRect(path), obj: {}}));
+// PASS: ID the rects
 rects.forEach((r,i) => { r.element.id = 'r'+(i+1); });
 
+// PASS: annotate box-text containment linkages
 document.querySelectorAll('text').forEach(t => {
   const container = rects.find(r => rectInsideRect(t.getBBox(), r.element.getBBox()));
   if (container) {
@@ -233,6 +241,7 @@ document.querySelectorAll('text').forEach(t => {
   }
 });
 
+// PASS: annotate arrow origin/target boxes
 findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
 
 o_rects = arrows.map(a => findRectContainingPt(a.origin));
@@ -245,6 +254,7 @@ arrows.forEach((a,i) => {
   a.element.dataset.target = target.element.id;
 });
 
+// PASS: annotate box/name linkages
 box_telts = Array.from(document.querySelectorAll('text:not([data-label-for]):not([data-contained-in])'));
 rects.forEach(r => {
   const rbb = r.element.getBBox();
@@ -252,15 +262,20 @@ rects.forEach(r => {
   if (t) {
     r.element.dataset.label = t.id;
     t.dataset.labelFor = r.element.id;
+
+    // Visualise this pass
     const [tl,tr,br,bl] = explodeRect(t.getBBox());
     const [x1,y1] = vmul(0.5, vadd(tl,br));
     const [x2,y2] = nearestRectCorner([x1,y1],rbb);
     svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2},
       t.parentElement);
+
+    // PASS: generate JS obj graph
     r.obj.name = t.textContent;
   }
 });
 
+// PASS: generate JS obj graph
 telts.forEach((telt,i) => {
   const label = telt.element.textContent;
   const origin = o_rects[i].obj;
