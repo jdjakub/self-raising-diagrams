@@ -64,12 +64,24 @@ vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
 vmul = (k, [a,b]) => [k*a, k*b];
 vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
+dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
 
 /* ### MAIN ### */
 
+addSetAttr = function(obj, prop, newItem) {
+  if (obj[prop] === undefined) obj[prop] = ' ';
+  if (obj[prop].indexOf(' '+newItem+' ') === -1)
+    obj[prop] += newItem + ' ';
+}
+
+setAttrHas = function(obj, prop, item) {
+  return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
+}
+
+pass = {};
+
 // Mathcha SVG outputs simple shapes as paths and multiline text as separate text elements...
 // Gotta recognise basic shapes. Computer Vector Vision
-
 extractPathCmds = function(pathElt) {
   const d = pathElt.getAttribute('d')
   const clauses = d.split(' ').filter(c => c.length > 0);
@@ -78,24 +90,6 @@ extractPathCmds = function(pathElt) {
   const xs = cmds.map(c => c[1][0]);
   const ys = cmds.map(c => c[1][1]);
   return [opcodes,xs,ys];
-}
-
-/*
-<path class="real" d=" Mlx,ty Lrx,ty Lrx,by Llx,by Z" />
----
-<rect x="lx" y="ty"
-  width="rx-lx" height="by-ty" />
-*/
-extractRect = function(rectPathElt) {
-  const [opcodes,xs,ys] = extractPathCmds(rectPathElt);
-  if (opcodes !== 'MLLLZ') return;
-  if (xs[0] !== xs[3]) return;
-  if (ys[0] !== ys[1]) return;
-  if (xs[1] !== xs[2]) return;
-  if (ys[2] !== ys[3]) return;
-  
-  const [lx,ty,rx,by] = [xs[0],ys[0],xs[1],ys[2]];
-  return [lx,ty,rx-lx,by-ty];
 }
 
 /*
@@ -117,12 +111,23 @@ extractArrow = function(arrowGroupElt) {
   return {origin: [xo,yo], target: [xt,yt]};
 }
 
-explodeRect = function(r) {
-  const [lx,rx,ty,by] = [r.x,r.x+r.width,r.y,r.y+r.height];
-  return [[lx,ty],[rx,ty],[rx,by],[lx,by]];
+pass.idArrows = function() {
+  log('Identifying arrows.');
+  arrows = Array.from(
+    document.querySelectorAll('.arrow-line'),
+    g => ({element: g, ...extractArrow(g)})
+  );
+  arrows.forEach((a,i) => {
+    a.element.id = 'a'+(i+1);
+    a.element.classList.add('is-arrow');
+    // TODO: extracted info in dataset
+  });
 }
 
-dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
+pass.idLabels = function() {
+  log('Identifying labels.');
+  document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
+}
 
 dist2ToRect = function(bbox,[x,y]) {
   // Thanks https://stackoverflow.com/a/18157551
@@ -143,79 +148,15 @@ findClosestTextElt = function(origin) {
   return closestPt;
 }
 
-// Arrows which Mathcha snaps to rect edges ought to count as "inside" the rect.
-// However, their coords are about 2px short.
-CONTAINS_PT_EPSILON = 3;
-containsPt = function([lx,ty,w,h],[x,y]) {
-  const [relx,rely] = [x-lx,y-ty];
-  const [propx,propy] = [relx/w,rely/h];
-  const ex = CONTAINS_PT_EPSILON/w;
-  const ey = CONTAINS_PT_EPSILON/h;
-  return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
+explodeRect = function(r) {
+  const [lx,rx,ty,by] = [r.x,r.x+r.width,r.y,r.y+r.height];
+  return [[lx,ty],[rx,ty],[rx,by],[lx,by]];
 }
 
-rectDist2ToRect = function(bbA,bbB) {
-  // Thanks https://stackoverflow.com/a/65107290
-  const a_min = [bbA.x,bbA.y];
-  const a_max = [bbA.x+bbA.width, bbA.y+bbA.height];
-  const b_min = [bbB.x,bbB.y];
-  const b_max = [bbB.x+bbB.width, bbB.y+bbB.height];
-  const u = vmax(0, vsub(a_min,b_max));
-  const v = vmax(0, vsub(b_min,a_max));
-  return vdot(u,u)+vdot(v,v);
-}
-
-rectInsideRect = function(bbIn,bbOut) {
-  const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
-  return 0 < rinx && rinx < bbOut.width  && bbIn.width < bbOut.width
-      && 0 < riny && riny < bbOut.height && bbIn.height < bbOut.height;
-}
-
-RECT_NAME_MAX_DISTANCE = 20;
-findClosestRectName = function(telts, bbox) {
-  const dist2s = telts.map(t => ({
-    element: t, dist2: rectDist2ToRect(t.getBBox(), bbox)
-  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2);
-  if (dist2s.length === 0) return;
-  const closest = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
-  return closest.element;
-}
-
-nearestRectCorner = function(pt,bbox) {
-  const corners = explodeRect(bbox).map(c => ({
-    coords: c, dist2: dist2(pt,c)
-  }));
-  return corners.reduce((min,c) => min.dist2 < c.dist2 ? min : c).coords;
-}
-
-addSetAttr = function(obj, prop, newItem) {
-  if (obj[prop] === undefined) obj[prop] = ' ';
-  if (obj[prop].indexOf(' '+newItem+' ') === -1)
-    obj[prop] += newItem + ' ';
-}
-
-setAttrHas = function(obj, prop, item) {
-  return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
-}
-
-pass = {};
-
-pass.idArrows = function() {
-  arrows = Array.from(
-    document.querySelectorAll('.arrow-line'),
-    g => ({element: g, ...extractArrow(g)})
-  );
-  arrows.forEach((a,i) => {
-    a.element.id = 'a'+(i+1);
-    // TODO: extracted info in dataset
-  });
-}
-
-pass.idLabels = function() {
-  document.querySelectorAll('text').forEach((t,i) => { t.id = 't'+(i+1); });
-}
-
+// Requires: idArrows
 pass.labelArrows = function() {
+  log('Labelling arrows.');
+  // document.querySelectorAll('.is-arrow');
   telts = arrows.map(a => findClosestTextElt(a.origin));
 
   // Annotate with label/arrow linkages
@@ -234,7 +175,26 @@ pass.labelArrows = function() {
   });
 }
 
+/*
+<path class="real" d=" Mlx,ty Lrx,ty Lrx,by Llx,by Z" />
+---
+<rect x="lx" y="ty"
+  width="rx-lx" height="by-ty" />
+*/
+extractRect = function(rectPathElt) {
+  const [opcodes,xs,ys] = extractPathCmds(rectPathElt);
+  if (opcodes !== 'MLLLZ') return;
+  if (xs[0] !== xs[3]) return;
+  if (ys[0] !== ys[1]) return;
+  if (xs[1] !== xs[2]) return;
+  if (ys[2] !== ys[3]) return;
+  
+  const [lx,ty,rx,by] = [xs[0],ys[0],xs[1],ys[2]];
+  return [lx,ty,rx-lx,by-ty];
+}
+
 pass.normalizeRects = function() {
+  log('Normalizing rect <paths> to <rect>s.');
   // TODO: PASS: normalise rect paths (to rect elements) and ID them
   rects = Array.from(document.querySelectorAll('path.real'))
     .filter(r => !r.classList.contains('connection'));
@@ -254,7 +214,15 @@ pass.normalizeRects = function() {
   });
 }
 
+rectInsideRect = function(bbIn,bbOut) {
+  const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
+  return 0 < rinx && rinx < bbOut.width  && bbIn.width < bbOut.width
+      && 0 < riny && riny < bbOut.height && bbIn.height < bbOut.height;
+}
+
+// Requires: idLabels, normalizeRects
 pass.annotateContainments = function() {
+  log('Annotating label/box containment relationships.');
   document.querySelectorAll('text').forEach(t => {
     const container = rects.find(r => rectInsideRect(t.getBBox(), r.element.getBBox()));
     if (container) {
@@ -264,7 +232,20 @@ pass.annotateContainments = function() {
   });
 }
 
+// Arrows which Mathcha snaps to rect edges ought to count as "inside" the rect.
+// However, their coords are about 2px short.
+CONTAINS_PT_EPSILON = 3;
+containsPt = function([lx,ty,w,h],[x,y]) {
+  const [relx,rely] = [x-lx,y-ty];
+  const [propx,propy] = [relx/w,rely/h];
+  const ex = CONTAINS_PT_EPSILON/w;
+  const ey = CONTAINS_PT_EPSILON/h;
+  return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
+}
+
+// Requires: idArrows, normalizeRects
 pass.annotateArrowConnections = function() {
+  log('Annotating arrow/box connections.');
   findRectContainingPt = coords => rects.find(r => containsPt(r.params,coords));
 
   o_rects = arrows.map(a => findRectContainingPt(a.origin));
@@ -278,7 +259,37 @@ pass.annotateArrowConnections = function() {
   });
 }
 
+rectDist2ToRect = function(bbA,bbB) {
+  // Thanks https://stackoverflow.com/a/65107290
+  const a_min = [bbA.x,bbA.y];
+  const a_max = [bbA.x+bbA.width, bbA.y+bbA.height];
+  const b_min = [bbB.x,bbB.y];
+  const b_max = [bbB.x+bbB.width, bbB.y+bbB.height];
+  const u = vmax(0, vsub(a_min,b_max));
+  const v = vmax(0, vsub(b_min,a_max));
+  return vdot(u,u)+vdot(v,v);
+}
+
+RECT_NAME_MAX_DISTANCE = 20;
+findClosestRectName = function(telts, bbox) {
+  const dist2s = telts.map(t => ({
+    element: t, dist2: rectDist2ToRect(t.getBBox(), bbox)
+  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2);
+  if (dist2s.length === 0) return;
+  const closest = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
+  return closest.element;
+}
+
+nearestRectCorner = function(pt,bbox) {
+  const corners = explodeRect(bbox).map(c => ({
+    coords: c, dist2: dist2(pt,c)
+  }));
+  return corners.reduce((min,c) => min.dist2 < c.dist2 ? min : c).coords;
+}
+
+// Requires: labelArrows, normalizeRects, annotateContainments
 pass.nameBoxesIfApplicable = function() {
+  log('Naming boxes.');
   box_telts = Array.from(document.querySelectorAll(
     'text:not([data-label-for]):not([data-contained-in])'
   ));
@@ -302,39 +313,56 @@ pass.nameBoxesIfApplicable = function() {
   });
 }
 
-main = function() {
-  pass.idArrows();
-  pass.idLabels();
-  pass.labelArrows();
-  pass.normalizeRects();
-  pass.annotateContainments();
-  pass.annotateArrowConnections();
-  pass.nameBoxesIfApplicable();
-
-// PASS: generate JS obj graph
-telts.forEach((telt,i) => {
-  const label = telt.element.textContent;
-  const origin = o_rects[i].obj;
-  const target = t_rects[i].obj;
-  origin[label] = target;  
-});
-
-objs = {};
-nextObj = 1;
-ensureName = str => str ? str : 'anon'+(nextObj++);
-rects.forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
-
-// Test it
-assert = (c, s) => { if (!c) throw "Assertion failure: "+s; };
-if (rects.length > 4) { // assume it's id-simple.svg
-  const names = 'Object Vtable Primitive Number Boolean String Null Undefined'.split(' ');
-  names.forEach(n => assert(objs[n].name === n, n+'.name'));
-  names.forEach(n => assert(objs[n].vtable === objs.Vtable, n+'.vtable'))
-  assert(objs.Vtable.parent === objs.Object, 'Vtable.parent');
-  assert(objs.Primitive.parent === objs.Object);
-  names.forEach((n,i) => i > 2 ? assert(objs[n].parent === objs.Primitive, n+'.parent') : null);
-  assert(Object.keys(objs.Object.log).length === 0);
-  assert(Object.keys(objs.Primitive.log).length === 0);
+// Requires: nameBoxesIfApplicable, annotateArrowConnections
+pass.generateJSOG = function() {
+  log('Generating JS object graph.');
+  telts.forEach((telt,i) => {
+    const label = telt.element.textContent;
+    const origin = o_rects[i].obj;
+    const target = t_rects[i].obj;
+    origin[label] = target;  
+  });
+  
+  objs = {};
+  nextObj = 1;
+  ensureName = str => str ? str : 'anon'+(nextObj++);
+  rects.forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
 }
-return objs;
+
+passOrder = [
+  pass.idArrows,
+  pass.idLabels,
+  pass.labelArrows,
+  pass.normalizeRects,
+  pass.annotateContainments,
+  pass.annotateArrowConnections,
+  pass.nameBoxesIfApplicable,
+  pass.generateJSOG,
+];
+
+nextPass = () => {
+  const pass = passOrder.shift();
+  pass();
+};
+
+doAll = function() {
+  while (passOrder.length > 0) nextPass();
+  testIt();
+  return objs;
+}
+
+testIt = function() {
+  log('Testing...');
+  assert = (c, s) => { if (!c) throw "Assertion failure: "+s; };
+  if (rects.length > 4) { // assume it's id-simple.svg
+    const names = 'Object Vtable Primitive Number Boolean String Null Undefined'.split(' ');
+    names.forEach(n => assert(objs[n].name === n, n+'.name'));
+    names.forEach(n => assert(objs[n].vtable === objs.Vtable, n+'.vtable'))
+    assert(objs.Vtable.parent === objs.Object, 'Vtable.parent');
+    assert(objs.Primitive.parent === objs.Object);
+    names.forEach((n,i) => i > 2 ? assert(objs[n].parent === objs.Primitive, n+'.parent') : null);
+    assert(Object.keys(objs.Object.log).length === 0);
+    assert(Object.keys(objs.Primitive.log).length === 0);
+  }
+  log('Great Success!');
 }

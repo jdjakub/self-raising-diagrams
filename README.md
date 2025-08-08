@@ -12,12 +12,16 @@ It is futile to expect to reinvent Adobe Illustrator in Squeak Smalltalk in orde
 In this project, I draw in [Mathcha.io](https://www.mathcha.io/editor) and output to (horrible) SVG. The SVG shall raise itself into a dynamic web app in the web browser.
 
 # Object vs Meta Graphics
-Some parts of the diagram are object-level: they're part of the intended output. Other parts (perhaps in a designated meta-colour, like blue) are instructions to the next transformation pass to alter the diagram in some way (add stuff, remove stuff, etc). Sorta like macros.
+Some parts of the diagram are object-level: they're part of the intended output. Other parts (perhaps in a designated meta-colour, like blue) are instructions to the next transformation pass to alter the diagram in some way (add stuff, remove stuff, etc). Sorta like macros. Example:
+
+![Dependency graph of passes in the boxGraph format.](./boxGraph-passes-deps.svg)
+
+The idea here is: we look for a rectangle containing a `<text>` with the special word `[[META]]` and collect the other `<text>`s it contains, parsing each as JSON. We use the `format` key to understand which passes understand this diagram (and are safe to run on it). The `labelGraph` format parser will know that the green rectangle is a comment box (to be ignored) by virtue of its specific border colour, and will interpret the shapes differently to `boxGraph`.
 
 # Current instructions
-Currently, we recognise a simple visual notation of boxes, arrows, and text labels. Arrows are labelled by the closest text element. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
+Currently, we recognise a simple visual notation of boxes, arrows, and text labels (the "`boxGraph`" format). An arrow is labelled by the text element closest to its origin point. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
 
-![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](boxes-arrows-labels-overview.svg)
+![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./boxes-arrows-labels-overview.svg)
 
 If providing your own SVG file, you need to insert the following into it, below the top svg element:
 
@@ -31,5 +35,5 @@ Open `diagram.svg` in Firefox. In the Ctrl-Shift-I console, call `main()` and se
 ## Example 2
 Open `id-simple.svg`. Run `main()`. Verify `objs`.
 
-![Demo of a more complex object structure.](demo-id.png)
+![Demo of a more complex object structure.](./demo-id.png)
 
