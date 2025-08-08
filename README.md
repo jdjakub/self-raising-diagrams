@@ -33,7 +33,7 @@ If providing your own SVG file, you need to insert the following into it, below 
 Open `diagram.svg` in Firefox. In the Ctrl-Shift-I console, call `main()` and see if `objs` encodes the correct names/relationships.
 
 ## Example 2
-Open `id-simple.svg`. Run `main()`. Verify `objs`.
+Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 
 ![Demo of a more complex object structure.](./demo-id.png)
 
