@@ -1,0 +1,247 @@
+/* ### UTILITIES ### */
+
+// For entering the debugger in a JS console statement. Add it as a dummy param
+// or use it to wrap a param in a function call so it evaluates first.
+// E.g: I want to step through the execution of `foo(1, 2, 3)`.
+// So I put: `foo(1, 2, DEBUG(3))` or `foo(1, 2, 3, DEBUG())`.
+DEBUG = (x) => { debugger; return x; };
+// `last([1,2,3])` = 3, `last([1,2,3], 2)` = 2
+last = (arr, n) => arr[arr.length-(n || 1)];
+// Interpose anywhere in an expression to transparently probe its value.
+// E.g. `foo(1, bar(x)*baz(y))` - I wonder what the 2nd argument is.
+// So I put: `foo(1, log(bar(x)*baz(y)))`
+log = (...args) => { console.log(...args); return last(args); };
+
+attr_single = (elem, key, val_or_func) => {
+  let old;
+  if (key === 'textContent') old = elem.textContent;
+  else old = elem.getAttribute(key);
+
+  let value = typeof(val_or_func) === 'function' ? val_or_func(old) : val_or_func;
+  if (key === 'textContent') elem.textContent = value;
+  else if (value !== undefined) elem.setAttribute(key, value);
+
+  return old;
+};
+
+// e.g. attr(rect, {stroke_width: 5, stroke: 'red'})
+//      attr(rect, 'stroke', 'red')
+//      attr(rect, 'height', h => h+32)
+//      attr(rect, {fill: 'orange', height: h => h+32})
+attr = (elem, key_or_dict, val_or_nothing) => {
+  if (typeof(key_or_dict) === 'string') {
+    let key = key_or_dict;
+    let value = val_or_nothing;
+    return attr_single(elem, key, value);
+  } else {
+    let dict = key_or_dict;
+    for (let [k,v_or_f] of Object.entries(dict)) {
+      let key = k.replace('_','-');
+      attr_single(elem, key, v_or_f);
+    }
+  }
+}
+
+nums = (arr) => arr.map(x => +x);
+attrs = (el, ...keys) => keys.map(k => attr(el, k));
+props = (o,  ...keys) => keys.map(k => o[k]);
+
+svg_parent = document.documentElement; // Default parent for new SVG elements
+
+create_element = (tag, attrs, parent, namespace) => {
+  let elem = document.createElementNS(namespace, tag);
+  if (attrs !== undefined) attr(elem, attrs);
+  if (parent === undefined) parent = svg_parent;
+  parent.appendChild(elem);
+  return elem;
+};
+
+// e.g. rect = svgel('rect', {x: 5, y: 5, width: 5, height: 5}, svg)
+svgel = (tag, attrs, parent) => create_element(tag, attrs, parent, 'http://www.w3.org/2000/svg');
+
+vadd = ([a, b], [c, d]) => [a+c, b+d];
+vsub = ([a, b], [c, d]) => [a-c, b-d];
+vdot = ([a, b], [c, d]) => a*c + b*d;
+vmul = (k, [a,b]) => [k*a, k*b];
+vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
+dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
+
+vtoa = ([x,y]) => x + ' ' + y;
+atov = s => s ? s.split(' ').map(Number.parseFloat) : undefined;
+
+all = selector => Array.from(document.querySelectorAll(selector));
+byId = id => document.getElementById(id);
+
+// ### MAIN ###
+
+// Mathcha SVG outputs simple shapes as paths and multiline text as separate text elements...
+// Gotta recognise basic shapes. Computer Vector Vision
+extractPathCmds = function(pathElt) {
+  const d = pathElt.getAttribute('d')
+  const clauses = d.split(' ').filter(c => c.length > 0);
+  const cmds = clauses.map(c => [c[0], c.substr(1).split(',').map(s => Number.parseFloat(s))]);
+  const opcodes = cmds.map(c => c[0]).join('');
+  const xs = cmds.map(c => c[1][0]);
+  const ys = cmds.map(c => c[1][1]);
+  return [opcodes,xs,ys];
+}
+
+/*
+<g class="arrow-line">
+  <path class="real" d=" Mxo,yo Lxt,yt" />
+</g>
+or
+d=" Mxo,yo L_,_ L_,_ L_,_ L_,_ (...) Lxt,yt"
+---
+arrow's origin is [xo,yo]
+arrow's target is [xt,yt]
+*/
+extractArrow = function(arrowGroupElt) {
+  const shaftPathElt = arrowGroupElt.querySelector('path.real');
+  const [opcodes,xs,ys] = extractPathCmds(shaftPathElt);
+  if (opcodes[0] !== 'M') return;
+  for (let i=1; i<opcodes.length; i++) if (opcodes[i] !== 'L') return;
+  const [xo,yo,xt,yt] = [xs[0],ys[0],last(xs),last(ys)];
+  return {originPt: [xo,yo], targetPt: [xt,yt]};
+}
+
+pass = {};
+
+// .arrow-line gets id, .is-arrow, originPt, targetPt
+pass.idArrows = function() {
+  const arrows = all('.arrow-line');
+  arrows.forEach((a,i) => {
+    a.id = 'a'+(i+1);
+    a.classList.add('is-arrow');
+    const {originPt, targetPt} = extractArrow(a);
+    a.dataset.originPt = vtoa(originPt);
+    a.dataset.targetPt = vtoa(targetPt);
+  });
+}
+
+// DOM -> JS
+getArrow = function(domElement) {
+  const a = domElement;
+  let a_js = a.jsdata;
+  if (a_js === undefined) a.jsdata = a_js = { dom: a };
+  // Set by idArrows
+  a_js.originPt = atov(a.dataset.originPt);
+  a_js.targetPt = atov(a.dataset.targetPt);
+  // Set by annotateArrowConnections
+  a_js.originLabelId = a.dataset.originLabel;
+  a_js.targetLabelId = a.dataset.targetLabel;
+  if (a_js.originLabelId) a_js.originLabel = getLabel(byId(a_js.originLabelId));
+  if (a_js.targetLabelId) a_js.targetLabel = getLabel(byId(a_js.targetLabelId));
+  return a_js;
+}
+
+getArrows = function() {
+  const arrows = all('.is-arrow');
+  return arrows.map(getArrow);
+}
+
+// text gets id, .is-label
+pass.idLabels = function() {
+  const texts = all('text');
+  texts.forEach((t,i) => {
+    t.id = 't'+(i+1);
+    t.classList.add('is-label');
+  });
+}
+
+// DOM -> JS
+getLabel = function(domElement) {
+  const l = domElement;
+  let l_js = l.jsdata;
+  if (l_js === undefined) l.jsdata = l_js = { dom: l };
+  return l_js;
+}
+
+getLabels = function() {
+  const labels = all('.is-label');
+  return labels.map(getLabel);
+}
+
+dist2ToBBox = function(bbox,[x,y]) {
+  // Thanks https://stackoverflow.com/a/18157551
+  // TODO: make it work when inside
+  const [l,r,t,b] = [bbox.x,bbox.x+bbox.width,bbox.y,bbox.y+bbox.height];
+  const dx = Math.max(l - x, 0, x - r);
+  const dy = Math.max(t - y, 0, y - b);
+  return dx*dx + dy*dy;
+}
+
+findNearestBBox = function(bboxes, pt) {
+  bboxes.forEach(bb => {
+    bb.dist2 = dist2ToBBox(bb, pt);
+  });
+  return bboxes.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
+}
+
+explodeRect = function(r) {
+  const [lx,rx,ty,by] = [r.x,r.x+r.width,r.y,r.y+r.height];
+  return [[lx,ty],[rx,ty],[rx,by],[lx,by]];
+}
+
+vizBBoxPtConnection = function(bbox, [x1,y1], parentDom) {
+  const [tl,tr,br,bl] = explodeRect(bbox);
+  const [x2,y2] = vmul(0.5, vadd(tl,br));
+  svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
+}
+
+// Requires: idArrows, idLabels
+// Each arrow gets originLabel, targetLabel
+pass.annotateArrowConnections = function() {
+  const arrows = getArrows();
+  const labels = getLabels();
+  const bboxes = labels.map(l => {
+    const b = l.dom.getBBox();
+    b.from = l;
+    return b;
+  });
+  
+  const origins = arrows.map(a => findNearestBBox(bboxes, a.originPt).from);
+  const targets = arrows.map(a => findNearestBBox(bboxes, a.targetPt).from);
+
+  arrows.forEach((a,i) => {
+    const [o_dom, t_dom] = [origins[i].dom, targets[i].dom];
+    a.dom.dataset.originLabel = o_dom.id;
+    a.dom.dataset.targetLabel = t_dom.id;
+
+    vizBBoxPtConnection(o_dom.getBBox(), a.originPt, o_dom.parentElement);
+    vizBBoxPtConnection(t_dom.getBBox(), a.targetPt, t_dom.parentElement);
+  });
+}
+
+// Requires: annotateArrowConnections
+pass.generateJS = function() {
+  const arrows = getArrows();
+  const js_lines = arrows.map(a => {
+    const origin_name = a.originLabel.dom.textContent;
+    const target_name = a.targetLabel.dom.textContent;
+    return `arrow('${origin_name}', '${target_name}');`;
+  });
+  return js_lines.join('\n');
+}
+
+const CORRECT_OUTPUT =
+`arrow('annotateContainments', 'normalizeRects');
+arrow('annotateContainments', 'idLabels');
+arrow('annotateArrowConnections', 'normalizeRects');
+arrow('annotateArrowConnections', 'idArrows');
+arrow('generateJSOG', 'nameBoxesIfApplicable');
+arrow('nameBoxesIfApplicable', 'labelArrows');
+arrow('nameBoxesIfApplicable', 'normalizeRects');
+arrow('labelArrows', 'idArrows');
+arrow('generateJSOG', 'annotateArrowConnections');
+arrow('labelArrows', 'idLabels');
+arrow('nameBoxesIfApplicable', 'annotateContainments');`;
+
+function doAll() {
+  pass.idArrows();
+  pass.idLabels();
+  pass.annotateArrowConnections();
+  const str = pass.generateJS();
+  if (str !== CORRECT_OUTPUT) throw str;
+  log(str);
+}

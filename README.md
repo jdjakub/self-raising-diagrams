@@ -26,14 +26,20 @@ Currently, we recognise a simple visual notation of boxes, arrows, and text labe
 If providing your own SVG file, you need to insert the following into it, below the top svg element:
 
 ```html
-<script href="./misc.js"></script>
+<script href="./boxGraph.js"></script>
+or
+<script href="./labelGraph.js"></script>
 ```
 
-## Example 1
-Open `diagram.svg` in Firefox. In the Ctrl-Shift-I console, call `main()` and see if `objs` encodes the correct names/relationships.
+## Example 1 (boxGraph)
+Open `boxGraph-example.svg` in Firefox. In the Ctrl-Shift-I console, call `doAll()` and see if `objs` encodes the correct names/relationships.
 
-## Example 2
+## Example 2 (boxGraph)
 Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 
 ![Demo of a more complex object structure.](./demo-id.png)
 
+## Example 3 (labelGraph)
+Open `labelGraph-example.svg`. Run `doAll()`. Verify the output JS code. (This code was then pasted into `boxGraph.js` to set up the pass dependency graph!)
+
+![Demo of the labelGraph format.](./demo-labelGraph.png)
