@@ -21,7 +21,7 @@ The idea here is: we look for a rectangle containing a `<text>` with the special
 # Current instructions
 Currently, we recognise a simple visual notation of boxes, arrows, and text labels (the "`boxGraph`" format). An arrow is labelled by the text element closest to its origin point. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
 
-![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./boxes-arrows-labels-overview.svg)
+![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./labelGraph-example.svg)
 
 If providing your own SVG file, you need to insert the following into it, below the top svg element:
 
@@ -40,6 +40,6 @@ Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 ![Demo of a more complex object structure.](./demo-id.png)
 
 ## Example 3 (labelGraph)
-Open `boxGraph-passes-deps.svg`. Run `doAll()`. Verify the output JS code. (This code was then pasted into `boxGraph.js` to set up the pass dependency graph!)
+Open `labelGraph-example.svg`. Run `doAll()`. Verify the output JS code. (This code was then pasted into `boxGraph.js` to set up the pass dependency graph!)
 
 ![Demo of the labelGraph format.](./demo-labelGraph.png)

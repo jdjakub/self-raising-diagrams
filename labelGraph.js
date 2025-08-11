@@ -254,7 +254,45 @@ pass.annotateContainments = function() {
   arrows.forEach(perItem);
 }
 
-makeComment = function(dom) {
+COMMENT_COLOR = 'rgb(65, 117, 5)';
+META_COLOR = 'rgb(74, 144, 226)';
+
+IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
+
+// Requires: annotateContainments
+// Elements contained within comment-coloured boxes (and the boxes) get .is-comment
+pass.annotateComments = function() {
+  const rects = getRects().filter(r => IGNORED_COLORS.has(r.dom.style.stroke));
+  rects.forEach(r => {
+    r.contains.forEach(c => c.classList.add('is-comment'));
+    r.dom.classList.add('is-comment');
+  });
+}
+
+// Requires: annotateContainments
+pass.checkFormat = function() {
+  const metaBox = getRects().find(r => r.dom.style.stroke === META_COLOR);
+  if (!metaBox) console.warn('Meta-box not found; risk of running the wrong format.');
+  else {
+    const jsonLines = ['{'];
+    metaBox.contains.forEach(t => {
+      if (t.classList.contains('is-label') && t.textContent !== '[[META]]') {
+        jsonLines.push(t.textContent);
+      }
+    });
+    jsonLines.push('}');
+    let metaInfo = {};
+    try {
+      metaInfo = JSON.parse(jsonLines.join(' '));
+    } catch (e) {
+      console.warn('Meta-box JSON error; risk of running the wrong format.', e);
+    }
+    if (metaInfo.format !== 'labelGraph')
+      console.warn('This diagram is of the format '+metaInfo.format);
+  }
+}
+
+hideComment = function(dom) {
   // TODO: Maybe commentify entire tree
   const oldTag = dom.tagName;
   const newDom = replaceTag(dom, 'comment');
@@ -270,19 +308,11 @@ restoreComment = function(dom) {
   delete oldDom.dataset.originalClass;
 }
 
-COMMENT_COLOR = 'rgb(65, 117, 5)';
-META_COLOR = 'rgb(74, 144, 226)';
-
-IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
-
-// Requires: annotateContainments
-// Elements contained within comment-coloured boxes become <comment>s, temporarily
+// Requires: annotateComments
+// Elements contained within .is-comment boxes (as well as the boxes) become <comment>s, temporarily
 pass.hideComments = function() {
-  const rects = getRects().filter(r => IGNORED_COLORS.has(r.dom.style.stroke));
-  rects.forEach(r => {
-    r.contains.forEach(makeComment);
-    makeComment(r.dom);
-  });
+  const comments = all('.is-comment');
+  comments.forEach(hideComment);
 }
 
 // Requires: generateJS
@@ -370,6 +400,8 @@ function doAll() {
   pass.idLabels();
   pass.normalizeRects();
   pass.annotateContainments();
+  pass.checkFormat();
+  pass.annotateComments();
   pass.hideComments();
   pass.annotateArrowConnections();
   const str = pass.generateJS();
