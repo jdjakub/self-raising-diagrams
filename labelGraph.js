@@ -135,10 +135,7 @@ getArrow = function(domElement) {
   return a_js;
 }
 
-getArrows = function() {
-  const arrows = all('.is-arrow');
-  return arrows.map(getArrow);
-}
+getArrows = () => all('.is-arrow').map(getArrow);
 
 // text gets id, .is-label
 pass.idLabels = function() {
@@ -157,9 +154,140 @@ getLabel = function(domElement) {
   return l_js;
 }
 
-getLabels = function() {
-  const labels = all('.is-label');
-  return labels.map(getLabel);
+getLabels = () => all('.is-label').map(getLabel);
+
+/*
+<path class="real" d=" Mlx,ty Lrx,ty Lrx,by Llx,by Z" />
+---
+<rect x="lx" y="ty"
+  width="rx-lx" height="by-ty" />
+*/
+extractRect = function(rectPathElt) {
+  const [opcodes,xs,ys] = extractPathCmds(rectPathElt);
+  if (opcodes !== 'MLLLZ') return;
+  if (xs[0] !== xs[3]) return;
+  if (ys[0] !== ys[1]) return;
+  if (xs[1] !== xs[2]) return;
+  if (ys[2] !== ys[3]) return;
+  
+  const [lx,ty,rx,by] = [xs[0],ys[0],xs[1],ys[2]];
+  return [lx,ty,rx-lx,by-ty];
+}
+
+replaceTag = function(node, tag) {
+  // Thanks https://stackoverflow.com/a/65090521
+  const clone = svgel(tag, {});
+  // Copy all attributes (style etc.)
+  for (let j=node.attributes.length-1; j>=0; j--)
+    clone.setAttributeNode(node.attributes[j].cloneNode());
+  while (node.firstChild) {
+    clone.appendChild(node.firstChild);
+  }
+  node.replaceWith(clone);
+  return clone;
+}
+
+pass.normalizeRects = function() {
+  const rects = all('path.real')
+    .filter(r => !r.classList.contains('connection'));
+  rects.forEach((pathRect,i) => {
+    const params = extractRect(pathRect);
+    // Create a <rect> to replace the <path>
+    const actualRect = replaceTag(pathRect, 'rect');
+    attr(actualRect, {
+      x: params[0], y: params[1], width: params[2], height: params[3]
+    });
+    actualRect.id = 'r'+(i+1); // ID each rect
+    actualRect.attributes.removeNamedItem('d'); // ... except the path geom
+  });
+}
+
+// DOM -> JS
+getRect = function(domElement) {
+  const r = domElement;
+  let r_js = r.jsdata;
+  if (r_js === undefined) r.jsdata = r_js = { dom: r };
+  r_js.topLeft = [+r.getAttribute('x'), +r.getAttribute('y')];
+  r_js.extent = [+r.getAttribute('width'), +r.getAttribute('height')];
+  r_js.botRight = vadd(r_js.topLeft, r_js.extent);
+  r_js.center = vmul(0.5, vadd(r_js.topLeft, r_js.botRight));
+  // Set by annotateContainments
+  if (r.dataset.contains)
+    r_js.contains = new Set(r.dataset.contains.trim().split(' ').map(byId));
+  else
+    r_js.contains = new Set();
+  return r_js;
+}
+
+getRects = () => all('rect').map(getRect);
+
+rectInsideRect = function(bbIn,bbOut) {
+  const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
+  return 0 < rinx && rinx < bbOut.width  && bbIn.width < bbOut.width
+      && 0 < riny && riny < bbOut.height && bbIn.height < bbOut.height;
+}
+
+addSetAttr = function(obj, prop, newItem) {
+  if (obj[prop] === undefined) obj[prop] = ' ';
+  if (obj[prop].indexOf(' '+newItem+' ') === -1)
+    obj[prop] += newItem + ' ';
+}
+
+setAttrHas = function(obj, prop, item) {
+  return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
+}
+
+// Requires: idLabels, idArrows, normalizeRects
+// Some texts get containedIn a rect
+pass.annotateContainments = function() {
+  const labels = getLabels();
+  const rects = getRects();
+  const arrows = getArrows();
+  const perItem = t => {
+    const container = rects.find(r => rectInsideRect(t.dom.getBBox(), r.dom.getBBox()));
+    if (container) {
+      addSetAttr(container.dom.dataset, 'contains', t.dom.id);
+      t.dom.dataset.containedIn = container.dom.id; // Persistent
+    }
+  }
+  labels.forEach(perItem);
+  arrows.forEach(perItem);
+}
+
+makeComment = function(dom) {
+  // TODO: Maybe commentify entire tree
+  const oldTag = dom.tagName;
+  const newDom = replaceTag(dom, 'comment');
+  newDom.dataset.originalTag = oldTag;
+  newDom.dataset.originalClass = attr(newDom, 'class');
+  attr(newDom, 'class', '');
+}
+
+restoreComment = function(dom) {
+  const oldDom = replaceTag(dom, dom.dataset.originalTag);
+  attr(oldDom, 'class', dom.dataset.originalClass);
+  delete oldDom.dataset.originalTag;
+  delete oldDom.dataset.originalClass;
+}
+
+COMMENT_COLOR = 'rgb(65, 117, 5)';
+META_COLOR = 'rgb(74, 144, 226)';
+
+IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
+
+// Requires: annotateContainments
+// Elements contained within comment-coloured boxes become <comment>s, temporarily
+pass.hideComments = function() {
+  const rects = getRects().filter(r => IGNORED_COLORS.has(r.dom.style.stroke));
+  rects.forEach(r => {
+    r.contains.forEach(makeComment);
+    makeComment(r.dom);
+  });
+}
+
+// Requires: generateJS
+pass.restoreComments = function() {
+  all('comment').forEach(c => restoreComment(c));
 }
 
 dist2ToBBox = function(bbox,[x,y]) {
@@ -189,7 +317,7 @@ vizBBoxPtConnection = function(bbox, [x1,y1], parentDom) {
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
 }
 
-// Requires: idArrows, idLabels
+// Requires: idArrows, idLabels, hideComments
 // Each arrow gets originLabel, targetLabel
 pass.annotateArrowConnections = function() {
   const arrows = getArrows();
@@ -240,8 +368,12 @@ arrow('nameBoxesIfApplicable', 'annotateContainments');`;
 function doAll() {
   pass.idArrows();
   pass.idLabels();
+  pass.normalizeRects();
+  pass.annotateContainments();
+  pass.hideComments();
   pass.annotateArrowConnections();
   const str = pass.generateJS();
+  pass.restoreComments();
   if (str !== CORRECT_OUTPUT) throw str;
   log(str);
 }

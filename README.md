@@ -40,6 +40,6 @@ Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 ![Demo of a more complex object structure.](./demo-id.png)
 
 ## Example 3 (labelGraph)
-Open `labelGraph-example.svg`. Run `doAll()`. Verify the output JS code. (This code was then pasted into `boxGraph.js` to set up the pass dependency graph!)
+Open `boxGraph-passes-deps.svg`. Run `doAll()`. Verify the output JS code. (This code was then pasted into `boxGraph.js` to set up the pass dependency graph!)
 
 ![Demo of the labelGraph format.](./demo-labelGraph.png)
