@@ -157,6 +157,53 @@ getLabel = function(domElement) {
 getLabels = () => all('.is-label').map(getLabel);
 
 /*
+Mathcha outputs multiline text boxes ("paragraphs") as a para <g> containing
+line <g>s containing "run" <g>s (for runs of different formatting). A single-line
+single-format label looks like:
+<g> (paragraph)
+  <g> (line)
+    <g> (run)
+      <text ...>labelText</text></g></g></g>
+
+A multi-line, multi-format paragraph like this:
+<g>
+  <g>
+    <g> <text>This is line 1.</text> </g>
+  </g>
+  <g>
+    <g> <text Courier New>code</text> </g>
+    <g> <text>in line 2</text> </g>
+  </g>
+</g>
+
+Should get stitched into the string:
+`This is line 1.
+code in line 2`
+*/
+// Requires: idLabels
+// Each paragraph <g> with >1 child <g> gets .is-multiline and data-string
+pass.annotateParagraphs = function() {
+  const labels = getLabels();
+  labels.forEach(l => {
+    const line_g = l.dom.parentElement.parentElement;
+    if (!line_g.previousSibling) { // First line
+      const para_g = line_g.parentElement;
+      if (para_g.children.length > 1) { // Multiple lines
+        para_g.classList.add('is-multiline');
+        // TODO: maybe sanity check they're in y-order
+        const lines = Array.from(para_g.children).map(line_g => {
+          const runs = Array.from(line_g.children).map(run_g =>
+            run_g.firstChild.textContent
+          );
+          return runs.join(' ');
+        });
+        para_g.dataset.string = lines.join('\n');
+      }
+    }
+  });
+}
+
+/*
 <path class="real" d=" Mlx,ty Lrx,ty Lrx,by Llx,by Z" />
 ---
 <rect x="lx" y="ty"
@@ -238,7 +285,8 @@ setAttrHas = function(obj, prop, item) {
 }
 
 // Requires: idLabels, idArrows, normalizeRects
-// Some texts get containedIn a rect
+// Some labels/arrows get containedIn a rect
+// forall (Label|Arrow) t, Rect r. t inside: r => t containedIn: r
 pass.annotateContainments = function() {
   const labels = getLabels();
   const rects = getRects();
@@ -261,6 +309,7 @@ IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
 
 // Requires: annotateContainments
 // Elements contained within comment-coloured boxes (and the boxes) get .is-comment
+// forall Rect r. r stroke = C => forall a. a containedIn: r => a is-comment
 pass.annotateComments = function() {
   const rects = getRects().filter(r => IGNORED_COLORS.has(r.dom.style.stroke));
   rects.forEach(r => {
@@ -274,22 +323,34 @@ pass.checkFormat = function() {
   const metaBox = getRects().find(r => r.dom.style.stroke === META_COLOR);
   if (!metaBox) console.warn('Meta-box not found; risk of running the wrong format.');
   else {
-    const jsonLines = ['{'];
+    const jsonLines = [];
     metaBox.contains.forEach(t => {
       if (t.classList.contains('is-label') && t.textContent !== '[[META]]') {
         jsonLines.push(t.textContent);
       }
     });
-    jsonLines.push('}');
     let metaInfo = {};
+    const jsonStr = '{' + jsonLines.join(', ') + '}';
     try {
-      metaInfo = JSON.parse(jsonLines.join(' '));
+      metaInfo = JSON.parse(jsonStr);
     } catch (e) {
       console.warn('Meta-box JSON error; risk of running the wrong format.', e);
     }
     if (metaInfo.format !== 'labelGraph')
       console.warn('This diagram is of the format '+metaInfo.format);
+    document.documentElement.dataset.metaInfo = jsonStr;
   }
+}
+
+getMetaInfo = function() {
+  // SMELL: duped
+  let metaInfo = {};
+  try {
+    metaInfo = JSON.parse(document.documentElement.dataset.metaInfo);
+  } catch (e) {
+    console.warn('Meta-box JSON error; risk of running the wrong format.', e);
+  }
+  return metaInfo;
 }
 
 hideComment = function(dom) {
@@ -347,8 +408,10 @@ vizBBoxPtConnection = function(bbox, [x1,y1], parentDom) {
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
 }
 
-// Requires: idArrows, idLabels, hideComments
+// Requires: hideComments, checkFormat
 // Each arrow gets originLabel, targetLabel
+// forall Arrow a. a origin = Label nearestTo: a originPt.
+//                 a target = Label nearestTo: a targetPt.
 pass.annotateArrowConnections = function() {
   const arrows = getArrows();
   const labels = getLabels();
@@ -382,7 +445,8 @@ pass.generateJS = function() {
   return js_lines.join('\n');
 }
 
-const CORRECT_OUTPUT =
+const CORRECT_OUTPUT = {
+  boxGraph:
 `arrow('annotateContainments', 'normalizeRects');
 arrow('annotateContainments', 'idLabels');
 arrow('annotateArrowConnections', 'normalizeRects');
@@ -393,19 +457,36 @@ arrow('nameBoxesIfApplicable', 'normalizeRects');
 arrow('labelArrows', 'idArrows');
 arrow('generateJSOG', 'annotateArrowConnections');
 arrow('labelArrows', 'idLabels');
-arrow('nameBoxesIfApplicable', 'annotateContainments');`;
+arrow('nameBoxesIfApplicable', 'annotateContainments');`,
+  labelGraph:
+`arrow('annotateContainments', 'idLabels');
+arrow('annotateContainments', 'idArrows');
+arrow('restoreComments', 'generateJS');
+arrow('generateJS', 'annotateArrowConnections');
+arrow('checkFormat', 'annotateContainments');
+arrow('annotateArrowConnections', 'hideComments');
+arrow('hideComments', 'annotateComments');
+arrow('annotateArrowConnections', 'checkFormat');
+arrow('annotateComments', 'annotateContainments');
+arrow('annotateContainments', 'normalizeRects');
+arrow('annotateParagraphs', 'idLabels');`
+};
 
 function doAll() {
+  // --- Likely common to all formats ---
   pass.idArrows();
   pass.idLabels();
+  pass.annotateParagraphs();
   pass.normalizeRects();
   pass.annotateContainments();
   pass.checkFormat();
   pass.annotateComments();
   pass.hideComments();
+    // --- Format-specific ---
   pass.annotateArrowConnections();
   const str = pass.generateJS();
   pass.restoreComments();
-  if (str !== CORRECT_OUTPUT) throw str;
+  const info = getMetaInfo();
+  if (info.test && str !== CORRECT_OUTPUT[info.test]) throw str;
   log(str);
 }
