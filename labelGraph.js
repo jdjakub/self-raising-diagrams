@@ -109,6 +109,7 @@ pass = {};
 
 // .arrow-line gets id, .is-arrow, originPt, targetPt
 pass.idArrows = function() {
+  log('Identifying arrows.');
   const arrows = all('.arrow-line');
   arrows.forEach((a,i) => {
     a.id = 'a'+(i+1);
@@ -139,6 +140,7 @@ getArrows = () => all('.is-arrow').map(getArrow);
 
 // text gets id, .is-label
 pass.idLabels = function() {
+  log('Identifying labels.');
   const texts = all('text');
   texts.forEach((t,i) => {
     t.id = 't'+(i+1);
@@ -183,6 +185,7 @@ code in line 2`
 // Requires: idLabels
 // Each paragraph <g> with >1 child <g> gets .is-multiline and data-string
 pass.annotateParagraphs = function() {
+  log('Annotating paragraphs.');
   const labels = getLabels();
   labels.forEach(l => {
     const line_g = l.dom.parentElement.parentElement;
@@ -235,6 +238,7 @@ replaceTag = function(node, tag) {
 }
 
 pass.normalizeRects = function() {
+  log('Normalizing rect <path>s to <rect>s.');
   const rects = all('path.real')
     .filter(r => !r.classList.contains('connection'));
   rects.forEach((pathRect,i) => {
@@ -288,6 +292,7 @@ setAttrHas = function(obj, prop, item) {
 // Some labels/arrows get containedIn a rect
 // forall (Label|Arrow) t, Rect r. t inside: r => t containedIn: r
 pass.annotateContainments = function() {
+  log('Annotating containment relationships.');
   const labels = getLabels();
   const rects = getRects();
   const arrows = getArrows();
@@ -311,6 +316,7 @@ IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
 // Elements contained within comment-coloured boxes (and the boxes) get .is-comment
 // forall Rect r. r stroke = C => forall a. a containedIn: r => a is-comment
 pass.annotateComments = function() {
+  log('Annotating comments to ignore.');
   const rects = getRects().filter(r => IGNORED_COLORS.has(r.dom.style.stroke));
   rects.forEach(r => {
     r.contains.forEach(c => c.classList.add('is-comment'));
@@ -318,27 +324,31 @@ pass.annotateComments = function() {
   });
 }
 
-// Requires: annotateContainments
+// Requires: annotateContainments, annotateParagraphs
 pass.checkFormat = function() {
+  log('Checking diagram format.');
   const metaBox = getRects().find(r => r.dom.style.stroke === META_COLOR);
-  if (!metaBox) console.warn('Meta-box not found; risk of running the wrong format.');
-  else {
-    const jsonLines = [];
-    metaBox.contains.forEach(t => {
-      if (t.classList.contains('is-label') && t.textContent !== '[[META]]') {
-        jsonLines.push(t.textContent);
+  if (!metaBox) {
+    console.warn('Meta-box not found; risk of running the wrong format.');
+    return;
+  }
+  for (let t of metaBox.contains) {
+    if (t.classList.contains('is-label')) {
+      const par_g = t.parentElement.parentElement.parentElement;
+      if (par_g.classList.contains('is-multiline')) {
+        const jsonStr = '{' + par_g.dataset.string.replaceAll('\n',', ') + '}';
+        let metaInfo = {};
+        try {
+          metaInfo = JSON.parse(jsonStr);
+        } catch (e) {
+          console.warn('Meta-box JSON error; risk of running the wrong format.', e);
+        }
+        if (metaInfo.format !== 'labelGraph')
+          console.warn('This diagram is of the format '+metaInfo.format);
+        document.documentElement.dataset.metaInfo = jsonStr;
+        break;
       }
-    });
-    let metaInfo = {};
-    const jsonStr = '{' + jsonLines.join(', ') + '}';
-    try {
-      metaInfo = JSON.parse(jsonStr);
-    } catch (e) {
-      console.warn('Meta-box JSON error; risk of running the wrong format.', e);
     }
-    if (metaInfo.format !== 'labelGraph')
-      console.warn('This diagram is of the format '+metaInfo.format);
-    document.documentElement.dataset.metaInfo = jsonStr;
   }
 }
 
@@ -369,15 +379,17 @@ restoreComment = function(dom) {
   delete oldDom.dataset.originalClass;
 }
 
-// Requires: annotateComments
+// Requires: annotateComments, checkFormat
 // Elements contained within .is-comment boxes (as well as the boxes) become <comment>s, temporarily
 pass.hideComments = function() {
+  log('Hiding comments from subsequent passes.');
   const comments = all('.is-comment');
   comments.forEach(hideComment);
 }
 
 // Requires: generateJS
 pass.restoreComments = function() {
+  log('Restoring comments.');
   all('comment').forEach(c => restoreComment(c));
 }
 
@@ -408,11 +420,12 @@ vizBBoxPtConnection = function(bbox, [x1,y1], parentDom) {
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
 }
 
-// Requires: hideComments, checkFormat
+// Requires: hideComments
 // Each arrow gets originLabel, targetLabel
 // forall Arrow a. a origin = Label nearestTo: a originPt.
 //                 a target = Label nearestTo: a targetPt.
 pass.annotateArrowConnections = function() {
+  log('Connecting arrow endpoints to labels.');
   const arrows = getArrows();
   const labels = getLabels();
   const bboxes = labels.map(l => {
@@ -436,13 +449,65 @@ pass.annotateArrowConnections = function() {
 
 // Requires: annotateArrowConnections
 pass.generateJS = function() {
+  log('Generating JS.');
   const arrows = getArrows();
   const js_lines = arrows.map(a => {
     const origin_name = a.originLabel.dom.textContent;
     const target_name = a.targetLabel.dom.textContent;
     return `arrow('${origin_name}', '${target_name}');`;
   });
-  return js_lines.join('\n');
+  generated_js = js_lines.join('\n');
+}
+
+passReqs = {};
+
+(function() {
+  const arrow = function(origin, target) {
+    let reqs = passReqs[origin];
+    if (reqs === undefined) passReqs[origin] = reqs = [];
+    reqs.push(target);
+  }
+  // Generated from labelGraph-deps.svg
+  arrow('annotateContainments', 'idLabels');
+  arrow('annotateContainments', 'idArrows');
+  arrow('restoreComments', 'generateJS');
+  arrow('generateJS', 'annotateArrowConnections');
+  arrow('checkFormat', 'annotateContainments');
+  arrow('annotateArrowConnections', 'hideComments');
+  arrow('hideComments', 'annotateComments');
+  arrow('annotateComments', 'annotateContainments');
+  arrow('annotateContainments', 'normalizeRects');
+  arrow('annotateParagraphs', 'idLabels');
+  arrow('hideComments', 'checkFormat');
+  arrow('checkFormat', 'annotateParagraphs');
+})()
+
+donePasses = new Set();
+
+nextReq = (root) => {
+  if (donePasses.has(root)) return null;
+  const reqs = passReqs[root];
+  if (!reqs) return root;
+  for (let req of reqs) {
+    if (!donePasses.has(req)) return nextReq(req);
+  }
+  return root;
+}
+
+nextPass = () => {
+  const next = nextReq('restoreComments');
+  if (next) {
+    pass[next]();
+    donePasses.add(next);
+    return true;
+  }
+  return false;
+};
+
+doAll = function() {
+  while (nextPass());
+  testIt();
+  return generated_js;
 }
 
 const CORRECT_OUTPUT = {
@@ -466,13 +531,21 @@ arrow('generateJS', 'annotateArrowConnections');
 arrow('checkFormat', 'annotateContainments');
 arrow('annotateArrowConnections', 'hideComments');
 arrow('hideComments', 'annotateComments');
-arrow('annotateArrowConnections', 'checkFormat');
 arrow('annotateComments', 'annotateContainments');
 arrow('annotateContainments', 'normalizeRects');
-arrow('annotateParagraphs', 'idLabels');`
+arrow('annotateParagraphs', 'idLabels');
+arrow('hideComments', 'checkFormat');
+arrow('checkFormat', 'annotateParagraphs');`
 };
 
-function doAll() {
+function testIt() {
+  const info = getMetaInfo();
+  const str = generated_js;
+  if (info.test && str !== CORRECT_OUTPUT[info.test]) throw str;
+  log('Great Success!');
+}
+
+function oldDoAll() {
   // --- Likely common to all formats ---
   pass.idArrows();
   pass.idLabels();
@@ -484,9 +557,10 @@ function doAll() {
   pass.hideComments();
     // --- Format-specific ---
   pass.annotateArrowConnections();
-  const str = pass.generateJS();
+  pass.generateJS();
   pass.restoreComments();
   const info = getMetaInfo();
+  const str = generated_js;
   if (info.test && str !== CORRECT_OUTPUT[info.test]) throw str;
   log(str);
 }

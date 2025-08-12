@@ -19,7 +19,7 @@ Self-raising diagrams sit at a "sweet spot" between the ubiquitous tech of strin
 # Object vs Meta Graphics
 Some parts of the diagram are object-level: they're part of the intended output. Other parts (perhaps in a designated meta-colour, like blue) are instructions to the next transformation pass to alter the diagram in some way (add stuff, remove stuff, etc). Sorta like macros. Example:
 
-![Dependency graph of passes in the boxGraph format.](./labelGraph-example.svg)
+![Dependency graph of passes in the boxGraph format.](./boxGraph-deps.svg)
 
 The idea here is: we look for a rectangle whose border is the special meta-colour, and collect the `<text>`s inside it into a JSON object. We use the `format` key to understand which passes understand this diagram (and are safe to run on it). The `labelGraph` format parser will know that the green rectangle is a comment box (to be ignored) by virtue of its specific border colour, and will interpret these shapes differently to `boxGraph`.
 
@@ -47,6 +47,11 @@ Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 ## Example 3 (labelGraph)
 In a similar but more restricted format, we recognise arrows between text labels. Anything (including arrows or labels) inside a box stroked with the specific "comment" shade of green (one of Mathcha's default colours) will be treated as a comment and ignored. (Finally! Rich text, lines, and shapes in comments! Anything you want!) Also, a box in the specific "meta" shade of blue (another Mathcha default) is expected to contain a JSON property definition of `format`, so we can later pass it to the correct diagram parser.
 
-Open `labelGraph-example.svg`. Run `doAll()`. Verify the generated JS code. (Fun fact: this code was then pasted into `boxGraph.js` to set up its pass dependency graph.)
+Open `boxGraph-deps.svg`. Run `doAll()`. Verify the generated JS code. (Fun fact: this code was then pasted into `boxGraph.js` to set up its pass dependency graph.)
 
 ![Demo of the labelGraph format.](./demo-labelGraph.png)
+
+## Example 3 (labelGraph)
+Similarly, `labelGraph-deps.svg` describes the dependencies of the very format parser that understands it. After manually ordering the passes in a list in `labelGraph.js`, I generated the dependency code from the diagram. I then pasted it into `labelGraph.js` to set up its pass dependency graph.
+
+![Demo of the labelGraph format feeding into itself.](./demo-labelGraph-own-deps.png)
