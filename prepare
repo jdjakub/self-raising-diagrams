@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Insert the main script and its dependencies into the
+# SVG file. This is the only way we can actually run our
+# code in modern browsers WITHOUT relying on a local server
+# because of same-origin nonsense.
+
+SCRIPT=$2
+# Thanks Copilot
+sed -z -E -i \
+  "s|(<svg[^>]*>)|\\1\n\
+\t<script href=\"./passes.js\"></script>\n\
+\t<script href=\"./${SCRIPT}.js\"></script>|" \
+ $1

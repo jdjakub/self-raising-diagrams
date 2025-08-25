@@ -31,10 +31,16 @@ Currently, we recognise a simple visual notation of boxes, arrows, and text labe
 If providing your own SVG file, you need to insert the following into it, below the top svg element:
 
 ```html
+<script href="./passes.js"></script>
 <script href="./boxGraph.js"></script>
 or
+<script href="./passes.js"></script>
 <script href="./labelGraph.js"></script>
 ```
+
+The `prepare` script will insert this for you. E.g. running `./prepare my-diagram.svg labelGraph` will insert the latter two script references.
+
+This way, the whole thing still works in the `file://` scheme and nobody needs to set up a web server, or remember to restart it after the next reboot, or set up infrastruture to do so automatically...
 
 ## Example 1 (boxGraph)
 Open `boxGraph-example.svg` in Firefox. In the Ctrl-Shift-I console, call `doAll()` and see if `objs` encodes the correct names/relationships.
@@ -55,3 +61,6 @@ Open `boxGraph-deps.svg`. Run `doAll()`. Verify the generated JS code. (Fun fact
 Similarly, `labelGraph-deps.svg` describes the dependencies of the very format parser that understands it. After manually ordering the passes in a list in `labelGraph.js`, I generated the dependency code from the diagram. I then pasted it into `labelGraph.js` to set up its pass dependency graph.
 
 ![Demo of the labelGraph format feeding into itself.](./demo-labelGraph-own-deps.png)
+
+### Example 4 (dragCircle)
+Testing stuff with embedded code now. Open `drag-circle.svg` and run `doAll()`. The event handler code visible in the SVG should run and you should be able to drag the circle around. Now *that's* a self-raising diagram.
