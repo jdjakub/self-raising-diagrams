@@ -4,4 +4,5 @@ doAll = function() {
   pass.annotateAllContainments();
   pass.treeifyContainments();
   showContainmentTree(byId('r1'));
+  pass.makeDOMReflectContainmentTree();
 }

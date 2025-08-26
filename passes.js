@@ -349,9 +349,7 @@ pass.annotateAllContainments = function() {
 // After: nontransitive, tree-structured.
 pass.treeifyContainments = function() {
   log('Treeifying containment relationships.');
-  const labels = getLabels();
   const rects = getRects();
-  const arrows = getArrows();
   const roots = rects.filter(r => !r.dom.dataset.containedIn).map(r => r.dom);
   const perRect = rect => {
     const contained = setAttrToArray(rect.dataset.contains).map(byId);
@@ -385,6 +383,26 @@ showContainmentTree = function(root) {
   const contained = setAttrToArray(root.dataset.contains).map(byId);
   if (root.dataset.contains) log(root.id + ' > ' + root.dataset.contains);
   contained.forEach(showContainmentTree);
+}
+
+// Requires: treeifyContainments
+// A containedIn B ==> A is a DOM child of B
+pass.makeDOMReflectContainmentTree = function() {
+  log('Re-rooting elements to reflect containment relations.');
+  const domContainChildren = rect => {
+    const contained = setAttrToArray(rect.dataset.contains).map(byId);
+    contained.forEach(domContainChildren);
+    // Uproot the soon-to-be child from wherever it happens to be
+    // and plant it under its container
+    contained.forEach(child => rect.parentElement.appendChild(
+      child.tagName === 'text' ? child.parentElement.parentElement.parentElement
+    : child.tagName === 'rect' ? child.parentElement
+    : child
+    ));
+  }
+  const rects = getRects();
+  const roots = rects.filter(r => !r.dom.dataset.containedIn).map(r => r.dom);
+  roots.forEach(domContainChildren);
 }
 
 COMMENT_COLOR = 'rgb(65, 117, 5)';
