@@ -300,6 +300,14 @@ setAttrHas = function(obj, prop, item) {
   return obj[prop] === undefined || obj[prop].indexOf(' '+item+' ') !== -1;
 }
 
+removeFromSetAttr = function(obj, prop, item) {
+  obj[prop] = obj[prop].replace(' '+item+' ', ' ');
+}
+
+setAttrToArray = function(setAttr) {
+  return setAttr ? setAttr.trim().split(' ') : [];
+}
+
 // Requires: idLabels, idArrows, normalizeRects
 // Some labels/arrows get containedIn a rect
 // forall (Label|Arrow) t, Rect r. t inside: r => t containedIn: r
@@ -317,6 +325,66 @@ pass.annotateContainments = function() {
   }
   labels.forEach(perItem);
   arrows.forEach(perItem);
+}
+
+pass.annotateAllContainments = function() {
+  log('Annotating containment relationships.');
+  const labels = getLabels();
+  const rects = getRects();
+  const arrows = getArrows();
+  const perItem = t => {
+    const containers = rects.filter(r => r !== t && rectInsideRect(t.dom.getBBox(), r.dom.getBBox()));
+    containers.forEach(r => {
+      addSetAttr(r.dom.dataset, 'contains', t.dom.id);
+      addSetAttr(t.dom.dataset, 'containedIn', r.dom.id);
+    });
+  }
+  labels.forEach(perItem);
+  arrows.forEach(perItem);
+  rects.forEach(perItem);
+}
+
+// Requires: annotateAllContainments
+// Before: contains/containedIn is transitive; A contains B contains C => A contains C
+// After: nontransitive, tree-structured.
+pass.treeifyContainments = function() {
+  log('Treeifying containment relationships.');
+  const labels = getLabels();
+  const rects = getRects();
+  const arrows = getArrows();
+  const roots = rects.filter(r => !r.dom.dataset.containedIn).map(r => r.dom);
+  const perRect = rect => {
+    const contained = setAttrToArray(rect.dataset.contains).map(byId);
+    const potentialGrandchildren = [...contained];
+    const potentialParents = [...contained];
+    let doRemove;
+    do {
+      doRemove = false;
+      const pg = potentialGrandchildren.shift();
+      for (let pp of potentialParents) {
+        if (pp === pg) continue;
+        if (setAttrHas(pg.dataset, 'containedIn', pp.id)) {
+          // pg is actually under pp, so it shouldn't be under rect
+          doRemove = true; break;
+        }
+      }
+      if (doRemove) { // pg really is a grandchild; reflect this
+        potentialParents.splice(potentialParents.indexOf(pg), 1);
+        removeFromSetAttr(pg.dataset, 'containedIn', rect.id);
+        removeFromSetAttr(rect.dataset, 'contains', pg.id);
+      }
+    } while (potentialGrandchildren.length > 0);
+
+    const childRects = potentialParents.filter(r => r.tagName === 'rect');
+    childRects.forEach(perRect); // recurse depth-first
+  }
+  roots.forEach(perRect);
+}
+
+showContainmentTree = function(root) {
+  const contained = setAttrToArray(root.dataset.contains).map(byId);
+  if (root.dataset.contains) log(root.id + ' > ' + root.dataset.contains);
+  contained.forEach(showContainmentTree);
 }
 
 COMMENT_COLOR = 'rgb(65, 117, 5)';
