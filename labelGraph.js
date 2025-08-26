@@ -1,4 +1,4 @@
-// Requires: annotateArrowConnections
+// Requires: annotateArrowsBetweenLabels
 pass.generateJS = function() {
   log('Generating JS.');
   const arrows = getArrows();
@@ -22,9 +22,9 @@ passReqs = {};
   arrow('annotateContainments', 'idLabels');
   arrow('annotateContainments', 'idArrows');
   arrow('restoreComments', 'generateJS');
-  arrow('generateJS', 'annotateArrowConnections');
+  arrow('generateJS', 'annotateArrowsBetweenLabels');
   arrow('checkFormat', 'annotateContainments');
-  arrow('annotateArrowConnections', 'hideComments');
+  arrow('annotateArrowsBetweenLabels', 'hideComments');
   arrow('hideComments', 'annotateComments');
   arrow('annotateComments', 'annotateContainments');
   arrow('annotateContainments', 'normalizeRects');
@@ -107,7 +107,7 @@ function oldDoAll() {
   pass.annotateComments();
   pass.hideComments();
     // --- Format-specific ---
-  pass.annotateArrowConnections();
+  pass.annotateArrowsBetweenLabels();
   pass.generateJS();
   pass.restoreComments();
   const info = getMetaInfo();

@@ -432,11 +432,15 @@ vizBBoxPtConnection = function(bbox, [x1,y1], parentDom) {
   svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
 }
 
+vizPtPtConnection = function([x1,y1], [x2,y2], parentDom) {
+  svgel('line', {style: 'stroke:rgb(0, 195, 255)', x1, y1, x2, y2}, parentDom);
+}
+
 // Requires: hideComments
 // Each arrow gets originLabel, targetLabel
 // forall Arrow a. a origin = Label nearestTo: a originPt.
 //                 a target = Label nearestTo: a targetPt.
-pass.annotateArrowConnections = function() {
+pass.annotateArrowsBetweenLabels = function() {
   log('Connecting arrow endpoints to labels.');
   const arrows = getArrows();
   const labels = getLabels();
@@ -456,5 +460,168 @@ pass.annotateArrowConnections = function() {
 
     vizBBoxPtConnection(o_dom.getBBox(), a.originPt, o_dom.parentElement);
     vizBBoxPtConnection(t_dom.getBBox(), a.targetPt, t_dom.parentElement);
+  });
+}
+
+dist2ToRect = function(bbox,[x,y]) {
+  // Thanks https://stackoverflow.com/a/18157551
+  // TODO: make it work when inside
+  const [l,r,t,b] = [bbox.x,bbox.x+bbox.width,bbox.y,bbox.y+bbox.height];
+  const dx = Math.max(l - x, 0, x - r);
+  const dy = Math.max(t - y, 0, y - b);
+  return dx*dx + dy*dy;
+}
+
+findClosestTextElt = function(origin) {
+  const ts = getLabels();
+  const bboxes = ts.map(t => [t, t.dom.getBBox()]);
+  const dist2s = bboxes.map(([t,bb]) => ({
+    element: t, dist2: dist2ToRect(bb,origin)
+  }));
+  const closestPt = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
+  return closestPt;
+}
+
+// Requires: idArrows
+// each arrow gets label
+pass.labelArrows = function() {
+  log('Labelling arrows.');
+  const arrows = getArrows();
+  const tdists = arrows.map(a => findClosestTextElt(a.originPt));
+
+  // Annotate with label/arrow linkages
+  tdists.forEach((tdist,i) => {
+    const t = tdist.element;
+    const a = arrows[i];
+    a.dom.dataset.label = t.dom.id;
+    t.dom.dataset.labelFor = a.dom.id;
+
+    // Visualise this pass
+    const [tl,tr,br,bl] = explodeRect(t.dom.getBBox());
+    const tcenter = vmul(0.5, vadd(tl,br));
+    vizPtPtConnection(a.originPt, tcenter, t.parentElement);
+  });
+}
+
+// Arrows which Mathcha snaps to rect edges ought to count as "inside" the rect.
+// However, their coords are about 2px short.
+CONTAINS_PT_EPSILON = 3;
+containsPt = function(rect,pt) {
+  const [relx,rely] = vsub(pt,rect.top_left);
+  const [w,h] = rect.extent;
+  const [propx,propy] = [relx/w,rely/h];
+  const ex = CONTAINS_PT_EPSILON/w;
+  const ey = CONTAINS_PT_EPSILON/h;
+  return -ex < propx && propx < 1+ex && -ey < propy && propy < 1+ey;
+}
+
+// Requires: idArrows, normalizeRects
+// Each arrow gets originBox, targetBox
+pass.annotateArrowsBetweenBoxes = function() {
+  log('Annotating arrow/box connections.');
+
+  const rects = getRects();
+  findRectContainingPt = coords => rects.find(r => containsPt(r,coords));
+
+  const arrows = getArrows();
+  const o_rects = arrows.map(a => findRectContainingPt(a.originPt));
+  const t_rects = arrows.map(a => findRectContainingPt(a.targetPt));
+
+  arrows.forEach((a,i) => {
+    const origin = o_rects[i];
+    const target = t_rects[i];
+    a.dom.dataset.origin = origin.dom.id;
+    a.dom.dataset.target = target.dom.id;
+  });
+}
+
+rectDist2ToRect = function(bbA,bbB) {
+  // Thanks https://stackoverflow.com/a/65107290
+  const a_min = [bbA.x,bbA.y];
+  const a_max = [bbA.x+bbA.width, bbA.y+bbA.height];
+  const b_min = [bbB.x,bbB.y];
+  const b_max = [bbB.x+bbB.width, bbB.y+bbB.height];
+  const u = vmax(0, vsub(a_min,b_max));
+  const v = vmax(0, vsub(b_min,a_max));
+  return vdot(u,u)+vdot(v,v);
+}
+
+RECT_NAME_MAX_DISTANCE = 20;
+findClosestRectName = function(telts, bbox) {
+  const dist2s = telts.map(t => ({
+    element: t, dist2: rectDist2ToRect(t.getBBox(), bbox)
+  })).filter(d => d.dist2 < RECT_NAME_MAX_DISTANCE**2);
+  if (dist2s.length === 0) return;
+  const closest = dist2s.reduce((min,d) => min.dist2 < d.dist2 ? min : d);
+  return closest.element;
+}
+
+nearestRectCorner = function(pt,bbox) {
+  const corners = explodeRect(bbox).map(c => ({
+    coords: c, dist2: dist2(pt,c)
+  }));
+  return corners.reduce((min,c) => min.dist2 < c.dist2 ? min : c).coords;
+}
+
+// Requires: labelArrows, normalizeRects, annotateContainments
+// Some boxes get label
+pass.nameBoxesIfApplicable = function() {
+  log('Naming boxes.');
+  const box_telts = all('text:not([data-label-for]):not([data-contained-in])');
+  const rects = getRects();
+  rects.forEach(r => {
+    const rbb = r.dom.getBBox();
+    const t = findClosestRectName(box_telts, rbb);
+    if (t) {
+      r.dom.dataset.label = t.id;
+      t.dataset.labelFor = r.dom.id;
+
+      // Visualise this pass
+      const [tl,tr,br,bl] = explodeRect(t.getBBox());
+      const tcenter = vmul(0.5, vadd(tl,br));
+      const corner = nearestRectCorner(tcenter,rbb);
+      vizPtPtConnection(tcenter, corner, t.parentElement);
+    }
+  });
+}
+
+/*
+<path class="real"
+d=" M_,cy
+    C_,_ _,_ cx,ty
+    ___"
+style="stroke-width: 1px;
+           stroke: #{MAGIC_CIRCLE_COLOR};
+           fill: none;
+           fill-opacity: 1;"/>
+---
+<circle class="real"
+cx="#{cx}" cy="#{cy}" r="#{cy-ty}"
+style="stroke-width: 1px;
+           stroke: #141313;
+           fill: none;
+           fill-opacity: 1;"/>
+*/
+extractCircle = function(circPathElt) {
+  const [opcodes,xs,ys] = extractPathCmds(circPathElt);
+  if (opcodes !== 'MCCCCZ') return;
+  const cy = ys[0];
+  const cx = xs[1][2];
+  const ty = ys[1][2];
+  const r = cy-ty;
+  return {cx, cy, r};
+}
+
+pass.normalizeCircles = function() {
+  log('Normalizing circle <path>s to <circle>s.');
+  const circs = all('path.real').filter(r => !r.classList.contains('connection'));
+  circs.forEach((pathCirc,i) => {
+    const params = extractCircle(pathCirc);
+    if (!params) return;
+    // Create a <circle> to replace the <path>
+    const actualCirc = replaceTag(pathCirc, 'circle');
+    attr(actualCirc, params);
+    actualCirc.id = 'c'+(i+1); // ID each circle
+    actualCirc.attributes.removeNamedItem('d'); // ... except the path geom
   });
 }
