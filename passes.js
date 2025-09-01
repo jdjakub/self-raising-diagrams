@@ -69,7 +69,13 @@ dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
 vtoa = ([x,y]) => x + ' ' + y;
 atov = s => s ? s.split(' ').map(Number.parseFloat) : undefined;
 
-all = selector => Array.from(document.querySelectorAll(selector));
+currentScope = document;
+restrictScope = function(element) {
+  const oldScope = currentScope;
+  currentScope = element;
+  return oldScope;
+}
+all = selector => Array.from(currentScope.querySelectorAll(selector));
 byId = id => document.getElementById(id);
 
 // ### MAIN ###
@@ -194,28 +200,41 @@ Should get stitched into the string:
 code in line 2`
 */
 // Requires: idLabels
-// Each paragraph <g> with >1 child <g> gets .is-multiline and data-string
+// Each paragraph <g> with >1 child <g> gets id, .is-paragraph, .is-multiline, and data-string
+// Each paragraph <g> with =1 child <g> gets id, .is-paragraph and data-string
 pass.annotateParagraphs = function() {
   log('Annotating paragraphs.');
   const labels = getLabels();
+  let pId = 1;
   labels.forEach(l => {
     const line_g = l.dom.parentElement.parentElement;
     if (!line_g.previousSibling) { // First line
       const para_g = line_g.parentElement;
-      if (para_g.children.length > 1) { // Multiple lines
-        para_g.classList.add('is-multiline');
-        // TODO: maybe sanity check they're in y-order
-        const lines = Array.from(para_g.children).map(line_g => {
-          const runs = Array.from(line_g.children).map(run_g =>
-            run_g.firstChild.textContent
-          );
-          return runs.join(' ');
-        });
-        para_g.dataset.string = lines.join('\n');
-      }
+      para_g.classList.add('is-paragraph');
+      para_g.id = 'p'+(pId++);
+      if (para_g.children.length > 1) para_g.classList.add('is-multiline');
+      // TODO: maybe sanity check they're in y-order
+      const lines = Array.from(para_g.children).map(line_g => {
+        const runs = Array.from(line_g.children).map(run_g =>
+          run_g.firstChild.textContent
+        );
+        return runs.join(' ');
+      });
+      para_g.dataset.string = lines.join('\n');
     }
   });
 }
+
+// DOM -> JS
+getParagraph = function(domElement) {
+  const p = domElement;
+  let p_js = p.jsdata;
+  if (p_js === undefined) p.jsdata = p_js = { dom: p };
+  p_js.string = domElement.dataset.string;
+  return p_js;
+}
+
+getParagraphs = () => all('.is-paragraph').map(getParagraph);
 
 /*
 <path class="real" d=" Mlx,ty Lrx,ty Lrx,by Llx,by Z" />
@@ -327,9 +346,12 @@ pass.annotateContainments = function() {
   arrows.forEach(perItem);
 }
 
+// Requires: idLabels, idArrows, normalizeRects
+// Some paragraphs/arrows get containedIn some rects
+// forall (Paragraph|Arrow) t, Rect r. t inside: r => t containedIn: r
 pass.annotateAllContainments = function() {
   log('Annotating containment relationships.');
-  const labels = getLabels();
+  const paragraphs = getParagraphs();
   const rects = getRects();
   const arrows = getArrows();
   const perItem = t => {
@@ -339,7 +361,7 @@ pass.annotateAllContainments = function() {
       addSetAttr(t.dom.dataset, 'containedIn', r.dom.id);
     });
   }
-  labels.forEach(perItem);
+  paragraphs.forEach(perItem);
   arrows.forEach(perItem);
   rects.forEach(perItem);
 }
@@ -710,4 +732,28 @@ pass.normalizeCircles = function() {
     actualCirc.id = 'c'+(i+1); // ID each circle
     actualCirc.attributes.removeNamedItem('d'); // ... except the path geom
   });
+}
+
+// Requires: annotateParagraphs, makeDOMReflectContainmentTree
+pass.executeCode = function() {
+  svg = document.documentElement;
+  const rects = getRects().filter(r => r.dom.style.stroke === 'rgb(208, 2, 27)');
+  rects.forEach(r => {
+    const paras = Array.from(r.dom.parentElement.querySelectorAll('.is-paragraph'));
+    paras.forEach(p => {
+      eval(p.dataset.string);
+    })
+  });
+}
+
+// Common passes for all diagrams, before moving on to custom passes
+// TODO: comments
+doAllGeneric = function() {
+  pass.idLabels();
+  pass.annotateParagraphs();
+  pass.normalizeRects();
+  pass.annotateAllContainments();
+  pass.treeifyContainments();
+  pass.makeDOMReflectContainmentTree();
+  pass.executeCode();
 }

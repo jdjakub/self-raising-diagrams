@@ -53,6 +53,8 @@ Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 ## Example 3 (labelGraph)
 In a similar but more restricted format, we recognise arrows between text labels. Anything (including arrows or labels) inside a box stroked with the specific "comment" shade of green (one of Mathcha's default colours) will be treated as a comment and ignored. (Finally! Rich text, lines, and shapes in comments! Anything you want!) Also, a box in the specific "meta" shade of blue (another Mathcha default) is expected to contain a JSON property definition of `format`, so we can later pass it to the correct diagram parser.
 
+**NB: I might have broken labelGraph for the time being**
+
 Open `boxGraph-deps.svg`. Run `doAll()`. Verify the generated JS code. (Fun fact: this code was then pasted into `boxGraph.js` to set up its pass dependency graph.)
 
 ![Demo of the labelGraph format.](./demo-labelGraph.png)
@@ -62,5 +64,5 @@ Similarly, `labelGraph-deps.svg` describes the dependencies of the very format p
 
 ![Demo of the labelGraph format feeding into itself.](./demo-labelGraph-own-deps.png)
 
-### Example 4 (dragCircle)
-Testing stuff with embedded code now. Open `drag-circle.svg` and run `doAll()`. The event handler code visible in the SVG should run and you should be able to drag the circle around. Now *that's* a self-raising diagram.
+### Example 4 (dragCircles)
+Testing stuff with embedded code now. Open `drag-circles.svg` and run `doAllGeneric()`. The event handler code visible in the SVG should run and you should be able to drag the circles around. Now *that's* a self-raising diagram.
