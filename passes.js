@@ -293,6 +293,8 @@ getRect = function(domElement) {
   r_js.extent = [+r.getAttribute('width'), +r.getAttribute('height')];
   r_js.botRight = vadd(r_js.topLeft, r_js.extent);
   r_js.center = vmul(0.5, vadd(r_js.topLeft, r_js.botRight));
+  r_js.topRight = vadd(r_js.topLeft, [r_js.extent[0],0]);
+  r_js.botLeft =  vadd(r_js.topLeft, [0,r_js.extent[1]]);
   // Set by annotateContainments
   if (r.dataset.contains)
     r_js.contains = new Set(r.dataset.contains.trim().split(' ').map(byId));
@@ -304,9 +306,9 @@ getRect = function(domElement) {
 getRects = () => all('rect').map(getRect);
 
 rectInsideRect = function(bbIn,bbOut) {
-  const [rinx,riny] = vsub([bbIn.x,bbIn.y],[bbOut.x,bbOut.y]);
-  return 0 < rinx && rinx < bbOut.width  && bbIn.width < bbOut.width
-      && 0 < riny && riny < bbOut.height && bbIn.height < bbOut.height;
+  bbIn.right = bbIn.x + bbIn.width; bbOut.right = bbOut.x + bbOut.width;
+  bbIn.bot = bbIn.y + bbIn.height; bbOut.bot = bbOut.y + bbOut.height;
+  return bbOut.x <= bbIn.x && bbIn.right <= bbOut.right && bbOut.y <= bbIn.y && bbIn.bot <= bbOut.bot;
 }
 
 addSetAttr = function(obj, prop, newItem) {
@@ -615,7 +617,7 @@ pass.labelArrows = function() {
 // However, their coords are about 2px short.
 CONTAINS_PT_EPSILON = 3;
 containsPt = function(rect,pt) {
-  const [relx,rely] = vsub(pt,rect.top_left);
+  const [relx,rely] = vsub(pt,rect.topLeft);
   const [w,h] = rect.extent;
   const [propx,propy] = [relx/w,rely/h];
   const ex = CONTAINS_PT_EPSILON/w;
