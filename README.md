@@ -66,3 +66,9 @@ Similarly, `labelGraph-deps.svg` describes the dependencies of the very format p
 
 ### Example 4 (dragCircles)
 Testing stuff with embedded code now. Open `drag-circles.svg` and run `doAllGeneric()`. The event handler code visible in the SVG should run and you should be able to drag the circles around. Now *that's* a self-raising diagram.
+
+### Example 5 and 6 (bitsTable)
+Inspired by the ASCII art in [Appendix E of the 2007 VPRI STEPS progress report](https://tinlizzie.org/VPRIPapers/tr2007008_steps.pdf#page=44), providing "executable documentation" of IP and TCP packet headers, here is the Real Thing (though, without the benefits of an OMeta analogue ... yet). Demo for invited talk at PAINT.
+
+![IP packet header diagram](./demo-ip-packet.png)
+![TCP packet header diagram](./demo-tcp-packet.png)
