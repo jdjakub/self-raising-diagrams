@@ -76,6 +76,7 @@ restrictScope = function(element) {
   return oldScope;
 }
 all = selector => Array.from(currentScope.querySelectorAll(selector));
+some = selector => all(selector)[0];
 byId = id => document.getElementById(id);
 
 // ### MAIN ###
@@ -267,6 +268,18 @@ replaceTag = function(node, tag) {
   return clone;
 }
 
+/*
+FOR ALL matchElt(i) (
+  tag = 'path' ⟹ 'rect'
+  class ⊇ { 'real', 'connection' }
+  d = " Mlx,ty Lrx,ty Lrx,by Llx,by Z"
+  let [x, y, w, h] = [lx, ty, rx - lx, by - ty]
+  attributes {
+    x ⟹ x, y ⟹ y, width ⟹ w, height ⟹ h, d ⟹ nil
+  }
+  id ⟹ 'r'+(i+1)
+)
+*/
 pass.normalizeRects = function() {
   log('Normalizing rect <path>s to <rect>s.');
   const rects = all('path.real')
@@ -738,9 +751,11 @@ pass.normalizeCircles = function() {
 
 // Requires: annotateParagraphs, makeDOMReflectContainmentTree
 pass.executeCode = function() {
+  log('Executing code in red boxes.');
   svg = document.documentElement;
   const rects = getRects().filter(r => r.dom.style.stroke === 'rgb(208, 2, 27)');
   rects.forEach(r => {
+    r.dom.classList.add('is-code');
     const paras = Array.from(r.dom.parentElement.querySelectorAll('.is-paragraph'));
     paras.forEach(p => {
       eval(p.dataset.string);

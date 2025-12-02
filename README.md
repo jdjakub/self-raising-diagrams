@@ -72,3 +72,6 @@ Inspired by the ASCII art in [Appendix E of the 2007 VPRI STEPS progress report]
 
 ![IP packet header diagram](./demo-ip-packet.png)
 ![TCP packet header diagram](./demo-tcp-packet.png)
+
+### Example 7 (svgEdit)
+How hard is it to add basic editing to SVG shapes (i.e. drag path and rect vertices, circle centre+radius)? Modulo selecting the vertex via the console (ha): only about 200 LoC (svgEdit.js). More to come.

@@ -401,7 +401,7 @@ passReqs = {};
     if (reqs === undefined) passReqs[origin] = reqs = [];
     reqs.push(target);
   }
-  // Generated from labelGraph-example.svg
+  // Generated from boxGraph-deps.svg
   arrow('annotateContainments', 'normalizeRects');
   arrow('annotateContainments', 'idLabels');
   arrow('annotateArrowConnections', 'normalizeRects');
