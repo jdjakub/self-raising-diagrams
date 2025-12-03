@@ -14,20 +14,26 @@ class BackedPoint {
   }
 }
 
-class BackedRadiusPoint extends BackedPoint {
-  applyDelta([dx,dy]) {
-    this.value[0] += dx;
-    this.backer.notifyChanged(this);
-  }
-}
-
 class Circle {
   constructor(circleElt) {
     this.domElt = circleElt;
     const center = attrs(circleElt, 'cx', 'cy').map(x=>+x);
     this.center = new BackedPoint(this, center);
     const radius = +attr(circleElt, 'r');
-    this.radius = new BackedRadiusPoint(this, [radius,0]);
+    this.radius = new AttrDeltaForwarder(circleElt, 'r', (dv) => {
+      // Begin with r2 = (p-c).(p-c) where p is lastPos, c is center
+      // differentiate and simplify, assume dc = 0 (center not moving simultaneously)
+      // you get dr = normed(p-c).dp
+      // i.e: motion along the circle (dp perp to p-c) => radius stays the same
+      // motion out (dp . (p-c) is positive) => radius increases
+      // motion in (dp . (p-c)) is negative) => radius decreases
+      // GRATIAS NEVVTONI!
+      const center = this.center.value;
+      const lastPos_from_center = vsub(lastPos, center); // HACK! accessing lastPos
+      const n = vnormed(lastPos_from_center);
+      const dr = vdot(n,dv);
+      return dr;
+    });
   }
 
   exposeCenter() {
@@ -38,13 +44,9 @@ class Circle {
     return this.radius;
   }
 
-  notifyChanged(what) {
-    const v = what.value;
-    if (what === this.center) {
-      attr(this.domElt, {cx: v[0], cy: v[1]});
-    } else if (what === this.radius) {
-      attr(this.domElt, 'r', v[0]);
-    }
+  notifyChanged() {
+    const v = this.center.value;
+    attr(this.domElt, {cx: v[0], cy: v[1]});
   }
 }
 

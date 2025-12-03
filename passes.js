@@ -65,6 +65,7 @@ vdot = ([a, b], [c, d]) => a*c + b*d;
 vmul = (k, [a,b]) => [k*a, k*b];
 vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
 dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
+vnormed = v => vmul(1/Math.sqrt(vdot(v,v)), v);
 
 vtoa = ([x,y]) => x + ' ' + y;
 atov = s => s ? s.split(' ').map(Number.parseFloat) : undefined;
