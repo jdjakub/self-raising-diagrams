@@ -755,13 +755,21 @@ pass.executeCode = function() {
   log('Executing code in red boxes.');
   svg = document.documentElement;
   const rects = getRects().filter(r => r.dom.style.stroke === 'rgb(208, 2, 27)');
+  const codeToEval = [];
   rects.forEach(r => {
     r.dom.classList.add('is-code');
     const paras = Array.from(r.dom.parentElement.querySelectorAll('.is-paragraph'));
     paras.forEach(p => {
-      eval(p.dataset.string);
+      const str = p.dataset.string;
+      // Special case: red box just containing #myId sets container id=myId and self-deletes
+      if (paras.length === 1 && str.startsWith('#')) {
+        const parent_g = r.dom.parentElement.parentElement;
+        parent_g.firstChild.id = str.substring(1); // SMELL nondeterminism
+        r.dom.parentElement.remove();
+      } else codeToEval.push(str);
     })
   });
+  codeToEval.forEach(eval);
 }
 
 // Common passes for all diagrams, before moving on to custom passes
