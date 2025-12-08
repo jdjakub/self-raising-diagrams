@@ -29,7 +29,7 @@ class Circle {
       // motion in (dp . (p-c)) is negative) => radius decreases
       // GRATIAS NEVVTONI!
       const center = this.center.value;
-      const lastPos_from_center = vsub(lastPos, center); // HACK! accessing lastPos
+      const lastPos_from_center = vsub(lastPos, center); // HACK! accessing lastPos - delta violation
       const n = vnormed(lastPos_from_center);
       const dr = vdot(n,dv);
       return dr;
@@ -60,15 +60,33 @@ class Path {
       this.cmpts.push([op, new BackedPoint(this, [x,y])]);
     }
     // Warning: won't receive updates to path element
+    let arrowhead = pathElt.parentElement.querySelector('g');
+     if (arrowhead) { // Assume it's the endpoint arrowhead
+      this.arrowhead = arrowhead; // <g>
+     }
   }
 
   exposePoint(n) {
     return this.cmpts[n-1][1];
   }
 
-  notifyChanged() {
+  notifyChanged(what) {
     const new_d = this.cmpts.map(c => c[0]+c[1].toString()).join(' ');
     attr(this.domElt, 'd', new_d);
+    if (what === last(this.cmpts)[1]) {
+      if (this.arrowhead) {
+        const m = this.arrowhead.transform.baseVal[0].matrix;
+        const v = what.value;
+        m.e = v[0]; m.f = v[1];
+        // New get the angle right
+        const vPrev = last(this.cmpts,2)[1].value;
+        const dv = vsub(v,vPrev);
+        const n = vnormed(dv);
+        // Empirically determined based on Mathcha's arrowhead coord sys
+        m.a = -n[0]; m.c =  n[1];
+        m.b = -n[1]; m.d = -n[0];
+      }
+    }
   }
 }
 
@@ -85,11 +103,13 @@ class AttrDeltaForwarder {
 }
 
 class DeltaForwarderPoint {
-  constructor(xLinks, yLinks) {
+  constructor(xLinks, yLinks, pt) {
     this.xLinks = xLinks; this.yLinks = yLinks;
+    this.value = pt;
   }
 
   applyDelta([dx,dy]) {
+    this.value[0] += dx; this.value[1] += dy;
     this.xLinks.forEach(l=>l.applyDelta(dx));
     this.yLinks.forEach(l=>l.applyDelta(dy));
   }
@@ -102,6 +122,8 @@ class Rect {
     const pos = k => new AttrDeltaForwarder(this.domElt, k);
     const neg = k => new AttrDeltaForwarder(this.domElt, k, x=>-x);
 
+    let [x,y,w,h] = attrs(rectElt, 'x', 'y', 'width', 'height').map(x=>+x);
+
     this.points = {};
     // Pretty sure the JS here could be automatically generated
     // by differencing the following equations:
@@ -113,36 +135,36 @@ class Rect {
 
     // Resize from corners
     this.points.topL = new DeltaForwarderPoint(
-      [ pos('x'), neg('width') ], [ pos('y'), neg('height') ]
+      [ pos('x'), neg('width') ], [ pos('y'), neg('height') ], [x,y]
     );
     this.points.topR = new DeltaForwarderPoint(
-      [ pos('width') ], [ pos('y'), neg('height') ]
+      [ pos('width') ], [ pos('y'), neg('height') ], [x+w,y]
     );
     this.points.botL = new DeltaForwarderPoint(
-      [ pos('x'), neg('width') ], [ pos('height') ]
+      [ pos('x'), neg('width') ], [ pos('height') ], [x,y+h]
     );
     this.points.botR = new DeltaForwarderPoint(
-      [ pos('width') ], [ pos('height') ]
+      [ pos('width') ], [ pos('height') ], [x+w,y+h]
     );
     // Move entire rectangle
     this.points.center = new DeltaForwarderPoint(
-      [ pos('x') ], [ pos('y') ]
+      [ pos('x') ], [ pos('y') ], [x+w/2,y+h/2]
     );
     // Resize from top = topL ∩ topR
     this.points.top = new DeltaForwarderPoint(
-      [], [ pos('y'), neg('height') ]
+      [], [ pos('y'), neg('height') ], [x+w/2,y]
     )
     // Rezise from left = topL ∩ botL
     this.points.left = new DeltaForwarderPoint(
-      [ pos('x'), neg('width') ], []
+      [ pos('x'), neg('width') ], [], [x,y+h/2]
     )
     // Resize from right = topR ∩ botR
     this.points.right = new DeltaForwarderPoint(
-      [ pos('width') ], []
+      [ pos('width') ], [], [x+w,y+h/2]
     )
     // Resize from bottom = botL ∩ botR
     this.points.bottom = new DeltaForwarderPoint(
-      [], [ pos('height') ]
+      [], [ pos('height') ], [x+w/2,y+h]
     )
   }
 }
@@ -167,8 +189,33 @@ mouseDeltaFwdLinks = [];
 svg_parent.onmousemove = e => {
   let currPos = [e.offsetX,e.offsetY];
   if (lastPos) {
-    let delta = vsub(currPos,lastPos);
-    for (const l of mouseDeltaFwdLinks) l.applyDelta(delta);
+    let [dx,dy] = vsub(currPos,lastPos);
+    for (const [[wx,wy],l] of mouseDeltaFwdLinks) l.applyDelta([wx*dx,wy*dy]);
     lastPos = currPos;
   }
+}
+
+fwdMouse = function(l,w) {
+  if (w) mouseDeltaFwdLinks.push([w,l]);
+  else mouseDeltaFwdLinks.push([[1,1],l]);
+}
+
+clearMouse = function() {
+  mouseDeltaFwdLinks.splice(0, mouseDeltaFwdLinks.length);
+}
+
+// Towards rect point handles (flawed)
+function init() {
+  Object.entries(rect.points).forEach(([name,backedPt]) => {
+    const [cx,cy] = backedPt.value;
+    const handleElt = svgel('circle', {style: 'fill: green', cx, cy, r: 5 });
+    backedPt.handle = controlShape(handleElt);
+    handleElt.onmousedown = () => {
+      fwdMouse(backedPt);
+      fwdMouse(backedPt.handle.exposeCenter())
+    };
+    handleElt.onmouseup = () => {
+      clearMouse();
+    };
+  });
 }
