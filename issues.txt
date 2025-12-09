@@ -1,0 +1,8 @@
+ISSUES / ARCHITECTURE / PHILOSOPHY
+
+Currently, the shape node (rect, circle, etc) gets the id, not its parent <g>.
+
+Containment / geometry stuff ONLY works with rects.
+
+Paths/arrows are followed in path coords order, irrespective of arrowheads.
+

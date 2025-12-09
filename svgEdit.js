@@ -83,8 +83,9 @@ class Path {
         const dv = vsub(v,vPrev);
         const n = vnormed(dv);
         // Empirically determined based on Mathcha's arrowhead coord sys
-        m.a = -n[0]; m.c =  n[1];
-        m.b = -n[1]; m.d = -n[0];
+        /* [ */ m.a = -n[0]; m.c =  n[1]; // e ]
+        /* [ */ m.b = -n[1]; m.d = -n[0]; // f ]
+        //       look back     look left
       }
     }
   }
@@ -181,16 +182,18 @@ lastPos = null;
 svg_parent.onmousedown = e => {
   lastPos = [e.offsetX,e.offsetY];
 }
+clearOnMouseUp = false; // HACK
 svg_parent.onmouseup = e => {
   lastPos = null;
+  if (clearOnMouseUp) clearMouse();
 }
 
 mouseDeltaFwdLinks = [];
 svg_parent.onmousemove = e => {
   let currPos = [e.offsetX,e.offsetY];
   if (lastPos) {
-    let [dx,dy] = vsub(currPos,lastPos);
-    for (const [[wx,wy],l] of mouseDeltaFwdLinks) l.applyDelta([wx*dx,wy*dy]);
+    let delta = vsub(currPos,lastPos);
+    for (const [w,l] of mouseDeltaFwdLinks) l.applyDelta(vcmul(w,delta));
     lastPos = currPos;
   }
 }
@@ -204,18 +207,107 @@ clearMouse = function() {
   mouseDeltaFwdLinks.splice(0, mouseDeltaFwdLinks.length);
 }
 
+nullHandle = {
+  applyDeltaDFS: () => [],
+  applyDelta:() => {},
+  reset: () => {}
+};
+
+class RectPoint {
+  constructor([cx,cy]) {
+    this.received = false;
+    this.handle = controlShape(svgel('circle', {style: 'stroke: black; fill: green', cx, cy, r: 5 }));
+    this.point = this.handle.exposeCenter();
+    this.linkWeights = {};
+    this.links = {};
+  }
+
+  reset() {
+    const oldRecieved = this.received;
+    this.received = false;
+    if (oldRecieved) Object.values(this.links).forEach(l => l.reset());
+  }
+
+  applyDelta(delta0) {
+    const frontier = [[this,delta0,null]];
+    while (frontier.length > 0) {
+      const [node,delta,fromWho] = frontier.shift();
+      const nextSteps = node.applyDeltaDFS(delta,fromWho);
+      frontier.push(...nextSteps);
+    }
+    this.reset();
+  }
+}
+
+class RectCorner extends RectPoint {
+  constructor(pos) {
+    super(pos);
+    this.linkWeights = {hor: [1/2,1], ver: [1,1/2]};
+    this.links = {hor: nullHandle, ver: nullHandle};
+    this.handle.domElt.onmousedown = () => {
+      fwdMouse(this); clearOnMouseUp = true;
+    }
+  }
+
+  applyDeltaDFS([dx,dy], fromWho) {
+    if (this.received) return [];
+    this.received = true;
+    this.point.applyDelta([dx,dy]);
+    if (this.backer) this.backer.applyDelta([dx,dy]); // HACK!
+    const nextSteps = [];
+    if (fromWho !== this.links.hor) nextSteps.push([this.links.hor, [dx/2,dy], this]);
+    if (fromWho !== this.links.ver) nextSteps.push([this.links.ver, [dx,dy/2], this]);
+    return nextSteps;
+  }
+}
+
+class RectSide extends RectPoint {
+  constructor(pos, doTranspose) {
+    super(pos);
+    this.func = doTranspose ? vswap : x=>x;
+    this.linkWeights = {inward: [1,1/2], left: [0,1], right: [0,1]};
+    this.links = {inward: nullHandle, left: nullHandle, right: nullHandle};
+    this.handle.domElt.onmousedown = () => {
+      fwdMouse(this, this.func([0,1])); clearOnMouseUp = true;
+    }
+  }
+
+  applyDeltaDFS(delta, fromWho) {
+    const [dx,dy] = this.func(delta);
+    if (this.received) return [];
+    this.received = true;
+    this.point.applyDelta(delta);
+    if (this.backer) this.backer.applyDelta([dx,dy]); // HACK!
+    const nextSteps = [];
+    if (fromWho !== this.links.inward) nextSteps.push([this.links.inward, this.func([dx,dy/2]), this]);
+    if (fromWho !== this.links.left) nextSteps.push([this.links.left, this.func([0,dy]), this]);
+    if (fromWho !== this.links.right) nextSteps.push([this.links.right, this.func([0,dy]), this]);
+    return nextSteps;
+  }
+}
+
 // Towards rect point handles (flawed)
 function init() {
-  Object.entries(rect.points).forEach(([name,backedPt]) => {
-    const [cx,cy] = backedPt.value;
-    const handleElt = svgel('circle', {style: 'fill: green', cx, cy, r: 5 });
-    backedPt.handle = controlShape(handleElt);
-    handleElt.onmousedown = () => {
-      fwdMouse(backedPt);
-      fwdMouse(backedPt.handle.exposeCenter())
-    };
-    handleElt.onmouseup = () => {
-      clearMouse();
-    };
-  });
+  topR = new RectCorner(rect.points.topR.value);
+  botR = new RectCorner(rect.points.botR.value);
+  botL = new RectCorner(rect.points.botL.value);
+  topL = new RectCorner(rect.points.topL.value);
+  topp = new RectSide(rect.points.top.value, false);
+  bottom = new RectSide(rect.points.bottom.value, false);
+  left = new RectSide(rect.points.left.value, true);
+  right = new RectSide(rect.points.right.value, true);
+  center = new RectSide(rect.points.center.value,true);
+
+  topR.links.hor = topp; topR.links.ver = right;
+  right.links.left = topR; right.links.right = botR;
+  botR.links.ver = right; botR.links.hor = bottom;
+  bottom.links.left = botL; bottom.links.right = botR; bottom.links.inward = center;
+  botL.links.hor = bottom; botL.links.ver = left;
+  left.links.left = botL; left.links.right = topL;
+  topL.links.hor = topp; topL.links.ver = left;
+  topp.links.left = topL; topp.links.right = topR; topp.links.inward = center;
+  center.links.left = bottom; center.links.right = topp;
+
+  topL.backer = rect.points.topL;
+  botR.backer = rect.points.botR;
 }
