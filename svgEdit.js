@@ -208,7 +208,7 @@ clearMouse = function() {
 }
 
 nullHandle = {
-  applyDeltaDFS: () => [],
+  applyDeltaBFS: () => [],
   applyDelta:() => {},
   reset: () => {}
 };
@@ -232,7 +232,7 @@ class RectPoint {
     const frontier = [[this,delta0,null]];
     while (frontier.length > 0) {
       const [node,delta,fromWho] = frontier.shift();
-      const nextSteps = node.applyDeltaDFS(delta,fromWho);
+      const nextSteps = node.applyDeltaBFS(delta,fromWho);
       frontier.push(...nextSteps);
     }
     this.reset();
@@ -249,7 +249,7 @@ class RectCorner extends RectPoint {
     }
   }
 
-  applyDeltaDFS([dx,dy], fromWho) {
+  applyDeltaBFS([dx,dy], fromWho) {
     if (this.received) return [];
     this.received = true;
     this.point.applyDelta([dx,dy]);
@@ -272,7 +272,7 @@ class RectSide extends RectPoint {
     }
   }
 
-  applyDeltaDFS(delta, fromWho) {
+  applyDeltaBFS(delta, fromWho) {
     const [dx,dy] = this.func(delta);
     if (this.received) return [];
     this.received = true;
