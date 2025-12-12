@@ -2,7 +2,89 @@ ISSUES / ARCHITECTURE / PHILOSOPHY
 
 Currently, the shape node (rect, circle, etc) gets the id, not its parent <g>.
 
-Containment / geometry stuff ONLY works with rects.
+Containment / geometry stuff ONLY works with rects and arrows. Should work out
+containment for ALL shapes. And incidence of endpoints for connectors.
 
 Paths/arrows are followed in path coords order, irrespective of arrowheads.
 
+------
+
+DOMMeta (Like OMeta but in the DOM tree)
+Inspiration: see my OMeta notes at
+https://programmingmadecomplicated.wordpress.com/2025/11/24/notes-on-chains-of-meaning-in-steps/
+
+---
+path d=( M lx,ty L rx,ty L rx,by L lx,by Z ) ⟹ {
+  return { type: 'rect', topLeft: [lx,ty], dims: [rx-lx, by-ty] }
+}
+---
+
+path
+All tag names have a tag matcher. Succeeds if curr DOM elem has that tag. Value is elem.
+
+d=(...)
+All attribute names have attribute matchers. Succeeds if curr DOM elem has that attr
+and its value matches the value-matcher on its RHS.
+
+M m L l Z etc
+Only available in the scope of a d attr value matcher. Sequentially match path data cmds.
+Embedded names are unified, wildcards permitted (`_`). Coordinates named via `,`, but will
+match spaces or other seps in the string (as per the DOM spec for this stuff). Can also name
+the pair e.g. `M p`. Can mix and match: e.g. `C p1 _ x3,_`. Can omit point e.g. `L L L` =
+`L _ L _ L _`.
+
+⟹ {} JS output expr.
+
+---
+g class=("arrow-line") {
+  path d=(path:p),
+  g transform=(matrix:m)
+} ⟹ { points: p, ??? }
+---
+
+"arrow-line"
+Succeeds if curr attr val is exactly that string. (TODO: embed OMeta text parsing DSL!)
+
+{ ..., ..., ... }
+Children matcher. Succeeds if curr DOM elem's children distinctly match each clause, in any
+order (use embedded predicate to enforce ordering constraints). E.g. here there must be at least
+2 children, a <path> and a <g>.
+
+path
+Within a d attr val matcher, means something different to the tag! Match any valid path cmd seq.
+
+:p
+...and call it p.
+
+matrix
+Similarly, within a transform attr, match the overall matrix.
+
+-----------
+
+Those are all DOM->JS. Here's a DOM->DOM mutation expr:
+
+FOR ALL matchElt(i) (
+  tag = 'path' ⟹ 'rect'
+  class ⊇ { 'real', 'connection' }
+  d = "M lx,ty L rx,ty L rx,by L lx,by Z"
+  let [x, y, w, h] = [lx, ty, rx - lx, by - ty]
+  attributes {
+    x ⟹ x, y ⟹ y, width ⟹ w, height ⟹ h, d ⇏
+  }
+  id ⟹ 'r'+(i+1)
+)
+
+All of the "reading/matching" things are confirmed first. If all succeed, the
+mutation ⟹ operators activate.
+
+- Ensure tag is 'path'
+- And class contains 'real' and 'connection'
+- And the d attr matches the path template (binding some vars)
+- And with some more vars bound...
+- Oh, that's it.
+
+If all good, then:
+
+- Change tag to 'rect'
+- Set the attrs, delete the d attr
+- Set the id based on the match index

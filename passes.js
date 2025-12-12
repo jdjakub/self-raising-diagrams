@@ -159,6 +159,13 @@ getArrow = function(domElement) {
 
 getArrows = () => all('.is-arrow').map(getArrow);
 
+/*
+FOR ALL matchElt(i) (
+  tag='text'
+  id ⟹ 't'+(i+1)
+  classList ⟹ { + 'is-label' }
+)
+*/
 // text gets id, .is-label
 pass.idLabels = function() {
   log('Identifying labels.');
@@ -450,6 +457,19 @@ META_COLOR = 'rgb(74, 144, 226)';
 
 IGNORED_COLORS = new Set([COMMENT_COLOR, META_COLOR]);
 
+
+/*
+FOR ALL commentBox (
+  tag = 'rect', style {
+    stroke ∈ IGNORED_COLORS
+  }
+  FOR ALL containedThing (
+    r ∈ commentBox[contains]
+    classList => { + 'is-comment' }
+  )
+  classList => { + 'is-comment' }
+)
+*/
 // Requires: annotateContainments
 // Elements contained within comment-coloured boxes (and the boxes) get .is-comment
 // forall Rect r. r stroke = C => forall a. a containedIn: r => a is-comment
@@ -517,6 +537,15 @@ restoreComment = function(dom) {
   delete oldDom.dataset.originalClass;
 }
 
+/*
+FOR ALL comment (
+  classList : oldClasses ∋ 'is-comment' => {}
+  tag : oldTag => 'comment'
+  dataset {
+    originalTag => oldTag, originalClass => oldClasses
+  }
+)
+*/
 // Requires: annotateComments, checkFormat
 // Elements contained within .is-comment boxes (as well as the boxes) become <comment>s, temporarily
 pass.hideComments = function() {
