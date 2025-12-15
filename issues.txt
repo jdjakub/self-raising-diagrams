@@ -7,6 +7,40 @@ containment for ALL shapes. And incidence of endpoints for connectors.
 
 Paths/arrows are followed in path coords order, irrespective of arrowheads.
 
+Problem: initially, all connectors and shapes are <path>s. Can distinguish by
+presence of final Z (close shape) cmd. Do all containment testing on the geometry
+first, as polygons? Or do containment testing afterwards?
+
+Of course, there IS an algorithm in either order. If all are paths, we can do
+generic slow path-path containment. If some shapes are specialised, we can do
+double-dispatch with specialised methods.
+
+Need to enumerate all type of shapes to test.
+
+Would like for it all to be lazy. I need to test whether node A spatially contains
+node B. Therefore, perform all prerequisite passes on relevant nodes (parse on demand).
+
+Also, all DOM nodes need a smart JS obj derivable from them.
+
+Let us adopt the following hierarchy. All shapes are Paths. If closed (Z), then it's a
+Shape. Otherwise, it's a Connector. Closed shapes can be further specialised based on
+constraints, but mutations that violate the constraints will degrade the class upwards.
+
+Oops - we also have Text! Treatable as a Rect, maybe
+
+OK: instead, we must first REIFY the implicit SVG semantics encoded in the browser's C++.
+|-- can be traversed via the 'specialize' message (general-containment.js)
+
+[any]
+|-- [TextNode]
+|-- g
+|-- text
+|-- path
+    |-- circle
+    |-- polyline (+not curved)
+        |-- polygon (+closed)
+            |-- rect
+
 ------
 
 DOMMeta (Like OMeta but in the DOM tree)
@@ -88,3 +122,24 @@ If all good, then:
 - Change tag to 'rect'
 - Set the attrs, delete the d attr
 - Set the id based on the match index
+
+---
+
+PATH TEMPLATE LANGUAGE
+
+cmd = 'M point:p? ->{ moveAbs(p) }
+    | 'm point:p? ->{ moveRel(p) }
+    | 'L' point:p? ->{ lineAbs(p) }
+    | 'l' point:p? ->{ lineRel(p) }
+    | 'Q (point:p1 point:p2)? ->{ quadAbs(p1, p2) }
+    | 'q (point:p1 point:p2)? ->{ quadRel(p1, p2) }
+    | 'C (point:p1 point:p2 point:p3)? ->{ cubicAbs(p1, p2, p3) }
+    | 'c (point:p1 point:p2 point:p3)? ->{ cubicRel(p1, p2, p3) }
+    | ('Z | 'z) ->{ closeShape() }
+
+point = wildcard | coord ', coord
+coord = wildcard | variable | constant
+
+PATH PARSING
+
+cmd = 

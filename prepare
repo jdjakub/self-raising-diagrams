@@ -5,7 +5,7 @@
 # code in modern browsers WITHOUT relying on a local server
 # because of same-origin nonsense.
 
-SCRIPT=$2
+SCRIPT=${2%.js}
 # Thanks Copilot
 sed -z -E -i \
   "s|(<svg[^>]*>)|\\1\n\

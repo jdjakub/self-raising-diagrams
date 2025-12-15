@@ -86,8 +86,9 @@ byId = id => document.getElementById(id);
 
 // Mathcha SVG outputs simple shapes as paths and multiline text as separate text elements...
 // Gotta recognise basic shapes. Computer Vector Vision
-parsePath = d => // TY Copilot
-    [...d.matchAll(/([MLCZ])([^MLCZ]*)/g)].map(([_, cmd, args]) => {
+parsePath = d => // TY Copilot. NB: Doesn't support H,V,A
+    [...d.matchAll(/([MLCQSTZmlcqstz])([^MLCQSTZmlcqstz]*)/g)]
+    .map(([_, cmd, args]) => {
       if (cmd === 'Z') return [cmd];
       const nums = args.trim().split(/[\s,]+/).map(Number);
       const pts = [];
