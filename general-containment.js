@@ -17,15 +17,15 @@ send = function(recv, ...pairs) {
 }
 
 // TODO: supersends
-sendNoKw = function(recv, selector, args) {
+sendNoKw = function(recv, selector, ...args) {
   let vtable = vtables.byTag[recv.tagName];
   let method;
   do {
     method = vtable[selector];
     vtable = vtable._parent; // i.e. superclass
   } while (!method && vtable);
-  if (!method && !vtable) throw ["Didn't understand: ",recv,selector,args];
-  return method(recv, args);
+  if (!method && !vtable) throw ["Didn't understand: ",recv,selector,...args];
+  return method(recv, ...args);
 }
 
 nextId = 1;
@@ -49,6 +49,18 @@ vtables.domNode = {
     }[self.tagName];
     if (!ret) ret = 'e';
     return ret;
+  },
+  ['containsPt:']: (self, [x,y]) => {
+    const bb = self.getBBox();
+    const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
+    return l<x && x<r && t<y && y<b;
+  },
+  ['encloses:']: (self, other) => {
+    const otherVs = send(other, 'vertices'); // SMELL convex polys only
+    for (const v of otherVs) {
+      if (!send(self, 'containsPt:', v)) return false;
+    }
+    return true;
   },
 };
 
@@ -83,8 +95,9 @@ vtables.byTag['path'] = {
     if (newTag) {
       self = replaceTag(self, newTag);
       self.removeAttribute('d');
+      return self;
     }
-    return self;
+    return null;
   },
 };
 
@@ -114,11 +127,21 @@ vtables.byTag['polyline'] = {
   ['vertices']: (self) => {
     return attr(self, 'points').trim().split(' ').map(v => v.split(',').map(Number));
   },
+  ['isClosed']: (self) => false,
+  ['isCurved']: (self) => false,
+  ['commands']: (self) => {
+    let vs = send(self, 'vertices');
+    vs = vs.map(v => ['L', v]);
+    vs[0][0] = 'M';
+    return vs;
+  },
+  ['encloses:']: () => false,
 };
 
 vtables.byTag['polygon'] = {
   _parent: vtables.byTag['polyline'],
 
+  ['isClosed']: () => true,
   ['specialize']: (self) => {
     let newTag = null;
     const vertices = send(self, 'vertices');
@@ -134,19 +157,118 @@ vtables.byTag['polygon'] = {
     if (newTag) {
       self = replaceTag(self, newTag);
       self.removeAttribute('points');
+      return self;
     }
-    return self;
+    return null;
   },
+  ['containsPt:']: (self, pt) => {
+    const vs = send(self, 'vertices');
+    return isPointInPolygon(pt, vs);
+  },
+  ['encloses:']: vtables.domNode['encloses:'],
 }
+
+// TY Claude
+function isPointInPolygon(pt, poly) {
+  const [x,y] = pt;
+  let inside = false;
+  // Cast a ray from the point to the right (along +x direction)
+  // Count how many times it crosses polygon edges
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
+    // each poly edge [i,j] = [0,-1], [1,0], [2,1], etc...
+    const [xi,yi] = poly[i]; const [xj,yj] = poly[j];
+    // Check if the edge crosses the horizontal ray from the point
+    // The edge must:
+    // 1. Have one vertex above and one below the point's y coordinate
+    // 2. Intersect the ray to the right of the point
+    const ray_y_from_i = y - yi;
+    const j_y_from_i = yj - yi;
+    const j_x_from_i = xj - xi;
+    const edge_x_per_y = j_x_from_i / j_y_from_i;
+    const isect_x_from_i = ray_y_from_i * edge_x_per_y;
+    const isect_x = xi + isect_x_from_i;
+    const mightIntersect = (yi > y) !== (yj > y);
+    const intersect = mightIntersect && isect_x > x;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
 
 vtables.byTag['rect'] = {
   _parent: vtables.byTag['polygon'],
+
+  ['vertices']: (self) => {
+    const [x,y,w,h] = attrs(self, 'x', 'y', 'width', 'height').map(Number);
+    return [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
+  },
+  ['specialize']: () => null,
 }
 
 vtables.byTag['circle'] = {
   _parent: vtables.byTag['path'],
+
+  ['vertices']: (self) => {
+    // Sigh ... approximate circle as octagon
+    const [cx,cy,r] = attrs(self, 'cx', 'cy', 'r').map(Number);
+    const n = 8;
+    const theta = Math.PI*2/n;
+    const vs = [];
+    for (let i=0; i<n; i++) {
+      const itheta = i*theta;
+      const [x,y] = [Math.cos(itheta), Math.sin(itheta)];
+      const avg_r = r*(1+1/Math.cos(theta/2))/2; // 1/2 between inner and outer polygon
+      vs.push(vadd([cx,cy], vmul(avg_r, [x,y])));
+    }
+    return vs;
+  },
+  ['specialize']: () => null,
+  ['containsPt:']: (self, pt) => {
+    const [cx,cy,r] = attrs(self, 'cx', 'cy', 'r').map(Number);
+    const pt_from_c = vsub(pt, [cx,cy]);
+    return vdot(pt_from_c,pt_from_c) < r*r;
+  },
 }
 
 vtables.byTag['text'] = {
   _parent: null,
+}
+
+e = {};
+function init() {
+  const paths = all('path.real');
+  let elems = paths.concat(all('polygon'));
+  elems.forEach((el) => {
+    let newEl = el;
+    let max_iter = 10;
+    do { // max specialize
+      el = newEl;
+      newEl = send(el, 'specialize');
+      max_iter--;
+    } while (max_iter > 0 && newEl);
+    e[send(el, 'id')] = el;
+  });
+
+  elems = Object.values(e);
+  // MUCH nicer code than annotateAllContainments plus treeifyContainments
+  elems.forEach((el1, i) => {
+    // elem i wants to find its least / tightest container
+    let container = null;
+    elems.forEach((el2, j) => {
+      if (i !== j) {
+        const rivalExists = send(el2, 'encloses:', el1);
+        if (rivalExists) {
+          const rival = el2;
+          // If the rival sits within my current tightest container, rival is tighter
+          if (container === null || send(container, 'encloses:', rival)) container = rival;
+        }
+      }
+    });
+    if (container) {
+      addSetAttr(container.dataset, 'contains', send(el1, 'id'));
+      attr(el1, 'containedIn', send(container, 'id'));
+    }
+  });
+  
+  return elems.length;
 }
