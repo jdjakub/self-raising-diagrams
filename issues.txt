@@ -30,12 +30,13 @@ Oops - we also have Text! Treatable as a Rect, maybe
 
 OK: instead, we must first REIFY the implicit SVG semantics encoded in the browser's C++.
 |-- can be traversed via the 'specialize' message (general-containment.js)
+|== just seems like a subclass relationship
 
 [any]
-|-- [TextNode]
-|-- g
-|-- text
-|-- path
+|== [DOM Text Node]
+|== g
+|== text
+|== path
     |-- circle
     |-- polyline (+not curved)
         |-- polygon (+closed)

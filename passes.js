@@ -80,7 +80,7 @@ restrictScope = function(element) {
 }
 all = selector => Array.from(currentScope.querySelectorAll(selector));
 some = selector => all(selector)[0];
-byId = id => document.getElementById(id);
+byId = id => document.getElementById(id.trim());
 
 // ### MAIN ###
 
@@ -785,7 +785,7 @@ pass.normalizeCircles = function() {
 // Requires: annotateParagraphs, makeDOMReflectContainmentTree
 pass.executeCode = function() {
   log('Executing code in red boxes.');
-  svg = document.documentElement;
+  svg = document.documentElement; // So that code can refer to 'svg'
   const rects = getRects().filter(r => r.dom.style.stroke === 'rgb(208, 2, 27)');
   const codeToEval = [];
   rects.forEach(r => {

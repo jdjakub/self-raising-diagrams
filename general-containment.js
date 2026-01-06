@@ -62,6 +62,13 @@ vtables.domNode = {
     }
     return true;
   },
+  ['vertices']: (self) => {
+    const bb = self.getBBox(); // SMELL duped
+    const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
+    return [[l,t], [r,t], [r,b], [l,b]];
+  },
+  ['specialize']: (self) => null,
+  ['localRoot']: (self) => self,
 };
 
 vtables.byTag['path'] = {
@@ -99,6 +106,7 @@ vtables.byTag['path'] = {
     }
     return null;
   },
+  ['localRoot']: (self) => self.parentElement,
 };
 
 polyFromPath = function(cmds) {
@@ -231,13 +239,45 @@ vtables.byTag['circle'] = {
 }
 
 vtables.byTag['text'] = {
-  _parent: null,
+  _parent: vtables.domNode,
+}
+
+vtables.byTag['g'] = {
+  _parent: vtables.domNode,
+
+  ['parseAsParagraph']: (self) => {
+    if (self.children.length === 0) return false;
+    for (let child of self.children) {
+      if (child.tagName !== 'g') return false;
+      for (let gchild of child.children) {
+        if (gchild.tagName !== 'g') return false;
+        if (gchild.firstChild.tagName !== 'text') return false;
+      }
+    }
+    // TODO: maybe sanity check they're in y-order
+    const lines = Array.from(self.children).map(line_g => {
+      const runs = Array.from(line_g.children).map(run_g =>
+        run_g.firstChild.textContent
+      );
+      return runs.join(' ');
+    });
+    self.dataset.string = lines.join('\n');
+    if (self.children.length > 1) self.classList.add('is-multiline');
+    self.classList.add('is-paragraph');
+    return true;
+  },
+  ['idPrefix']: (self) => {
+    if (self.classList.contains('is-paragraph')) return 'par';
+    else return 'g';
+  },
+  //SMELL domNode>>localRoot wrong for line/run <g>'s
 }
 
 e = {};
 function init() {
   const paths = all('path.real');
   let elems = paths.concat(all('polygon'));
+  elems = elems.concat(all('g').filter(g => send(g, 'parseAsParagraph')));
   elems.forEach((el) => {
     let newEl = el;
     let max_iter = 10;
@@ -266,9 +306,39 @@ function init() {
     });
     if (container) {
       addSetAttr(container.dataset, 'contains', send(el1, 'id'));
-      attr(el1, 'containedIn', send(container, 'id'));
+      el1.dataset.containedIn = send(container, 'id');
     }
   });
   
+  // MUCH nicer than makeDOMReflectContainmentTree
+  const elemsToReroot = all('[data-contained-in]');
+  elemsToReroot.forEach(child => {
+    let soonToBeParent = byId(child.dataset.containedIn);
+    const parentRoot = send(soonToBeParent, 'localRoot');
+    const childRoot = send(child, 'localRoot');
+    parentRoot.appendChild(childRoot);
+    delete soonToBeParent.dataset.contains;
+    delete child.dataset.containedIn;
+  });
+
+  // From executeCode
+  const codeBoxes = all('rect').filter(r => r.style.stroke === 'rgb(208, 2, 27)');
+  const codeToEval = [];
+  codeBoxes.forEach(r => {
+    r.classList.add('is-code');
+    const paras = Array.from(r.parentElement.querySelectorAll('.is-paragraph'));
+    paras.forEach(p => {
+      const str = p.dataset.string;
+      // Special case: red box just containing #myId sets container id=myId and self-deletes
+      if (paras.length === 1 && str.startsWith('#')) {
+        const parent_g = r.parentElement.parentElement;
+        // SMELL what if new ID already in use
+        parent_g.firstChild.id = str.substring(1); // SMELL nondeterminism
+        //r.parentElement.remove();
+      } else codeToEval.push(str);
+    })
+  });
+  codeToEval.forEach(eval);
+
   return elems.length;
 }

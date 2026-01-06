@@ -75,3 +75,10 @@ Inspired by the ASCII art in [Appendix E of the 2007 VPRI STEPS progress report]
 
 ### Example 7 (svgEdit)
 How hard is it to add basic editing to SVG shapes (i.e. drag path and rect vertices, circle centre+radius)? Modulo selecting the vertex via the console (ha): only about 200 LoC (svgEdit.js). More to come.
+
+### Example 8 (containment-stress-test)
+Moving towards a message-sending architecture where all parsing happens on demand (instead of carefully orchestrated in advance as in `passes.js`). This also allows things like containment testing to be dispatched
+according to the tag of the element, instead of containment being restricted to just rectangles. Run `init()`
+in the console.
+
+![Containment stress test](./demo-general-containment.png)
