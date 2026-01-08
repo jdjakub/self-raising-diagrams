@@ -69,6 +69,12 @@ vtables.domNode = {
   },
   ['specialize']: (self) => null,
   ['localRoot']: (self) => self,
+  ['reroot']: (self) => { // Given: containedIn
+    let soonToBeParent = byId(self.dataset.containedIn);
+    const parentRoot = send(soonToBeParent, 'localRoot');
+    const myRoot = send(self, 'localRoot');
+    parentRoot.appendChild(myRoot);
+  },
 };
 
 vtables.byTag['path'] = {
@@ -211,6 +217,25 @@ vtables.byTag['rect'] = {
     return [[x,y], [x+w,y], [x+w,y+h], [x,y+h]];
   },
   ['specialize']: () => null,
+  ['parseAsExecutable']: (self) => {
+    // Check for executable boxes
+    if (self.style.stroke === 'rgb(208, 2, 27)') {
+      const lroot = send(self, 'localRoot');
+      const paras = Array.from(lroot.querySelectorAll('.is-paragraph'));
+      paras.forEach(p => {
+        const str = p.dataset.string;
+        const lines = str.split('\n');
+        if (lines.length === 1 && str.startsWith('#')) {
+          p.classList.add('sets-id'); return true;
+        } else if (lines.every(l => l.startsWith('.'))) {
+          p.classList.add('adds-class'); return true;
+        } else {
+          p.classList.add('is-code'); return true;
+        }
+      });
+    }
+    return false;
+  },
 }
 
 vtables.byTag['circle'] = {
@@ -271,6 +296,27 @@ vtables.byTag['g'] = {
     else return 'g';
   },
   //SMELL domNode>>localRoot wrong for line/run <g>'s
+  ['execute']: (self) => {
+    const str = self.dataset.string;
+    const lines = str.split('\n');
+    const parent_g = self.parentElement.parentElement;
+    const parent_focus = parent_g.firstChild; // SMELL nondeterminism
+    if (self.classList.contains('sets-id')) {
+      // #myId para sets container id=myId and self-deletes
+      // SMELL what if new ID already in use
+      parent_focus.id = str.substring(1); 
+      //self.remove();
+    } else if (self.classList.contains('adds-class')) {
+      // .myClass line adds myClass to container and self-deletes
+      lines.forEach(l => {
+        parent_focus.classList.add(l.substring(1));
+      });
+      //self.remove();
+    } else if (self.classList.contains('is-code')) {
+      eval(str); // >:D
+      // self.remove()
+    }
+  }
 }
 
 e = {};
@@ -293,7 +339,7 @@ function init() {
   // MUCH nicer code than annotateAllContainments plus treeifyContainments
   elems.forEach((el1, i) => {
     // elem i wants to find its least / tightest container
-    let container = null;
+    let container = null; // Infinitely big initial container
     elems.forEach((el2, j) => {
       if (i !== j) {
         const rivalExists = send(el2, 'encloses:', el1);
@@ -313,32 +359,17 @@ function init() {
   // MUCH nicer than makeDOMReflectContainmentTree
   const elemsToReroot = all('[data-contained-in]');
   elemsToReroot.forEach(child => {
-    let soonToBeParent = byId(child.dataset.containedIn);
-    const parentRoot = send(soonToBeParent, 'localRoot');
-    const childRoot = send(child, 'localRoot');
-    parentRoot.appendChild(childRoot);
-    delete soonToBeParent.dataset.contains;
+    send(child, 'reroot');
     delete child.dataset.containedIn;
   });
-
-  // From executeCode
-  const codeBoxes = all('rect').filter(r => r.style.stroke === 'rgb(208, 2, 27)');
-  const codeToEval = [];
-  codeBoxes.forEach(r => {
-    r.classList.add('is-code');
-    const paras = Array.from(r.parentElement.querySelectorAll('.is-paragraph'));
-    paras.forEach(p => {
-      const str = p.dataset.string;
-      // Special case: red box just containing #myId sets container id=myId and self-deletes
-      if (paras.length === 1 && str.startsWith('#')) {
-        const parent_g = r.parentElement.parentElement;
-        // SMELL what if new ID already in use
-        parent_g.firstChild.id = str.substring(1); // SMELL nondeterminism
-        //r.parentElement.remove();
-      } else codeToEval.push(str);
-    })
+  all('[data-contains]').forEach(e => {
+    delete e.dataset.contains;
   });
-  codeToEval.forEach(eval);
+
+  all('rect').forEach(r => send(r, 'parseAsExecutable'));
+  all('.sets-id').forEach(p => send(p, 'execute'));
+  all('.adds-class').forEach(p => send(p, 'execute'));
+  all('.is-code').forEach(p => send(p, 'execute'));
 
   return elems.length;
 }

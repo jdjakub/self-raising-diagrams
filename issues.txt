@@ -1,6 +1,12 @@
 ISSUES / ARCHITECTURE / PHILOSOPHY
 
 Currently, the shape node (rect, circle, etc) gets the id, not its parent <g>.
+Same goes for most annotations, e.g. 'containedIn'. The problem is:
+- Conceptually, we want a shape containment tree in the DOM: e.g. a rect contains a circle.
+- But in SVG, the visual shape element is a terminal DOM node. It gets wrapped inside
+  a <g> and we add children to THAT.
+So we need to decide whether the "local root" <g> or the "visual elem" shall represent the
+conceptual shape.
 
 Containment / geometry stuff ONLY works with rects and arrows. Should work out
 containment for ALL shapes. And incidence of endpoints for connectors.
