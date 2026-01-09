@@ -34,6 +34,7 @@ vtables.domNode = {
   _parent: null,
 
   ['id']: (self) => {
+    // TODO: pull in + exec any red boxes on demand!?
     let id = attr(self, 'id');
     if (!id) {
       const prefix = send(self, 'idPrefix');
@@ -66,6 +67,23 @@ vtables.domNode = {
     const bb = self.getBBox(); // SMELL duped
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
     return [[l,t], [r,t], [r,b], [l,b]];
+  },
+  ['findTightestContainerIn:']: (self, elems) => { // -> containedIn
+    // MUCH nicer code than annotateAllContainments plus treeifyContainments
+    // I want to find my least / tightest container
+    let container = null; // Infinitely big initial container
+    elems.filter(other => self !== other).forEach(other => {
+      const rivalExists = send(other, 'encloses:', self);
+      if (rivalExists) {
+        const rival = other;
+        // If the rival sits within my current tightest container, rival is tighter
+        if (container === null || send(container, 'encloses:', rival)) container = rival;
+      }
+    });
+    if (container) {
+      addSetAttr(container.dataset, 'contains', send(self, 'id'));
+      self.dataset.containedIn = send(container, 'id');
+    }
   },
   ['specialize']: (self) => null,
   ['localRoot']: (self) => self,
@@ -150,6 +168,36 @@ vtables.byTag['polyline'] = {
     return vs;
   },
   ['encloses:']: () => false,
+  ['parseAsConnector']: (self) => {
+    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
+    const vs = send(self, 'vertices');
+    const endpoints = [vs[0],last(vs)];
+    const lroot = send(self, 'localRoot');
+    const arrowheads = Array.from(lroot.querySelectorAll('g'));
+    let arrowheadIndex = null;
+    if (arrowheads.length === 1) {
+      const m = arrowheads[0].transform.baseVal[0].matrix;
+      const pt = [m.e, m.f];
+      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
+      if (d0 < d1) arrowheadIndex = 0;
+      else arrowheadIndex = 1;
+      endpoints[arrowheadIndex] = pt;
+    }
+    const connectionIds = endpoints.map(([x,y]) => {
+      const elems = document.elementsFromPoint(x,y);
+      let topmost = null;
+      for (topmost of elems) {
+        if (!lroot.contains(topmost)) break;
+      }
+      return send(topmost, 'id');
+    });
+    if (arrowheadIndex !== null) {
+      self.dataset.origin = connectionIds[1-arrowheadIndex];
+      self.dataset.target = connectionIds[arrowheadIndex];
+    } else {
+      self.dataset.connects = connectionIds.join(' ');
+    }
+  },
 };
 
 vtables.byTag['polygon'] = {
@@ -222,7 +270,9 @@ vtables.byTag['rect'] = {
     if (self.style.stroke === 'rgb(208, 2, 27)') {
       const lroot = send(self, 'localRoot');
       const paras = Array.from(lroot.querySelectorAll('.is-paragraph'));
+      let done = true;
       paras.forEach(p => {
+        if (!p.classList.contains('done')) done = false;
         const str = p.dataset.string;
         const lines = str.split('\n');
         if (lines.length === 1 && str.startsWith('#')) {
@@ -233,6 +283,7 @@ vtables.byTag['rect'] = {
           p.classList.add('is-code'); return true;
         }
       });
+      if (done) self.classList.add('done');
     }
     return false;
   },
@@ -305,16 +356,16 @@ vtables.byTag['g'] = {
       // #myId para sets container id=myId and self-deletes
       // SMELL what if new ID already in use
       parent_focus.id = str.substring(1); 
-      //self.remove();
+      self.classList.add('done');
     } else if (self.classList.contains('adds-class')) {
       // .myClass line adds myClass to container and self-deletes
       lines.forEach(l => {
         parent_focus.classList.add(l.substring(1));
       });
-      //self.remove();
+      self.classList.add('done');
     } else if (self.classList.contains('is-code')) {
       eval(str); // >:D
-      // self.remove()
+      self.classList.add('done');
     }
   }
 }
@@ -336,29 +387,10 @@ function init() {
   });
 
   elems = Object.values(e);
-  // MUCH nicer code than annotateAllContainments plus treeifyContainments
-  elems.forEach((el1, i) => {
-    // elem i wants to find its least / tightest container
-    let container = null; // Infinitely big initial container
-    elems.forEach((el2, j) => {
-      if (i !== j) {
-        const rivalExists = send(el2, 'encloses:', el1);
-        if (rivalExists) {
-          const rival = el2;
-          // If the rival sits within my current tightest container, rival is tighter
-          if (container === null || send(container, 'encloses:', rival)) container = rival;
-        }
-      }
-    });
-    if (container) {
-      addSetAttr(container.dataset, 'contains', send(el1, 'id'));
-      el1.dataset.containedIn = send(container, 'id');
-    }
-  });
+  elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
   
   // MUCH nicer than makeDOMReflectContainmentTree
-  const elemsToReroot = all('[data-contained-in]');
-  elemsToReroot.forEach(child => {
+  all('[data-contained-in]').forEach(child => {
     send(child, 'reroot');
     delete child.dataset.containedIn;
   });
@@ -370,6 +402,10 @@ function init() {
   all('.sets-id').forEach(p => send(p, 'execute'));
   all('.adds-class').forEach(p => send(p, 'execute'));
   all('.is-code').forEach(p => send(p, 'execute'));
+  all('rect').forEach(r => send(r, 'parseAsExecutable'));
+  //all('.done').forEach(e => e.remove());
+
+  all('polyline').forEach(l => send(l, 'parseAsConnector'));
 
   return elems.length;
 }

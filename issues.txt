@@ -8,6 +8,21 @@ Same goes for most annotations, e.g. 'containedIn'. The problem is:
 So we need to decide whether the "local root" <g> or the "visual elem" shall represent the
 conceptual shape.
 
+I.e. where do all the annotations (id, classes, data-) go? On the <g>, or on the shape?
+
+If on the <g>:
+- Dispatch messages on receiver tag is now meaningless. Must dispatch on "current
+tree shape" or "current emergent class" combining details from the entire subtree
+- Many annoying problems go away
+- In order to set shape props (e.g. fill, width), need to go to firstChild
+
+If on the shape:
+- Can continue to dispatch on receiver tag.
+
+Probably gonna go with "on the <g>"
+
+E.g. vtables can be registered for firstChild tag, css classes, etc
+
 Containment / geometry stuff ONLY works with rects and arrows. Should work out
 containment for ALL shapes. And incidence of endpoints for connectors.
 
