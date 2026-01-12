@@ -109,6 +109,15 @@ vtables.byTag['path'] = {
     const d = attr(self, 'd');
     return parsePath(d);
   },
+  ['pointAtFrac:']: (self, frac /* 0 to 1 */) => {
+    const total = self.getTotalLength();
+    const pt = self.getPointAtLength(frac * total);
+    return [pt.x, pt.y];
+  },
+  ['encloses:']: (self, other) => {
+    if (!send(self, 'isClosed')) return false;
+    else return vtables.domNode['encloses:'](self, other); // HACK supersend
+  },
   ['specialize']: (self) => {
     let newTag = null;
     if (!send(self, 'isCurved')) { // => Polygon | Polyline
@@ -131,6 +140,35 @@ vtables.byTag['path'] = {
     return null;
   },
   ['localRoot']: (self) => self.parentElement,
+  ['parseAsConnector']: (self) => {
+    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
+    const endpoints = [send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1)];
+    const lroot = send(self, 'localRoot');
+    const arrowheads = Array.from(lroot.querySelectorAll('g'));
+    let arrowheadIndex = null;
+    if (arrowheads.length === 1) {
+      const m = arrowheads[0].transform.baseVal[0].matrix;
+      const pt = [m.e, m.f];
+      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
+      if (d0 < d1) arrowheadIndex = 0;
+      else arrowheadIndex = 1;
+      endpoints[arrowheadIndex] = pt;
+    }
+    const connectionIds = endpoints.map(([x,y]) => {
+      const elems = document.elementsFromPoint(x,y);
+      let topmost = null;
+      for (topmost of elems) {
+        if (!lroot.contains(topmost)) break;
+      }
+      if (topmost && topmost !== svg_parent) return send(topmost, 'id');
+    });
+    if (arrowheadIndex !== null) {
+      self.dataset.origin = connectionIds[1-arrowheadIndex];
+      self.dataset.target = connectionIds[arrowheadIndex];
+    } else {
+      self.dataset.connects = connectionIds.join(' ');
+    }
+  },
 };
 
 polyFromPath = function(cmds) {
@@ -159,8 +197,8 @@ vtables.byTag['polyline'] = {
   ['vertices']: (self) => {
     return attr(self, 'points').trim().split(' ').map(v => v.split(',').map(Number));
   },
-  ['isClosed']: (self) => false,
-  ['isCurved']: (self) => false,
+  ['isClosed']: () => false,
+  ['isCurved']: () => false,
   ['commands']: (self) => {
     let vs = send(self, 'vertices');
     vs = vs.map(v => ['L', v]);
@@ -168,36 +206,6 @@ vtables.byTag['polyline'] = {
     return vs;
   },
   ['encloses:']: () => false,
-  ['parseAsConnector']: (self) => {
-    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
-    const vs = send(self, 'vertices');
-    const endpoints = [vs[0],last(vs)];
-    const lroot = send(self, 'localRoot');
-    const arrowheads = Array.from(lroot.querySelectorAll('g'));
-    let arrowheadIndex = null;
-    if (arrowheads.length === 1) {
-      const m = arrowheads[0].transform.baseVal[0].matrix;
-      const pt = [m.e, m.f];
-      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
-      if (d0 < d1) arrowheadIndex = 0;
-      else arrowheadIndex = 1;
-      endpoints[arrowheadIndex] = pt;
-    }
-    const connectionIds = endpoints.map(([x,y]) => {
-      const elems = document.elementsFromPoint(x,y);
-      let topmost = null;
-      for (topmost of elems) {
-        if (!lroot.contains(topmost)) break;
-      }
-      return send(topmost, 'id');
-    });
-    if (arrowheadIndex !== null) {
-      self.dataset.origin = connectionIds[1-arrowheadIndex];
-      self.dataset.target = connectionIds[arrowheadIndex];
-    } else {
-      self.dataset.connects = connectionIds.join(' ');
-    }
-  },
 };
 
 vtables.byTag['polygon'] = {
@@ -227,7 +235,7 @@ vtables.byTag['polygon'] = {
     const vs = send(self, 'vertices');
     return isPointInPolygon(pt, vs);
   },
-  ['encloses:']: vtables.domNode['encloses:'],
+  ['encloses:']: vtables.domNode['encloses:'], // HACK super?
 }
 
 // TY Claude
@@ -292,6 +300,8 @@ vtables.byTag['rect'] = {
 vtables.byTag['circle'] = {
   _parent: vtables.byTag['path'],
 
+  ['isClosed']: () => true,
+  ['isCurved']: () => true,
   ['vertices']: (self) => {
     // Sigh ... approximate circle as octagon
     const [cx,cy,r] = attrs(self, 'cx', 'cy', 'r').map(Number);
@@ -406,6 +416,7 @@ function init() {
   //all('.done').forEach(e => e.remove());
 
   all('polyline').forEach(l => send(l, 'parseAsConnector'));
+  all('path.real').forEach(l => send(l, 'parseAsConnector'));
 
   return elems.length;
 }
