@@ -23,11 +23,6 @@ Probably gonna go with "on the <g>"
 
 E.g. vtables can be registered for firstChild tag, css classes, etc
 
-Containment / geometry stuff ONLY works with rects and arrows. Should work out
-containment for ALL shapes. And incidence of endpoints for connectors.
-
-Paths/arrows are followed in path coords order, irrespective of arrowheads.
-
 Problem: initially, all connectors and shapes are <path>s. Can distinguish by
 presence of final Z (close shape) cmd. Do all containment testing on the geometry
 first, as polygons? Or do containment testing afterwards?
@@ -62,6 +57,16 @@ OK: instead, we must first REIFY the implicit SVG semantics encoded in the brows
     |-- polyline (+not curved)
         |-- polygon (+closed)
             |-- rect
+
+0D point is a degen 1D open path is a degen 2D closed path (area).
+
+There seem to be a few core semantics that are reasonable to expect across ALL diagrams:
+- Exploit the DOM tree for containment relationships.
+- Open paths connect closed areas. (what about connecting 1Ds occasionally??)
+- Text labels attach to the closest 1D or 2D shape, for some definition of "closest".
+
+Uh - we also have "fat arrows". Generally, any shape can be parsed as a connector:
+just determine the two endpoints.
 
 ------
 

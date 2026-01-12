@@ -141,6 +141,15 @@ vtables.byTag['path'] = {
   },
   ['localRoot']: (self) => self.parentElement,
   ['parseAsConnector']: (self) => {
+    /* In DOMMeta terms, a Mathcha arrow is recognised something like:
+     * g .arrow-line {
+         path .connection .real :shaft ,
+         ( g { path :head1 } ) ? ,
+         ( g { path :head2 } ) ?
+       }
+      But remember: we also have "fat arrows". Generally, any shape can
+      be parsed as a connector: just determine the two endpoints.
+    */
     if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
     const endpoints = [send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1)];
     const lroot = send(self, 'localRoot');
@@ -420,3 +429,15 @@ function init() {
 
   return elems.length;
 }
+
+/*
+To support boxGraph:
+
+vtables.path['claimLabel'] = ...
+
+In order for a generic shape (1D/2D) to claim a label, we want to use
+a context-specific shape as proxy. E.g. for boxGraph, a 1D arrow claims
+the closest label to its *origin point* (0D). Meanwhile, a 2D box claims
+the closest label to its entire shape. Afterwards, max distances or further
+restrictions are applied.
+*/

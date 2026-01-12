@@ -50,36 +50,32 @@ class Circle {
   }
 }
 
-class Path {
-  constructor(pathElt) {
-    this.domElt = pathElt;
-    let [opcodes,xs,ys] = extractPathCmds(pathElt);
-    this.cmpts = [];
-    for (let i=0; i<opcodes.length; i++) {
-      const [op,x,y] = [opcodes.charAt(i),xs[i],ys[i]];
-      this.cmpts.push([op, new BackedPoint(this, [x,y])]);
-    }
+class Polyline {
+  constructor(plineElt) {
+    this.domElt = plineElt;
+    let pts = send(plineElt, 'vertices');
+    this.cmpts = pts.map(pt => new BackedPoint(this, pt));
     // Warning: won't receive updates to path element
-    let arrowhead = pathElt.parentElement.querySelector('g');
+    let arrowhead = plineElt.parentElement.querySelector('g');
      if (arrowhead) { // Assume it's the endpoint arrowhead
       this.arrowhead = arrowhead; // <g>
      }
   }
 
   exposePoint(n) {
-    return this.cmpts[n-1][1];
+    return this.cmpts[n-1];
   }
 
   notifyChanged(what) {
-    const new_d = this.cmpts.map(c => c[0]+c[1].toString()).join(' ');
-    attr(this.domElt, 'd', new_d);
-    if (what === last(this.cmpts)[1]) {
+    const new_pts = this.cmpts.map(c => c.toString()).join(' ');
+    attr(this.domElt, 'points', new_pts);
+    if (what === last(this.cmpts)) {
       if (this.arrowhead) {
         const m = this.arrowhead.transform.baseVal[0].matrix;
         const v = what.value;
         m.e = v[0]; m.f = v[1];
         // New get the angle right
-        const vPrev = last(this.cmpts,2)[1].value;
+        const vPrev = last(this.cmpts,2).value;
         const dv = vsub(v,vPrev);
         const n = vnormed(dv);
         // Empirically determined based on Mathcha's arrowhead coord sys
@@ -173,7 +169,7 @@ class Rect {
 controlShape = function(domElt) {
   switch (domElt.tagName) {
     case "circle": return new Circle(domElt);
-    case "path": return new Path(domElt);
+    case "polyline": return new Polyline(domElt);
     case "rect": return new Rect(domElt);
   }
 }
@@ -287,7 +283,7 @@ class RectSide extends RectPoint {
 }
 
 // Towards rect point handles (flawed)
-function init() {
+function init_rect() {
   topR = new RectCorner(rect.points.topR.value);
   botR = new RectCorner(rect.points.botR.value);
   botL = new RectCorner(rect.points.botL.value);
