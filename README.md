@@ -19,14 +19,14 @@ Self-raising diagrams sit at a "sweet spot" between the ubiquitous tech of strin
 # Object vs Meta Graphics
 Some parts of the diagram are object-level: they're part of the intended output. Other parts (perhaps in a designated meta-colour, like blue) are instructions to the next transformation pass to alter the diagram in some way (add stuff, remove stuff, etc). Sorta like macros. Example:
 
-![Dependency graph of passes in the boxGraph format.](./boxGraph-deps.svg)
+![Dependency graph of passes in the boxGraph format.](./old-approaches/v1/boxGraph-example.svg)
 
 The idea here is: we look for a rectangle whose border is the special meta-colour, and collect the `<text>`s inside it into a JSON object. We use the `format` key to understand which passes understand this diagram (and are safe to run on it). The `labelGraph` format parser will know that the green rectangle is a comment box (to be ignored) by virtue of its specific border colour, and will interpret these shapes differently to `boxGraph`.
 
 # Current instructions
 Currently, we recognise a simple visual notation of boxes, arrows, and text labels (the "`boxGraph`" format). An arrow is labelled by the text element closest to its origin point. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
 
-![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./boxes-arrows-labels-overview.svg)
+![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./old-approaches/v1/boxes-arrows-labels-overview.svg)
 
 If providing your own SVG file, you need to insert the following into it, below the top svg element:
 
@@ -48,7 +48,7 @@ Open `boxGraph-example.svg` in Firefox. In the Ctrl-Shift-I console, call `doAll
 ## Example 2 (boxGraph)
 Open `id-simple.svg`. Run `doAll()`. Verify `objs`.
 
-![Demo of a more complex object structure.](./demo-id.png)
+![Demo of a more complex object structure.](./screenshots/demo-id.png)
 
 ## Example 3 (labelGraph)
 In a similar but more restricted format, we recognise arrows between text labels. Anything (including arrows or labels) inside a box stroked with the specific "comment" shade of green (one of Mathcha's default colours) will be treated as a comment and ignored. (Finally! Rich text, lines, and shapes in comments! Anything you want!) Also, a box in the specific "meta" shade of blue (another Mathcha default) is expected to contain a JSON property definition of `format`, so we can later pass it to the correct diagram parser.
@@ -57,12 +57,12 @@ In a similar but more restricted format, we recognise arrows between text labels
 
 Open `boxGraph-deps.svg`. Run `doAll()`. Verify the generated JS code. (Fun fact: this code was then pasted into `boxGraph.js` to set up its pass dependency graph.)
 
-![Demo of the labelGraph format.](./demo-labelGraph.png)
+![Demo of the labelGraph format.](./screenshots/demo-labelGraph.png)
 
 ## Example 3 (labelGraph)
 Similarly, `labelGraph-deps.svg` describes the dependencies of the very format parser that understands it. After manually ordering the passes in a list in `labelGraph.js`, I generated the dependency code from the diagram. I then pasted it into `labelGraph.js` to set up its pass dependency graph.
 
-![Demo of the labelGraph format feeding into itself.](./demo-labelGraph-own-deps.png)
+![Demo of the labelGraph format feeding into itself.](./screenshots/demo-labelGraph-own-deps.png)
 
 ### Example 4 (dragCircles)
 Testing stuff with embedded code now. Open `drag-circles.svg` and run `doAllGeneric()`. The event handler code visible in the SVG should run and you should be able to drag the circles around. Now *that's* a self-raising diagram.
@@ -70,8 +70,8 @@ Testing stuff with embedded code now. Open `drag-circles.svg` and run `doAllGene
 ### Example 5 and 6 (bitsTable)
 Inspired by the ASCII art in [Appendix E of the 2007 VPRI STEPS progress report](https://tinlizzie.org/VPRIPapers/tr2007008_steps.pdf#page=44), providing "executable documentation" of IP and TCP packet headers, here is the Real Thing (though, without the benefits of an OMeta analogue ... yet). Demo for invited talk at PAINT.
 
-![IP packet header diagram](./demo-ip-packet.png)
-![TCP packet header diagram](./demo-tcp-packet.png)
+![IP packet header diagram](./screenshots/demo-ip-packet.png)
+![TCP packet header diagram](./screenshots/demo-tcp-packet.png)
 
 ### Example 7 (svgEdit)
 How hard is it to add basic editing to SVG shapes (i.e. drag path and rect vertices, circle centre+radius)? Modulo selecting the vertex via the console (ha): only about 200 LoC (svgEdit.js). More to come.
@@ -81,4 +81,4 @@ Moving towards a message-sending architecture where all parsing happens on deman
 according to the tag of the element, instead of containment being restricted to just rectangles. Run `init()`
 in the console.
 
-![Containment stress test](./demo-general-containment.png)
+![Containment stress test](./screenshots/demo-general-containment.png)
