@@ -1,0 +1,30 @@
+{
+  "name": "smalltalk-js-sugar",
+  "publisher": "local",
+  "displayName": "Smalltalk Message Syntax for JavaScript",
+  "description": "Syntax highlighting for Smalltalk-style message sends in JavaScript using ⟦⟧ brackets",
+  "version": "0.2.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "source.js.smalltalk-sugar",
+        "path": "./syntaxes/smalltalk-injection.tmLanguage.json",
+        "injectTo": ["source.js", "source.jsx", "source.ts", "source.tsx"],
+        "embeddedLanguages": {
+          "meta.message-send.smalltalk": "javascript"
+        }
+      }
+    ]
+  }
+}

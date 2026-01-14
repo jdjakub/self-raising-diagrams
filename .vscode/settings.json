@@ -1,0 +1,20 @@
+{
+  "javascript.validate.enable": false,
+  "editor.semanticHighlighting.enabled": false,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "entity.name.function.selector.smalltalk",
+        "settings": { "foreground": "#DCDCAA" }
+      },
+      {
+        "scope": "punctuation.definition.message-send.begin.smalltalk",
+        "settings": { "foreground": "#FFD700" }
+      },
+      {
+        "scope": "punctuation.definition.message-send.end.smalltalk",
+        "settings": { "foreground": "#FFD700" }
+      }
+    ]
+  }
+}

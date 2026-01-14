@@ -1,0 +1,47 @@
+{
+  "scopeName": "source.js.smalltalk-sugar",
+  "injectionSelector": "L:source.js -comment, L:source.jsx -comment, L:source.ts -comment, L:source.tsx -comment",
+  "patterns": [
+    { "include": "#message-send" }
+  ],
+  "repository": {
+    "message-send": {
+      "patterns": [
+        { "include": "#keyword-message-send" },
+        { "include": "#unary-message-send" }
+      ]
+    },
+    "keyword-message-send": {
+      "name": "meta.message-send.smalltalk",
+      "comment": "Keyword message: ⟦receiver selector: arg⟧",
+      "begin": "(⟦)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.message-send.begin.smalltalk" }
+      },
+      "end": "(⟧)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.message-send.end.smalltalk" }
+      },
+      "patterns": [
+        { "include": "#message-send" },
+        { "include": "#keyword-selector" },
+        { "include": "#unary-selector" },
+        { "include": "source.js" }
+      ]
+    },
+    "keyword-selector": {
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(:)",
+      "captures": {
+        "1": { "name": "entity.name.function.selector.smalltalk" },
+        "2": { "name": "punctuation.separator.selector.smalltalk" }
+      }
+    },
+    "unary-selector": {
+      "comment": "Unary message - identifier after receiver with no colon, followed by ⟧",
+      "match": "(?<=\\s)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*⟧)",
+      "captures": {
+        "1": { "name": "entity.name.function.selector.unary.smalltalk" }
+      }
+    }
+  }
+}
