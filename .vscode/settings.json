@@ -1,6 +1,7 @@
 {
   "javascript.validate.enable": false,
   "editor.semanticHighlighting.enabled": false,
+  "editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?⟦⟧",
   "editor.tokenColorCustomizations": {
     "textMateRules": [
       {

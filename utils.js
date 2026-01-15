@@ -162,3 +162,103 @@ extractCircle = function(circPathElt) {
   const r = cy-ty;
   return {cx, cy, r};
 }
+
+// TY Claude
+function isPointInPolygon(pt, poly) {
+  const [x,y] = pt;
+  let inside = false;
+  // Cast a ray from the point to the right (along +x direction)
+  // Count how many times it crosses polygon edges
+  for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
+    // each poly edge [i,j] = [0,-1], [1,0], [2,1], etc...
+    const [xi,yi] = poly[i]; const [xj,yj] = poly[j];
+    // Check if the edge crosses the horizontal ray from the point
+    // The edge must:
+    // 1. Have one vertex above and one below the point's y coordinate
+    // 2. Intersect the ray to the right of the point
+    const ray_y_from_i = y - yi;
+    const j_y_from_i = yj - yi;
+    const j_x_from_i = xj - xi;
+    const edge_x_per_y = j_x_from_i / j_y_from_i;
+    const isect_x_from_i = ray_y_from_i * edge_x_per_y;
+    const isect_x = xi + isect_x_from_i;
+    const mightIntersect = (yi > y) !== (yj > y);
+    const intersect = mightIntersect && isect_x > x;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function closest_pt_on_line_seg(pt, seg_p1, seg_p2) {
+  const p1_to_pt = vsub(pt, seg_p1);
+  const p1_to_p2 = vsub(seg_p2, seg_p1);
+  let pt_proj_0_to_1 = vdot(p1_to_pt,p1_to_p2) / vdot(p1_to_p2,p1_to_p2);
+  pt_proj_0_to_1 = Math.min(Math.max(pt_proj_0_to_1, 0), 1); // Clamp [0,1]
+  const closest_pt = vadd(seg_p1, vmul(pt_proj_0_to_1, p1_to_p2));
+  return closest_pt;
+}
+
+function distance2_pt_to_line_seg(pt, seg_p1, seg_p2) {
+  const p = closest_pt_on_line_seg(pt, seg_p1, seg_p2);
+  const pt_to_p = vsub(p, pt);
+  return vdot(pt_to_p, pt_to_p);
+}
+
+function distance2_line_seg_to_seg(seg1_p1, seg1_p2, seg2_p1, seg2_p2) {
+  const seg1_p1_to_seg2 = distance2_pt_to_line_seg(seg1_p1, seg2_p1, seg2_p2);
+  const seg1_p2_to_seg2 = distance2_pt_to_line_seg(seg1_p2, seg2_p1, seg2_p2);
+  return Math.min(seg1_p1_to_seg2, seg1_p2_to_seg2);
+}
+
+function closest_line_seg_to_pt(pt, segs) {
+  let min_dist2_so_far = Infinity;
+  let closest_seg_so_far = null;
+  for (const seg of segs) {
+    const d2 = distance2_pt_to_line_seg(pt, seg[0], seg[1]);
+    if (d2 < min_dist2_so_far) {
+      min_dist2_so_far = d2;
+      closest_seg_so_far = seg;
+    }
+  }
+  return closest_seg_so_far;
+}
+
+function distance2_line_segs_to_segs(segs1, segs2) {
+  let min_dist2_so_far = Infinity;
+  for (const seg1 of segs1) {
+    for (const seg2 of segs2) {
+      const d2 = distance2_line_seg_to_seg(seg1[0], seg1[1], seg2[0], seg2[1]);
+      if (d2 < min_dist2_so_far) min_dist2_so_far = d2;
+    }
+  }
+  return min_dist2_so_far;
+}
+
+function explode_poly_segs(points, closed=true) {
+  const segs = [];
+  for (let i=1; i<points.length; i++) {
+    segs.push([points[i-1], points[i]]);
+  }
+  if (closed) segs.push([last(points), points[0]]);
+  return segs;
+}
+
+polyFromPath = function(cmds) {
+  const vertices = [ [0,0] ];
+  const penPos = (newPos) => {
+    if (newPos) vertices[vertices.length-1] = newPos;
+    else return vertices[vertices.length-1];
+  }
+  const penPosRel = (delta) => {
+    vertices[vertices.length-1] = vadd(vertices[vertices.length-1], delta);
+  }
+  cmds.forEach(([c,v]) => {
+    switch (c) {
+      case 'M': penPos(v); break;
+      case 'm': penPosRel(v); break;
+      case 'L': vertices.push(v); break;
+      case 'l': vertices.push(vadd(last(vertices),v)); break;
+    }
+  });
+  return vertices;
+}

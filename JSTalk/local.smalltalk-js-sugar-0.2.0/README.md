@@ -37,6 +37,7 @@ Add to your `settings.json`:
 ```json
 "javascript.validate.enable": false,
 "editor.semanticHighlighting.enabled": false,
+"editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?⟦⟧",
 "editor.tokenColorCustomizations": {
   "textMateRules": [
     {

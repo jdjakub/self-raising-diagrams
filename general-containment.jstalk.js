@@ -4,7 +4,7 @@ vtables = { byTag: {}, };
 // e.g. send(rectElem, 'doSomething:', blah1, 'with:', blah2, 'and:', blah3)
 // = sendNoKw(rectElem, 'doSomething:with:and:', blah1, blah2, blah3)
 // NOTE: JSTalk macro syntactic sugar
-//   send(rectElem, 'doSomething:', blah1, 'with:', blah2, 'and:', blah3)
+//   ⟦ rectElem doSomething: blah1 with: blah2 and: blah3 ⟧
 // should expand (jstalk2js.pl) into the above send().
 // BTW: the VS Code extension.js auto-replaces [[ -> ⟦ and ]] -> ⟧ as you type
 // If the sugar isn't working for you, just work with the verbose .js output file
@@ -51,7 +51,7 @@ vtables.domNode = {
     // TODO: pull in + exec any red boxes on demand!?
     let id = attr(self, 'id');
     if (!id) {
-      const prefix = send(self, 'idPrefix');
+      const prefix = ⟦self idPrefix⟧;
       id = prefix+(nextId++);
       attr(self, 'id', id);
     }
@@ -71,9 +71,9 @@ vtables.domNode = {
     return l<x && x<r && t<y && y<b;
   },
   ['encloses:']: (self, other) => {
-    const otherVs = send(other, 'vertices'); // SMELL convex polys only
+    const otherVs = ⟦other vertices⟧; // SMELL convex polys only
     for (const v of otherVs) {
-      if (!send(self, 'containsPt:', v)) return false;
+      if (!⟦self containsPt: v⟧) return false;
     }
     return true;
   },
@@ -87,24 +87,24 @@ vtables.domNode = {
     // I want to find my least / tightest container
     let container = null; // Infinitely big initial container
     elems.filter(other => self !== other).forEach(other => {
-      const rivalExists = send(other, 'encloses:', self);
+      const rivalExists = ⟦other encloses: self⟧;
       if (rivalExists) {
         const rival = other;
         // If the rival sits within my current tightest container, rival is tighter
-        if (container === null || send(container, 'encloses:', rival)) container = rival;
+        if (container === null || ⟦container encloses: rival⟧) container = rival;
       }
     });
     if (container) {
-      addSetAttr(container.dataset, 'contains', send(self, 'id'));
-      self.dataset.containedIn = send(container, 'id');
+      addSetAttr(container.dataset, 'contains', ⟦self id⟧);
+      self.dataset.containedIn = ⟦container id⟧;
     }
   },
   ['specialize']: (self) => null,
   ['localRoot']: (self) => self,
   ['reroot']: (self) => { // Given: containedIn
     let soonToBeParent = byId(self.dataset.containedIn);
-    const parentRoot = send(soonToBeParent, 'localRoot');
-    const myRoot = send(self, 'localRoot');
+    const parentRoot = ⟦soonToBeParent localRoot⟧;
+    const myRoot = ⟦self localRoot⟧;
     parentRoot.appendChild(myRoot);
   },
 };
@@ -129,15 +129,15 @@ vtables.byTag['path'] = {
     return [pt.x, pt.y];
   },
   ['encloses:']: (self, other) => {
-    if (!send(self, 'isClosed')) return false;
+    if (!⟦self isClosed⟧) return false;
     else return vtables.domNode['encloses:'](self, other); // HACK supersend
   },
   ['specialize']: (self) => {
     let newTag = null;
-    if (!send(self, 'isCurved')) { // => Polygon | Polyline
-      const polyPts = polyFromPath(send(self, 'commands')).map(v => v.join(',')).join(' ');
+    if (!⟦self isCurved⟧) { // => Polygon | Polyline
+      const polyPts = polyFromPath(⟦self commands⟧).map(v => v.join(',')).join(' ');
       attr(self, 'points', polyPts);
-      newTag = send(self, 'isClosed')? 'polygon' : 'polyline';
+      newTag = ⟦self isClosed⟧? 'polygon' : 'polyline';
     } else {
       // SMELL: duped from normalizeCircles
       const params = extractCircle(self);
@@ -154,9 +154,9 @@ vtables.byTag['path'] = {
     return null;
   },
   ['localRoot']: (self) => self.parentElement,
-  ['parseAsConnector']: (self) => {
+  ['parseAsConnector']: (self) => { // SMELL DOM stuff shouldn't know about diagram semantics
     const arrow = { vtable: 'Arrow' }; // HACK constructors
-    send(arrow, 'initFromDOM:', self);
+    ⟦arrow initFromDOM: self⟧;
     return arrow;
   },
 };
@@ -174,9 +174,9 @@ vtables['Arrow'] = {
       be parsed as a connector: just determine the two endpoints.
     */
     self.dom = path; // Now I will inherit all messages
-    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
-    const endpoints = [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
-    const lroot = send(self, 'localRoot');
+    if (⟦self isClosed⟧) throw [self, 'must not be closed!'];
+    const endpoints = [ ⟦self pointAtFrac: 0⟧, ⟦self pointAtFrac: 1⟧ ];
+    const lroot = ⟦self localRoot⟧;
     const arrowheads = Array.from(lroot.querySelectorAll('g'));
     let arrowheadIndex = null;
     if (arrowheads.length === 1) {
@@ -193,7 +193,7 @@ vtables['Arrow'] = {
       for (topmost of elems) {
         if (!lroot.contains(topmost)) break;
       }
-      if (topmost && topmost !== svg_parent) return send(topmost, 'id');
+      if (topmost && topmost !== svg_parent) return ⟦topmost id⟧;
     });
     if (arrowheadIndex !== null) {
       self.dom.dataset.origin = connectionIds[1-arrowheadIndex];
@@ -202,6 +202,10 @@ vtables['Arrow'] = {
       self.dom.dataset.connects = connectionIds.join(' ');
     }
   },
+  // Arrow >> claimLabel
+  //   labels := all('.is-paragraph:not(.is-multiline)').
+  //   label := labels minimizing: [ :l | self originPt distanceTo: l ].
+  //   self label: label.
 }
 
 vtables.byTag['polyline'] = {
@@ -213,7 +217,7 @@ vtables.byTag['polyline'] = {
   ['isClosed']: () => false,
   ['isCurved']: () => false,
   ['commands']: (self) => {
-    let vs = send(self, 'vertices');
+    let vs = ⟦self vertices⟧;
     vs = vs.map(v => ['L', v]);
     vs[0][0] = 'M';
     return vs;
@@ -227,7 +231,7 @@ vtables.byTag['polygon'] = {
   ['isClosed']: () => true,
   ['specialize']: (self) => {
     let newTag = null;
-    const vertices = send(self, 'vertices');
+    const vertices = ⟦self vertices⟧;
     if (vertices.length === 4) {
       const [tl,tr,br,bl] = vertices;
       // NB: requires axis-aligned and clockwise starting from top-left
@@ -245,7 +249,7 @@ vtables.byTag['polygon'] = {
     return null;
   },
   ['containsPt:']: (self, pt) => {
-    const vs = send(self, 'vertices');
+    const vs = ⟦self vertices⟧;
     return isPointInPolygon(pt, vs);
   },
   ['encloses:']: vtables.domNode['encloses:'], // HACK super?
@@ -262,7 +266,7 @@ vtables.byTag['rect'] = {
   ['parseAsExecutable']: (self) => {
     // Check for executable boxes
     if (self.style.stroke === 'rgb(208, 2, 27)') {
-      const lroot = send(self, 'localRoot');
+      const lroot = ⟦self localRoot⟧;
       const paras = Array.from(lroot.querySelectorAll('.is-paragraph'));
       let done = true;
       paras.forEach(p => {
@@ -370,39 +374,39 @@ e = {};
 function init() {
   const paths = all('path.real');
   let elems = paths.concat(all('polygon'));
-  elems = elems.concat(all('g').filter(g => send(g, 'parseAsParagraph')));
+  elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
   elems.forEach((el) => {
     let newEl = el;
     let max_iter = 10;
     do { // max specialize
       el = newEl;
-      newEl = send(el, 'specialize');
+      newEl = ⟦el specialize⟧;
       max_iter--;
     } while (max_iter > 0 && newEl);
-    e[ send(el, 'id') ] = el;
+    e[ ⟦el id⟧ ] = el;
   });
 
   elems = Object.values(e);
-  elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
+  elems.forEach(el => ⟦el findTightestContainerIn: elems⟧);
   
   // MUCH nicer than makeDOMReflectContainmentTree
   all('[data-contained-in]').forEach(child => {
-    send(child, 'reroot');
+    ⟦child reroot⟧;
     delete child.dataset.containedIn;
   });
   all('[data-contains]').forEach(e => {
     delete e.dataset.contains;
   });
 
-  all('rect').forEach(r => send(r, 'parseAsExecutable'));
-  all('.sets-id').forEach(p => send(p, 'execute'));
-  all('.adds-class').forEach(p => send(p, 'execute'));
-  all('.is-code').forEach(p => send(p, 'execute'));
-  all('rect').forEach(r => send(r, 'parseAsExecutable'));
+  all('rect').forEach(r => ⟦r parseAsExecutable⟧);
+  all('.sets-id').forEach(p => ⟦p execute⟧);
+  all('.adds-class').forEach(p => ⟦p execute⟧);
+  all('.is-code').forEach(p => ⟦p execute⟧);
+  all('rect').forEach(r => ⟦r parseAsExecutable⟧);
   //all('.done').forEach(e => e.remove());
 
-  all('polyline').forEach(l => send(l, 'parseAsConnector'));
-  all('path.real').forEach(l => send(l, 'parseAsConnector'));
+  all('polyline').forEach(l => ⟦l parseAsConnector⟧);
+  all('path.real').forEach(l => ⟦l parseAsConnector⟧);
 
   return elems.length;
 }
@@ -425,7 +429,7 @@ Premature commitment to the specific DOM. Want something more like:
 (package boxGraph)
 
 Arrow >> claimLabel
-  labels := all('.is-paragraph').
+  labels := all('.is-paragraph:not(.is-multiline)').
   label := labels minimizing: [ :l | self originPt distanceTo: l ].
   self label: label.
 
