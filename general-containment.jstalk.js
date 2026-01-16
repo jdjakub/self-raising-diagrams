@@ -26,6 +26,7 @@ send = function(recv, ...pairs) {
 sendNoKw = function(recv, selector, ...args) {
   let vtable;
   if (recv.tagName) vtable = vtables.byTag[recv.tagName];
+  else if (recv instanceof Array && recv.length === 2) vtable = vtables.point;
   else if (typeof recv.vtable === 'string') vtable = vtables[recv.vtable];
   else vtable = recv.vtable;
   let method;
@@ -41,6 +42,17 @@ sendNoKw = function(recv, selector, ...args) {
   }
   return method(recv, ...args);
 }
+
+vtables.point = {
+  ['distanceTo:']: (self, other) => {
+    if (other instanceof Array && other.length === 2) {
+      return Math.sqrt(dist2(self, other));
+    } else { // Assumes < domNode
+      const closest = closest_line_seg_to_pt(self, ⟦other lineSegments⟧);
+      return Math.sqrt(distance2_pt_to_line_seg(self, ...closest));
+    }
+  }
+};
 
 nextId = 1;
 
@@ -81,6 +93,12 @@ vtables.domNode = {
     const bb = self.getBBox(); // SMELL duped
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
     return [ [l,t], [r,t], [r,b], [l,b] ];
+  },
+  ['isClosed']: (self) => true,
+  ['lineSegments']: (self) => explode_poly_segs(⟦self vertices⟧, ⟦self isClosed⟧),
+  ['distanceTo:']: (self, other) => {
+    if (other instanceof Array) return ⟦other distanceTo: self⟧;
+    return Math.sqrt(distance2_line_segs_to_segs(⟦self lineSegments⟧, ⟦other lineSegments⟧));
   },
   ['findTightestContainerIn:']: (self, elems) => { // -> containedIn
     // MUCH nicer code than annotateAllContainments plus treeifyContainments
@@ -161,8 +179,20 @@ vtables.byTag['path'] = {
   },
 };
 
-vtables['Arrow'] = {
+// TODO: Properly belongs under package BoxGraph or something
+vtables['BoxGraph-Common'] = {
+  // Wrap underlying DOM element and inherit its methods
   ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
+  ['label:']: (self, labelPara) => {
+    self.dom.dataset.label = ⟦labelPara id⟧;
+    labelPara.dataset.labelFor = ⟦self id⟧;
+  },
+}
+
+// TODO: Properly belongs under package BoxGraph or something
+vtables['Arrow'] = {
+  _parent: vtables['BoxGraph-Common'],
+
   ['initFromDOM:']: (self, path) => {
     /* In DOMMeta terms, a Mathcha arrow is recognised something like:
      * g .arrow-line {
@@ -187,6 +217,7 @@ vtables['Arrow'] = {
       else arrowheadIndex = 1;
       endpoints[arrowheadIndex] = pt;
     }
+    self.endpoints = endpoints; // cache on self
     const connectionIds = endpoints.map(([x,y]) => {
       const elems = document.elementsFromPoint(x,y);
       let topmost = null;
@@ -198,14 +229,24 @@ vtables['Arrow'] = {
     if (arrowheadIndex !== null) {
       self.dom.dataset.origin = connectionIds[1-arrowheadIndex];
       self.dom.dataset.target = connectionIds[arrowheadIndex];
+      self.arrowheadIndex = arrowheadIndex; // cache on self
     } else {
       self.dom.dataset.connects = connectionIds.join(' ');
     }
+  },
+  ['originPt']: (self) => {
+    if (self.arrowheadIndex === undefined) throw ['Connector is undirected', self];
+    return self.endpoints[1-self.arrowheadIndex];
   },
   // Arrow >> claimLabel
   //   labels := all('.is-paragraph:not(.is-multiline)').
   //   label := labels minimizing: [ :l | self originPt distanceTo: l ].
   //   self label: label.
+  ['claimLabel']: (self) => {
+    const labels = all('.is-paragraph:not(.is-multiline)');
+    const label = labels.thatWhichMinimizes(l => ⟦⟦self originPt⟧ distanceTo: l⟧);
+    ⟦self label: label⟧;
+  },
 }
 
 vtables.byTag['polyline'] = {
@@ -284,6 +325,31 @@ vtables.byTag['rect'] = {
       if (done) self.classList.add('done');
     }
     return false;
+  },
+  ['parseAsBox']: (self) => { // SMELL DOM stuff shouldn't know about diagram semantics
+    const box = { vtable: 'Box' }; // HACK constructors
+    ⟦box initFromDOM: self⟧;
+    return box;
+  },
+}
+
+// TODO: Properly belongs under package BoxGraph or something
+vtables['Box'] = {
+  _parent: vtables['BoxGraph-Common'],
+
+  ['initFromDOM:']: (self, rect) => {
+    self.dom = rect; // Yup, that's it
+  },
+  // Box >> claimLabel
+  //    labels := all('.is-paragraph:not(.is-multiline):not([data-label-for])').
+  //    label := (labels outside: self) minimizing: [ :l | self distanceTo: l ].
+  //    self label: label.
+  ['claimLabel']: (self) => {
+    const labels = all('.is-paragraph:not(.is-multiline):not([data-label-for])');
+    const outerLabels = labels.filter(l => !⟦self encloses: l⟧);
+    const labelDists = outerLabels.map(l => [l, ⟦self distanceTo: l⟧]);
+    const [label] = labelDists.filter(([l,d]) => d < 20).thatWhichMinimizes(([l,d]) => d);
+    if (label) ⟦self label: label⟧;
   },
 }
 
@@ -405,36 +471,53 @@ function init() {
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
   //all('.done').forEach(e => e.remove());
 
-  all('polyline').forEach(l => ⟦l parseAsConnector⟧);
-  all('path.real').forEach(l => ⟦l parseAsConnector⟧);
-
   return elems.length;
 }
 
-/*
-To support boxGraph:
+// Run on boxGraph-example.svg after init()
+parseBoxGraph = function() {
+  arrows = [];
+  all('polyline') .forEach(l => arrows.push(⟦l parseAsConnector⟧));
+  all('path.real').forEach(l => arrows.push(⟦l parseAsConnector⟧));
+  arrows.forEach(arr => ⟦arr claimLabel⟧);
 
-vtables.path['claimLabel'] = (self) => {
-  
+  all('rect').forEach(r => {
+    ⟦⟦r parseAsBox⟧ claimLabel⟧;
+  });
+
+  generateJSOG();
 }
 
+generateJSOG = function() {
+  log('Generating JS object graph.');
+  all('rect').forEach(r => {
+    const obj = {};
+    const labelId = r.dataset.label;
+    if (labelId) {
+      const label = byId(labelId);
+      obj.name = label.dataset.string;
+    }
+    r.obj = obj;
+  });
+  all('.connection[data-label]').forEach(arr => {
+    const label = byId(arr.dataset.label).dataset.string;
+    const origin = byId(arr.dataset.origin).obj;
+    const target = byId(arr.dataset.target).obj;
+    origin[label] = target;  
+  });
+  
+  objs = {};
+  nextObj = 1;
+  ensureName = str => str ? str : 'anon'+(nextObj++);
+  all('rect').forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
+}
+
+/*
 In order for a generic shape (1D/2D) to claim a label, we want to use
 a context-specific shape as proxy. E.g. for boxGraph, a 1D arrow claims
 the closest label to its *origin point* (0D). Meanwhile, a 2D box claims
 the closest label to its entire shape. Afterwards, max distances or further
 restrictions are applied.
 
-Premature commitment to the specific DOM. Want something more like:
-
-(package boxGraph)
-
-Arrow >> claimLabel
-  labels := all('.is-paragraph:not(.is-multiline)').
-  label := labels minimizing: [ :l | self originPt distanceTo: l ].
-  self label: label.
-
-Box >> claimLabel
-  labels := all('.is-paragraph:not([data-label-for])').
-  label := (labels outside: self) minimizing: [ :l | self distanceTo: l ].
-  self label: label.
+Don't prematurely commit to the specific DOM.
 */

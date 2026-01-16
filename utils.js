@@ -262,3 +262,12 @@ polyFromPath = function(cmds) {
   });
   return vertices;
 }
+
+Array.prototype.thatWhichMinimizes = function(funcToMinimize) {
+  let min_so_far = [null,Infinity];
+  for (let x of this) {
+    const value = funcToMinimize(x);
+    if (value < min_so_far[1]) min_so_far = [x,value];
+  }
+  return min_so_far[0];
+}
