@@ -322,7 +322,10 @@ vtables.byTag['g'] = {
     if (self.classList.contains('sets-id')) {
       // #myId para sets container id=myId and self-deletes
       // SMELL what if new ID already in use
-      parent_focus.id = str.substring(1); 
+      const newId = str.substring(1);
+      const clash = byId(newId);
+      if (clash) clash.id = parent_focus.id;
+      parent_focus.id = newId;
       self.classList.add('done');
     } else if (self.classList.contains('adds-class')) {
       // .myClass line adds myClass to container and self-deletes
