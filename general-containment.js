@@ -80,7 +80,7 @@ vtables.domNode = {
   ['containsPt:']: (self, [x,y]) => {
     const bb = self.getBBox();
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
-    return l<x && x<r && t<y && y<b;
+    return l<=x && x<=r && t<=y && y<=b;
   },
   ['encloses:']: (self, other) => {
     const otherVs = send(other, 'vertices'); // SMELL convex polys only
@@ -172,82 +172,7 @@ vtables.byTag['path'] = {
     return null;
   },
   ['localRoot']: (self) => self.parentElement,
-  ['parseAsConnector']: (self) => { // SMELL DOM stuff shouldn't know about diagram semantics
-    const arrow = { vtable: 'Arrow' }; // HACK constructors
-    send(arrow, 'initFromDOM:', self);
-    return arrow;
-  },
 };
-
-// TODO: Properly belongs under package BoxGraph or something
-vtables['BoxGraph-Common'] = {
-  // Wrap underlying DOM element and inherit its methods
-  ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
-  ['label:']: (self, labelPara) => {
-    self.dom.dataset.label = send(labelPara, 'id');
-    labelPara.dataset.labelFor = send(self, 'id');
-  },
-}
-
-// TODO: Properly belongs under package BoxGraph or something
-vtables['Arrow'] = {
-  _parent: vtables['BoxGraph-Common'],
-
-  ['initFromDOM:']: (self, path) => {
-    /* In DOMMeta terms, a Mathcha arrow is recognised something like:
-     * g .arrow-line {
-         path .connection .real :shaft ,
-         ( g { path :head1 } ) ? ,
-         ( g { path :head2 } ) ?
-       }
-      But remember: we also have "fat arrows". Generally, any shape can
-      be parsed as a connector: just determine the two endpoints.
-    */
-    self.dom = path; // Now I will inherit all messages
-    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
-    const endpoints = [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
-    const lroot = send(self, 'localRoot');
-    const arrowheads = Array.from(lroot.querySelectorAll('g'));
-    let arrowheadIndex = null;
-    if (arrowheads.length === 1) {
-      const m = arrowheads[0].transform.baseVal[0].matrix;
-      const pt = [m.e, m.f];
-      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
-      if (d0 < d1) arrowheadIndex = 0;
-      else arrowheadIndex = 1;
-      endpoints[arrowheadIndex] = pt;
-    }
-    self.endpoints = endpoints; // cache on self
-    const connectionIds = endpoints.map(([x,y]) => {
-      const elems = document.elementsFromPoint(x,y);
-      let topmost = null;
-      for (topmost of elems) {
-        if (!lroot.contains(topmost)) break;
-      }
-      if (topmost && topmost !== svg_parent) return send(topmost, 'id');
-    });
-    if (arrowheadIndex !== null) {
-      self.dom.dataset.origin = connectionIds[1-arrowheadIndex];
-      self.dom.dataset.target = connectionIds[arrowheadIndex];
-      self.arrowheadIndex = arrowheadIndex; // cache on self
-    } else {
-      self.dom.dataset.connects = connectionIds.join(' ');
-    }
-  },
-  ['originPt']: (self) => {
-    if (self.arrowheadIndex === undefined) throw ['Connector is undirected', self];
-    return self.endpoints[1-self.arrowheadIndex];
-  },
-  // Arrow >> claimLabel
-  //   labels := all('.is-paragraph:not(.is-multiline)').
-  //   label := labels minimizing: [ :l | self originPt distanceTo: l ].
-  //   self label: label.
-  ['claimLabel']: (self) => {
-    const labels = all('.is-paragraph:not(.is-multiline)');
-    const label = labels.thatWhichMinimizes(l => send(send(self, 'originPt'), 'distanceTo:', l));
-    send(self, 'label:', label);
-  },
-}
 
 vtables.byTag['polyline'] = {
   _parent: vtables.byTag['path'],
@@ -264,6 +189,7 @@ vtables.byTag['polyline'] = {
     return vs;
   },
   ['encloses:']: () => false,
+  ['specialize']: () => null,
 };
 
 vtables.byTag['polygon'] = {
@@ -325,31 +251,6 @@ vtables.byTag['rect'] = {
       if (done) self.classList.add('done');
     }
     return false;
-  },
-  ['parseAsBox']: (self) => { // SMELL DOM stuff shouldn't know about diagram semantics
-    const box = { vtable: 'Box' }; // HACK constructors
-    send(box, 'initFromDOM:', self);
-    return box;
-  },
-}
-
-// TODO: Properly belongs under package BoxGraph or something
-vtables['Box'] = {
-  _parent: vtables['BoxGraph-Common'],
-
-  ['initFromDOM:']: (self, rect) => {
-    self.dom = rect; // Yup, that's it
-  },
-  // Box >> claimLabel
-  //    labels := all('.is-paragraph:not(.is-multiline):not([data-label-for])').
-  //    label := (labels outside: self) minimizing: [ :l | self distanceTo: l ].
-  //    self label: label.
-  ['claimLabel']: (self) => {
-    const labels = all('.is-paragraph:not(.is-multiline):not([data-label-for])');
-    const outerLabels = labels.filter(l => !send(self, 'encloses:', l));
-    const labelDists = outerLabels.map(l => [l, send(self, 'distanceTo:', l)]);
-    const [label] = labelDists.filter(([l,d]) => d < 20).thatWhichMinimizes(([l,d]) => d);
-    if (label) send(self, 'label:', label);
   },
 }
 
@@ -474,18 +375,145 @@ function init() {
   return elems.length;
 }
 
+/*
+In order for a generic shape (1D/2D) to claim a label, we want to use
+a context-specific shape as proxy. E.g. for boxGraph, a 1D arrow claims
+the closest label to its *origin point* (0D). Meanwhile, a 2D box claims
+the closest label to its entire shape. Afterwards, max distances or further
+restrictions are applied.
+
+Don't prematurely commit to the specific DOM.
+*/
+
+// === BoxGraph SEMANTIC LAYER ===
+// TODO: reify package BoxGraph
+
+vtables['BoxGraph-Common'] = {
+  // Wrap underlying DOM element and inherit its methods
+  ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
+  ['label:']: (self, labelPara) => {
+    self.dom.dataset.label = send(labelPara, 'id');
+    labelPara.dataset.labelFor = send(self, 'id');
+  },
+}
+
+vtables['Box'] = {
+  _parent: vtables['BoxGraph-Common'],
+
+  ['initFromDOM:']: (self, rect) => {
+    self.dom = rect; // Yup, that's it
+    self.domContainer = rect.parentElement; // Target of all CSS queries
+  },
+  // Box >> claimLabel
+  //    labels := all('.is-paragraph:not(.is-multiline):not([data-label-for])').
+  //    label := (labels outside: self) minimizing: [ :l | self distanceTo: l ].
+  //    self label: label.
+  ['claimLabel']: (self) => {
+    const labels = all('.is-paragraph:not(.is-multiline):not([data-label-for])');
+    const outerLabels = labels.filter(l => !send(self, 'encloses:', l));
+    const labelDists = outerLabels.map(l => [l, send(self, 'distanceTo:', l)]).filter(([l,d]) => d < 20);
+    if (labelDists.length > 0) {
+      const [label] = labelDists.thatWhichMinimizes(([l,d]) => d);
+      if (label) send(self, 'label:', label);
+    }
+  },
+  ['at:']: (self, name) => {
+    const g = self.domContainer.querySelector('[data-string="'+name+'"]');
+    if (g && g.dataset.labelFor) {
+      const arrow = byId(g.dataset.labelFor);
+      if (arrow && arrow.dataset.target) {
+        const target = byId(arrow.dataset.target); // Follow the arrow
+        if (target) return target;
+      }
+    }
+    return null;
+  }
+}
+
+vtables['Arrow'] = {
+  _parent: vtables['BoxGraph-Common'],
+
+  ['initFromDOM:']: (self, path) => {
+    /* In DOMMeta terms, a Mathcha arrow is recognised something like:
+     * g .arrow-line {
+         path .connection .real :shaft ,
+         ( g { path :head1 } ) ? ,
+         ( g { path :head2 } ) ?
+       }
+      But remember: we also have "fat arrows". Generally, any shape can
+      be parsed as a connector: just determine the two endpoints.
+    */
+    self.dom = path; // Now I will inherit all messages
+    path.arrow = self; // backlink
+    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
+    const endpoints = [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
+    const lroot = send(self, 'localRoot');
+    const arrowheads = Array.from(lroot.querySelectorAll('g'));
+    let arrowheadIndex = null;
+    if (arrowheads.length === 1) {
+      const m = arrowheads[0].transform.baseVal[0].matrix;
+      const pt = [m.e, m.f];
+      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
+      if (d0 < d1) arrowheadIndex = 0;
+      else arrowheadIndex = 1;
+      endpoints[arrowheadIndex] = pt;
+    }
+    self.endpoints = endpoints; // cache on self
+    const connectionIds = endpoints.map(([x,y]) => {
+      const elems = document.elementsFromPoint(x,y);
+      let topmost = null;
+      for (topmost of elems) {
+        if (!lroot.contains(topmost)) break;
+      }
+      if (topmost && topmost !== svg_parent) return send(topmost, 'id');
+    });
+    if (arrowheadIndex !== null) {
+      self.dom.dataset.origin = connectionIds[1-arrowheadIndex];
+      self.dom.dataset.target = connectionIds[arrowheadIndex];
+      self.arrowheadIndex = arrowheadIndex; // cache on self
+    } else {
+      self.dom.dataset.connects = connectionIds.join(' ');
+    }
+  },
+  ['originPt']: (self) => {
+    if (self.arrowheadIndex === undefined) return null;
+    return self.endpoints[1-self.arrowheadIndex];
+  },
+  // Arrow >> claimLabel
+  //   labels := all('.is-paragraph:not(.is-multiline)').
+  //   label := labels minimizing: [ :l | self originPt distanceTo: l ].
+  //   self label: label.
+  ['claimLabel']: (self) => {
+    const labels = all('.is-paragraph:not(.is-multiline)');
+    const label = labels.thatWhichMinimizes(l => send(send(self, 'originPt'), 'distanceTo:', l));
+    send(self, 'label:', label);
+  },
+}
+
+vtables.byTag['rect']['parseAsBox'] = (self) => {
+  const box = { vtable: 'Box' }; // HACK constructors
+  send(box, 'initFromDOM:', self);
+  return box;
+}
+
+vtables.byTag['path']['parseAsConnector'] = (self) => {
+  const arrow = { vtable: 'Arrow' }; // HACK constructors
+  send(arrow, 'initFromDOM:', self);
+  return arrow;
+}
+
 // Run on boxGraph-example.svg after init()
 parseBoxGraph = function() {
   arrows = [];
   all('polyline') .forEach(l => arrows.push(send(l, 'parseAsConnector')));
   all('path.real').forEach(l => arrows.push(send(l, 'parseAsConnector')));
-  arrows.forEach(arr => send(arr, 'claimLabel'));
+  realArrows = arrows.filter(a => send(a, 'originPt') !== null);
+  realArrows.forEach(arr => send(arr, 'claimLabel'));
 
-  all('rect').forEach(r => {
-    send(send(r, 'parseAsBox'), 'claimLabel');
-  });
+  boxes = all('rect').map(r => send(r, 'parseAsBox'));
+  boxes.forEach(b => send(b, 'claimLabel'));
 
-  generateJSOG();
+  return generateJSOG();
 }
 
 generateJSOG = function() {
@@ -498,6 +526,10 @@ generateJSOG = function() {
       obj.name = label.dataset.string;
     }
     r.obj = obj;
+    const codePara = r.parentElement.querySelector('.is-multiline');
+    if (codePara) {
+      obj.code = codePara.dataset.string;
+    }
   });
   all('.connection[data-label]').forEach(arr => {
     const label = byId(arr.dataset.label).dataset.string;
@@ -510,14 +542,29 @@ generateJSOG = function() {
   nextObj = 1;
   ensureName = str => str ? str : 'anon'+(nextObj++);
   all('rect').forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
+  return objs;
 }
 
-/*
-In order for a generic shape (1D/2D) to claim a label, we want to use
-a context-specific shape as proxy. E.g. for boxGraph, a 1D arrow claims
-the closest label to its *origin point* (0D). Meanwhile, a 2D box claims
-the closest label to its entire shape. Afterwards, max distances or further
-restrictions are applied.
+// === IdObjModel SEMANTIC LAYER ===
 
-Don't prematurely commit to the specific DOM.
-*/
+vtables['Arrow']['checkIfSeparator'] = (self) => {
+  if (typeof self.arrowheadIndex === 'number') return false;
+  self.dom.classList.add('methods-are-below');
+  return true;
+}
+
+vtables['Box']['methodAt:'] = (self, name) => {
+  const method = send(self, 'at:', name);
+  // HACK duped from Box >> at:
+  const para = self.domContainer.querySelector('[data-string="'+name+'"]');
+  const separator = self.domContainer.querySelector('.methods-are-below');
+  if (!separator) throw [self, 'doesn\'t have methods'];
+  const pt_y = para.getBBox().y;
+  const y = separator.arrow.endpoints[0][1];
+  if (pt_y > y) return method; // methods live below separator
+  return null;
+}
+
+parseAsObjModel = function() {
+  arrows.forEach(a => send(a, 'checkIfSeparator'));
+}

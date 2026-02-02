@@ -165,7 +165,11 @@ extractCircle = function(circPathElt) {
 
 // TY Claude
 function isPointInPolygon(pt, poly) {
-  const [x,y] = pt;
+  // HACK! so that points ON the edge count as inside, suck point by epsilon towards center
+  const center = vmul(1/poly.length, poly.reduce((sum,v) => vadd(sum,v)));
+  const pt_to_center = vsub(center, pt);
+  const small_delta = vmul(0.00001, pt_to_center);
+  const [x,y] = vadd(pt, small_delta);
   let inside = false;
   // Cast a ray from the point to the right (along +x direction)
   // Count how many times it crosses polygon edges
@@ -183,7 +187,7 @@ function isPointInPolygon(pt, poly) {
     const isect_x_from_i = ray_y_from_i * edge_x_per_y;
     const isect_x = xi + isect_x_from_i;
     const mightIntersect = (yi > y) !== (yj > y);
-    const intersect = mightIntersect && isect_x > x;
+    const intersect = mightIntersect && isect_x >= x;
     if (intersect) inside = !inside;
   }
   return inside;
@@ -207,7 +211,8 @@ function distance2_pt_to_line_seg(pt, seg_p1, seg_p2) {
 function distance2_line_seg_to_seg(seg1_p1, seg1_p2, seg2_p1, seg2_p2) {
   const seg1_p1_to_seg2 = distance2_pt_to_line_seg(seg1_p1, seg2_p1, seg2_p2);
   const seg1_p2_to_seg2 = distance2_pt_to_line_seg(seg1_p2, seg2_p1, seg2_p2);
-  return Math.min(seg1_p1_to_seg2, seg1_p2_to_seg2);
+  const seg2_p1_to_seg1 = distance2_pt_to_line_seg(seg2_p1, seg1_p1, seg1_p2);
+  return Math.min(seg1_p1_to_seg2, seg1_p2_to_seg2, seg2_p1_to_seg1);
 }
 
 function closest_line_seg_to_pt(pt, segs) {
