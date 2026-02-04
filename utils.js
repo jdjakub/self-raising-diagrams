@@ -59,6 +59,19 @@ create_element = (tag, attrs, parent, namespace) => {
 // e.g. rect = svgel('rect', {x: 5, y: 5, width: 5, height: 5}, svg)
 svgel = (tag, attrs, parent) => create_element(tag, attrs, parent, 'http://www.w3.org/2000/svg');
 
+whereis = (pt_or_x,maybe_y) => {
+  let [cx,cy] = [pt_or_x, maybe_y];
+  if (cy === undefined) {
+    [cx,cy] = pt_or_x;
+  }
+  return svgel('circle', {cx, cy, r: 5, style: 'fill: magenta', class: 'debug-pt'});
+}
+
+inTopToBottomOrder = (a, b) => {
+  if (a === b) return 0;
+  return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1;
+}
+
 vadd = ([a, b], [c, d]) => [a+c, b+d];
 vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
@@ -275,4 +288,51 @@ Array.prototype.thatWhichMinimizes = function(funcToMinimize) {
     if (value < min_so_far[1]) min_so_far = [x,value];
   }
   return min_so_far[0];
+}
+
+// TY Claude
+function closestPointOnPath(path, [px,py], coarseSamples = 50, refinements = 10) {
+  const totalLength = path.getTotalLength();
+  
+  function distAt(t) {
+    const pt = path.getPointAtLength(t);
+    const dx = pt.x - px;
+    const dy = pt.y - py;
+    return dx * dx + dy * dy;
+  }
+  
+  // Coarse pass
+  let bestT = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i <= coarseSamples; i++) {
+    const t = (i / coarseSamples) * totalLength;
+    const dist = distAt(t);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestT = t;
+    }
+  }
+  
+  // Refine with golden section search
+  const phi = (1 + Math.sqrt(5)) / 2;
+  let lo = Math.max(0, bestT - totalLength / coarseSamples);
+  let hi = Math.min(totalLength, bestT + totalLength / coarseSamples);
+  
+  for (let i = 0; i < refinements; i++) {
+    const mid1 = hi - (hi - lo) / phi;
+    const mid2 = lo + (hi - lo) / phi;
+    if (distAt(mid1) < distAt(mid2)) {
+      hi = mid2;
+    } else {
+      lo = mid1;
+    }
+  }
+  
+  const finalT = (lo + hi) / 2;
+  const finalPt = path.getPointAtLength(finalT);
+  
+  return {
+    point: [finalPt.x, finalPt.y],
+    d2: distAt(finalT)
+  };
 }

@@ -36,7 +36,7 @@ sendNoKw = function(recv, selector, ...args) {
   } while (!method && vtable);
   if (!method && !vtable) {
     if (selector === 'doesNotUnderstand:')
-      throw ["Didn't understand: ",recv,selector,...args];
+      throw [recv," didn't understand: ",selector,...args];
     else
       return sendNoKw(recv, 'doesNotUnderstand:', [selector, ...args]);
   }
@@ -51,7 +51,15 @@ vtables.point = {
       const closest = closest_line_seg_to_pt(self, send(other, 'lineSegments'));
       return Math.sqrt(distance2_pt_to_line_seg(self, ...closest));
     }
-  }
+  },
+  ['insideWhichShapes:']: (self, shapes) =>
+    shapes.filter(s => send(s, 'containsPt:', self)).sort(inTopToBottomOrder),
+  ['pickFrom:']: (self, shapes) => {
+    shapes = send(self, 'insideWhichShapes:', shapes);
+    if (shapes.length > 0) return shapes[0];
+    else return null;
+  },
+  ['closestPointOn:']: (self, shape) => send(shape, 'closestPtToPt:', self),
 };
 
 nextId = 1;
@@ -71,8 +79,8 @@ vtables.domNode = {
   },
   ['idPrefix']: (self) => {
     let ret = {
-      'path': 'e', 'polygon': 'p', 'polyline': 'l',
-      'text': 't', 'circle': 'c', 'rect': 'r'
+      'path': 'e', 'polygon': 'p', 'polyline': 'pl',
+      'text': 't', 'circle': 'c', 'rect': 'r', 'line': 'l'
     }[self.tagName];
     if (!ret) ret = 'e';
     return ret;
@@ -125,6 +133,7 @@ vtables.domNode = {
     const myRoot = send(self, 'localRoot');
     parentRoot.appendChild(myRoot);
   },
+  ['atPoint:pickFrom:']: (self, pt, shapes) => send(pt, 'pickFrom:', shapes.filter(s => s !== self)),
 };
 
 vtables.byTag['path'] = {
@@ -145,6 +154,15 @@ vtables.byTag['path'] = {
     const total = self.getTotalLength();
     const pt = self.getPointAtLength(frac * total);
     return [pt.x, pt.y];
+  },
+  ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
+  ['containsPt:']: (self, pt) => {
+    if (!send(self, 'isClosed')) {
+      const {point, d2} = send(pt, 'closestPointOn:', self);
+      if (d2 < 4) return true;
+      return false;
+    }
+    throw "Should be overridden";
   },
   ['encloses:']: (self, other) => {
     if (!send(self, 'isClosed')) return false;
@@ -172,6 +190,20 @@ vtables.byTag['path'] = {
     return null;
   },
   ['localRoot']: (self) => self.parentElement,
+  ['endpoints']: (self) => {
+    if (send(self, 'isClosed')) return [];
+    return [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
+  },
+  ['connections']: (self) => {
+    if (self.dataset.connects) return self.dataset.connects.split(' ').map(byId);
+    if (self.dataset.origin && self.dataset.target
+      && self.dataset.origin !== 'nil' && self.dataset.target !== 'nil')
+      return [self.dataset.origin, self.dataset.target].map(byId);
+    const endpoints = send(self, 'endpoints');
+    const connections = endpoints.map(pt => send(self, 'atPoint:', pt, 'pickFrom:', Object.values(everything)));
+    self.dataset.connects = connections.map(c => send(c, 'id')).join(' ');
+    return connections;
+  },
 };
 
 vtables.byTag['polyline'] = {
@@ -189,6 +221,26 @@ vtables.byTag['polyline'] = {
     return vs;
   },
   ['encloses:']: () => false,
+  ['specialize']: (self) => {
+    let newTag = null;
+    const points = send(self, 'vertices');
+    if (points.length === 2) {
+      attr(self, {x1: points[0][0], y1: points[0][1], x2: points[1][0], y2: points[1][1]});
+      newTag = 'line';
+    }
+    if (newTag) {
+      self = replaceTag(self, newTag);
+      self.removeAttribute('points');
+      return self;
+    }
+    return null;
+  },
+};
+
+vtables.byTag['line'] = {
+  _parent: vtables.byTag['polyline'],
+
+  ['vertices']: (self) => [attrs(self, 'x1', 'y1'), attrs(self, 'x2', 'y2')],
   ['specialize']: () => null,
 };
 
@@ -340,8 +392,66 @@ vtables.byTag['g'] = {
   }
 }
 
-e = {};
+// Of a connector (open path) c, we must be able to ask:
+// c endpoints -> [p1, p2]
+// c connections -> [el1, el2]
+// c origin/target -> el or null
+
+// === MATHCHA ARROW SUPPORT ===
+
+/* In DOMMeta terms, a Mathcha arrow is recognised something like:
+  * g .arrow-line {
+      path .connection .real :shaft ,
+      ( g { path :head1 } ) ? ,
+      ( g { path :head2 } ) ?
+    }
+  But remember: we also have "fat arrows". Generally, any shape can
+  be parsed as a connector: just determine the two endpoints.
+  However, such "generalised connector" behaviour should probably not
+  live in Path.
+*/
+
+vtables.byTag['path']['target'] = (self) => {
+  if (self.dataset.target) return byId(self.dataset.target);
+  const endpoints = send(self, 'endpoints');
+  const lroot = send(self, 'localRoot');
+  const arrowheads = Array.from(lroot.querySelectorAll('g'));
+  let originPt = null;
+  let target = nilElem;
+  if (arrowheads.length === 1) {
+    const m = arrowheads[0].transform.baseVal[0].matrix;
+    const targetPt = [m.e, m.f];
+    const [d0,d1] = [dist2(targetPt,endpoints[0]), dist2(targetPt,endpoints[1])];
+    originPt = endpoints[d0 < d1 ? 1 : 0];
+    target = send(self, 'atPoint:', targetPt, 'pickFrom:', Object.values(everything));
+  }
+  self.dataset.origin = 'nil';
+  self.dataset.target = 'nil';
+  if (originPt) {
+    const origin = send(self, 'atPoint:', originPt, 'pickFrom:', Object.values(everything));
+    if (origin) {
+      self.dataset.origin = send(origin, 'id');
+      addSetAttr(origin.dataset, 'connectors', send(self, 'id'));
+    }
+  }
+  if (target) {
+    self.dataset.target = send(target, 'id');
+    addSetAttr(target.dataset, 'connectors', send(self, 'id'));
+  }
+  return target;
+}
+
+vtables.byTag['path']['origin'] = (self) => {
+  if (self.dataset.origin) return byId(self.dataset.origin);
+  send(self, 'target');
+  return byId(self.dataset.origin);
+}
+
+everything = {};
 function init() {
+  // First, ensure "nil" exists
+  nilElem = svgel('g', {id: 'nil'});
+
   const paths = all('path.real');
   let elems = paths.concat(all('polygon'));
   elems = elems.concat(all('g').filter(g => send(g, 'parseAsParagraph')));
@@ -353,10 +463,10 @@ function init() {
       newEl = send(el, 'specialize');
       max_iter--;
     } while (max_iter > 0 && newEl);
-    e[ send(el, 'id') ] = el;
+    everything[ send(el, 'id') ] = el;
   });
 
-  elems = Object.values(e);
+  elems = Object.values(everything);
   elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
   
   // MUCH nicer than makeDOMReflectContainmentTree
@@ -367,6 +477,11 @@ function init() {
   all('[data-contains]').forEach(e => {
     delete e.dataset.contains;
   });
+
+  /*
+  all('polyline') .forEach(l => arrows.push(send(l, 'parseAsConnector')));
+  all('path.real').forEach(l => arrows.push(send(l, 'parseAsConnector')));
+  */
 
   all('rect').forEach(r => send(r, 'parseAsExecutable'));
   all('.sets-id').forEach(p => send(p, 'execute'));
@@ -437,46 +552,8 @@ vtables['Arrow'] = {
   _parent: vtables['BoxGraph-Common'],
 
   ['initFromDOM:']: (self, path) => {
-    /* In DOMMeta terms, a Mathcha arrow is recognised something like:
-     * g .arrow-line {
-         path .connection .real :shaft ,
-         ( g { path :head1 } ) ? ,
-         ( g { path :head2 } ) ?
-       }
-      But remember: we also have "fat arrows". Generally, any shape can
-      be parsed as a connector: just determine the two endpoints.
-    */
     self.dom = path; // Now I will inherit all messages
     path.arrow = self; // backlink
-    if (send(self, 'isClosed')) throw [self, 'must not be closed!'];
-    const endpoints = [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
-    const lroot = send(self, 'localRoot');
-    const arrowheads = Array.from(lroot.querySelectorAll('g'));
-    let arrowheadIndex = null;
-    if (arrowheads.length === 1) {
-      const m = arrowheads[0].transform.baseVal[0].matrix;
-      const pt = [m.e, m.f];
-      const [d0,d1] = [dist2(pt,endpoints[0]), dist2(pt,endpoints[1])];
-      if (d0 < d1) arrowheadIndex = 0;
-      else arrowheadIndex = 1;
-      endpoints[arrowheadIndex] = pt;
-    }
-    self.endpoints = endpoints; // cache on self
-    const connectionIds = endpoints.map(([x,y]) => {
-      const elems = document.elementsFromPoint(x,y);
-      let topmost = null;
-      for (topmost of elems) {
-        if (!lroot.contains(topmost)) break;
-      }
-      if (topmost && topmost !== svg_parent) return send(topmost, 'id');
-    });
-    if (arrowheadIndex !== null) {
-      self.dom.dataset.origin = connectionIds[1-arrowheadIndex];
-      self.dom.dataset.target = connectionIds[arrowheadIndex];
-      self.arrowheadIndex = arrowheadIndex; // cache on self
-    } else {
-      self.dom.dataset.connects = connectionIds.join(' ');
-    }
   },
   ['originPt']: (self) => {
     if (self.arrowheadIndex === undefined) return null;

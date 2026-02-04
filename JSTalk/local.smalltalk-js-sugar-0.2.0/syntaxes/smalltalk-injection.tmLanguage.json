@@ -13,8 +13,8 @@
     },
     "keyword-message-send": {
       "name": "meta.message-send.smalltalk",
-      "comment": "Keyword message: ⟦receiver selector: arg⟧",
-      "begin": "(⟦)",
+      "comment": "Keyword message: ⟦receiver selector: arg⟧ - must contain at least one colon",
+      "begin": "(⟦)(?=[^⟧]*[a-zA-Z_][a-zA-Z0-9_]*:)",
       "beginCaptures": {
         "1": { "name": "punctuation.definition.message-send.begin.smalltalk" }
       },
@@ -25,6 +25,22 @@
       "patterns": [
         { "include": "#message-send" },
         { "include": "#keyword-selector" },
+        { "include": "source.js" }
+      ]
+    },
+    "unary-message-send": {
+      "name": "meta.message-send.smalltalk",
+      "comment": "Unary message: ⟦receiver selector⟧ - no colons",
+      "begin": "(⟦)(?![^⟧]*[a-zA-Z_][a-zA-Z0-9_]*:)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.message-send.begin.smalltalk" }
+      },
+      "end": "(⟧)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.message-send.end.smalltalk" }
+      },
+      "patterns": [
+        { "include": "#message-send" },
         { "include": "#unary-selector" },
         { "include": "source.js" }
       ]

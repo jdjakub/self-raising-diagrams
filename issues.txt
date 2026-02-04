@@ -68,6 +68,11 @@ There seem to be a few core semantics that are reasonable to expect across ALL d
 Uh - we also have "fat arrows". Generally, any shape can be parsed as a connector:
 just determine the two endpoints.
 
+Problem: ids are the main text-compatible way of doing references in the SVG DOM. They show
+up in singular attributes like data-origin and set attributes like "contains". If one wants to
+rename an ID, all reference sites will have to be updated. Will need some way to enumerate
+sites mentioning a particular ID.
+
 ------
 
 DOMMeta (Like OMeta but in the DOM tree)
