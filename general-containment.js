@@ -134,6 +134,10 @@ vtables.domNode = {
     parentRoot.appendChild(myRoot);
   },
   ['atPoint:pickFrom:']: (self, pt, shapes) => send(pt, 'pickFrom:', shapes.filter(s => s !== self)),
+  ['connectors']: (self) => {
+    if (self.dataset.connectors) return setAttrToArray(self.dataset.connectors).map(byId);
+    return [];
+  }
 };
 
 vtables.byTag['path'] = {
@@ -202,6 +206,8 @@ vtables.byTag['path'] = {
     const endpoints = send(self, 'endpoints');
     const connections = endpoints.map(pt => send(self, 'atPoint:', pt, 'pickFrom:', Object.values(everything)));
     self.dataset.connects = connections.map(c => send(c, 'id')).join(' ');
+    const myId = send(self, 'id');
+    connections.forEach(e => addSetAttr(e.dataset, 'connectors', myId))
     return connections;
   },
 };
@@ -274,6 +280,7 @@ vtables.byTag['polygon'] = {
   ['encloses:']: vtables.domNode['encloses:'], // HACK super?
 }
 
+MAGIC_RED = 'rgb(208, 2, 27)';
 vtables.byTag['rect'] = {
   _parent: vtables.byTag['polygon'],
 
@@ -284,7 +291,7 @@ vtables.byTag['rect'] = {
   ['specialize']: () => null,
   ['parseAsExecutable']: (self) => {
     // Check for executable boxes
-    if (self.style.stroke === 'rgb(208, 2, 27)') {
+    if (self.style.stroke === MAGIC_RED) {
       const lroot = send(self, 'localRoot');
       const paras = Array.from(lroot.querySelectorAll('.is-paragraph'));
       let done = true;
@@ -369,26 +376,33 @@ vtables.byTag['g'] = {
   ['execute']: (self) => {
     const str = self.dataset.string;
     const lines = str.split('\n');
-    const parent_g = self.parentElement.parentElement;
-    const parent_focus = parent_g.firstChild; // SMELL nondeterminism
+    const parent_g = self.parentElement;
+    const red_box = parent_g.firstChild; // SMELL nondeterminism
+    let targets = [parent_g.parentElement.firstChild]; // SMELL nondeterminism
+    const conns = send(red_box, 'connectors');
+    if (conns.length > 0) // Find the connections that aren't the red box itself
+      targets = conns.map(c => send(c, 'connections').filter(x => x !== red_box)[0]);
     if (self.classList.contains('sets-id')) {
-      // #myId para sets container id=myId and self-deletes
+      // #myId para sets target id=myId and self-deletes
       // SMELL what if new ID already in use
+      if (targets.length > 1) throw [self, 'sets-id needs exactly 1 target'];
+      const target = targets[0];
       const newId = str.substring(1);
       const clash = byId(newId);
-      if (clash) clash.id = parent_focus.id;
-      parent_focus.id = newId;
+      if (clash) clash.id = target.id;
+      target.id = newId;
       self.classList.add('done');
     } else if (self.classList.contains('adds-class')) {
       // .myClass line adds myClass to container and self-deletes
       lines.forEach(l => {
-        parent_focus.classList.add(l.substring(1));
+        targets.forEach(target => target.classList.add(l.substring(1)));
       });
       self.classList.add('done');
     } else if (self.classList.contains('is-code')) {
       eval(str); // >:D
       self.classList.add('done');
     }
+    conns.forEach(c => c.classList.add('done'));
   }
 }
 
@@ -478,17 +492,22 @@ function init() {
     delete e.dataset.contains;
   });
 
+  const codeConnectors = Object.values(everything)
+    .filter(x => !send(x, 'isClosed'))
+    .filter(x => x.style.stroke === MAGIC_RED);
+  codeConnectors.forEach(c => send(c, 'connections'));
+
   /*
   all('polyline') .forEach(l => arrows.push(send(l, 'parseAsConnector')));
   all('path.real').forEach(l => arrows.push(send(l, 'parseAsConnector')));
   */
 
   all('rect').forEach(r => send(r, 'parseAsExecutable'));
+  all('.adds-class').forEach(p => send(p, 'execute')); // must occur before sets-id
   all('.sets-id').forEach(p => send(p, 'execute'));
-  all('.adds-class').forEach(p => send(p, 'execute'));
   all('.is-code').forEach(p => send(p, 'execute'));
   all('rect').forEach(r => send(r, 'parseAsExecutable'));
-  //all('.done').forEach(e => e.remove());
+  //all('.done').forEach(e => e.remove()); // warning: connections[*].connectors will be stale
 
   return elems.length;
 }
