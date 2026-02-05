@@ -73,6 +73,13 @@ up in singular attributes like data-origin and set attributes like "contains". I
 rename an ID, all reference sites will have to be updated. Will need some way to enumerate
 sites mentioning a particular ID.
 
+Two-way references:
+- if x label = y, y labelOf = x.
+- if x contains ∋ y, y containedIn = x
+- if x connections ∋ y, y connectors ∋ x
+- if x origin = y, y originOf ∋ x
+- if x target = y, y targetOf ∋ x
+
 ------
 
 DOMMeta (Like OMeta but in the DOM tree)

@@ -246,7 +246,7 @@ vtables.byTag['polyline'] = {
 vtables.byTag['line'] = {
   _parent: vtables.byTag['polyline'],
 
-  ['vertices']: (self) => [attrs(self, 'x1', 'y1'), attrs(self, 'x2', 'y2')],
+  ['vertices']: (self) => [attrs(self, 'x1', 'y1'), attrs(self, 'x2', 'y2')].map(pt => pt.map(parseFloat)),
   ['specialize']: () => null,
 };
 
@@ -436,7 +436,9 @@ vtables.byTag['path']['target'] = (self) => {
     const m = arrowheads[0].transform.baseVal[0].matrix;
     const targetPt = [m.e, m.f];
     const [d0,d1] = [dist2(targetPt,endpoints[0]), dist2(targetPt,endpoints[1])];
-    originPt = endpoints[d0 < d1 ? 1 : 0];
+    const originIndex = d0 < d1 ? 1 : 0;
+    self.dataset.originIndex = originIndex;
+    originPt = endpoints[originIndex];
     target = ⟦self atPoint: targetPt pickFrom: Object.values(everything)⟧;
   }
   self.dataset.origin = 'nil';
@@ -461,13 +463,31 @@ vtables.byTag['path']['origin'] = (self) => {
   return byId(self.dataset.origin);
 }
 
+vtables.byTag['path']['isDirected'] = (self) => {
+  ⟦self target⟧;
+  return !isNaN(parseInt(self.dataset.originIndex));
+}
+
+vtables.byTag['path']['originPt'] = (self) => {
+  if (⟦self isDirected⟧) {
+    const endpoints = ⟦self endpoints⟧;
+    return endpoints[+self.dataset.originIndex];
+  }
+}
+
+vtables.byTag['path']['targetPt'] = (self) => {
+  if (⟦self isDirected⟧) {
+    const endpoints = ⟦self endpoints⟧;
+    return endpoints[1 - +self.dataset.originIndex];
+  }
+}
+
 everything = {};
 function init() {
   // First, ensure "nil" exists
   nilElem = svgel('g', {id: 'nil'});
 
-  const paths = all('path.real');
-  let elems = paths.concat(all('polygon'));
+  let elems = all('path.real, polygon');
   elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
   elems.forEach((el) => {
     let newEl = el;
@@ -497,17 +517,15 @@ function init() {
     .filter(x => x.style.stroke === MAGIC_RED);
   codeConnectors.forEach(c => ⟦c connections⟧);
 
-  /*
-  all('polyline') .forEach(l => arrows.push(⟦l parseAsConnector⟧));
-  all('path.real').forEach(l => arrows.push(⟦l parseAsConnector⟧));
-  */
-
+  // TODO: need to save code to execute until ALL processing done
+  // even with further formats. I.e. delay execution to point where
+  // the diagram "means" that which was intended by the user
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
   all('.adds-class').forEach(p => ⟦p execute⟧); // must occur before sets-id
   all('.sets-id').forEach(p => ⟦p execute⟧);
   all('.is-code').forEach(p => ⟦p execute⟧);
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
-  //all('.done').forEach(e => e.remove()); // warning: connections[*].connectors will be stale
+  all('.done').forEach(e => e.remove()); // WARNING: connections[*].connectors will be stale
 
   return elems.length;
 }
@@ -538,7 +556,8 @@ vtables['Box'] = {
   _parent: vtables['BoxGraph-Common'],
 
   ['initFromDOM:']: (self, rect) => {
-    self.dom = rect; // Yup, that's it
+    self.dom = rect;
+    rect.box = self; // backlink
     self.domContainer = rect.parentElement; // Target of all CSS queries
   },
   // Box >> claimLabel
@@ -554,13 +573,17 @@ vtables['Box'] = {
       if (label) ⟦self label: label⟧;
     }
   },
+  ['name']: (self) => {
+    if (self.dom.dataset.label) return byId(self.dom.dataset.label).dataset.string;
+    return null;
+  },
   ['at:']: (self, name) => {
     const g = self.domContainer.querySelector('[data-string="'+name+'"]');
     if (g && g.dataset.labelFor) {
       const arrow = byId(g.dataset.labelFor);
       if (arrow && arrow.dataset.target) {
         const target = byId(arrow.dataset.target); // Follow the arrow
-        if (target) return target;
+        if (target) return target.box;
       }
     }
     return null;
@@ -573,10 +596,6 @@ vtables['Arrow'] = {
   ['initFromDOM:']: (self, path) => {
     self.dom = path; // Now I will inherit all messages
     path.arrow = self; // backlink
-  },
-  ['originPt']: (self) => {
-    if (self.arrowheadIndex === undefined) return null;
-    return self.endpoints[1-self.arrowheadIndex];
   },
   // Arrow >> claimLabel
   //   labels := all('.is-paragraph:not(.is-multiline)').
@@ -601,18 +620,27 @@ vtables.byTag['path']['parseAsConnector'] = (self) => {
   return arrow;
 }
 
+vtables['BoxGraph'] = {
+  _parent: null,
+
+  ['parse']: (self) => {
+    self.connectors = all('polyline, path.real, line').map(l => ⟦l parseAsConnector⟧);
+    self.realArrows = self.connectors.filter(a => ⟦a isDirected⟧);
+    self.realArrows.forEach(arr => ⟦arr claimLabel⟧);
+
+    self.boxes = all('rect').map(r => ⟦r parseAsBox⟧);
+    self.boxes.forEach(b => ⟦b claimLabel⟧);
+  },
+  ['boxNamed:']: (self, name) => {
+    const label = some('g[data-string="'+name+'"');
+    if (label) return byId(label.dataset.labelFor).box;
+  }
+}
+
 // Run on boxGraph-example.svg after init()
 parseBoxGraph = function() {
-  arrows = [];
-  all('polyline') .forEach(l => arrows.push(⟦l parseAsConnector⟧));
-  all('path.real').forEach(l => arrows.push(⟦l parseAsConnector⟧));
-  realArrows = arrows.filter(a => ⟦a originPt⟧ !== null);
-  realArrows.forEach(arr => ⟦arr claimLabel⟧);
-
-  boxes = all('rect').map(r => ⟦r parseAsBox⟧);
-  boxes.forEach(b => ⟦b claimLabel⟧);
-
-  return generateJSOG();
+  boxGraph = { vtable: 'BoxGraph' }; // HACK constructors
+  return ⟦boxGraph parse⟧;
 }
 
 generateJSOG = function() {
@@ -645,9 +673,10 @@ generateJSOG = function() {
 }
 
 // === IdObjModel SEMANTIC LAYER ===
+// For id-vanilla.svg
 
 vtables['Arrow']['checkIfSeparator'] = (self) => {
-  if (typeof self.arrowheadIndex === 'number') return false;
+  if (⟦self isDirected⟧) return false;
   self.dom.classList.add('methods-are-below');
   return true;
 }
@@ -659,11 +688,52 @@ vtables['Box']['methodAt:'] = (self, name) => {
   const separator = self.domContainer.querySelector('.methods-are-below');
   if (!separator) throw [self, 'doesn\'t have methods'];
   const pt_y = para.getBBox().y;
-  const y = separator.arrow.endpoints[0][1];
+  const y = ⟦separator.arrow endpoints⟧[0][1];
   if (pt_y > y) return method; // methods live below separator
   return null;
 }
 
-parseAsObjModel = function() {
-  arrows.forEach(a => ⟦a checkIfSeparator⟧);
+vtables['Box']['asJSFunc'] = (self) => {
+  const para = self.domContainer.querySelector('g.is-paragraph');
+  const source = para.dataset.string;
+  return eval(source); // >:D
 }
+
+/*
+parseAsObjModel = function() {
+  boxGraph.connectors.forEach(a => ⟦a checkIfSeparator⟧);
+
+  const vt = ⟦boxGraph boxNamed: 'Vtable'⟧;
+  id_vtable_lookup = ⟦vt methodAt: 'lookup'⟧;
+
+  id_send   = ⟦⟦boxGraph boxNamed: 'id_send'⟧ asJSFunc⟧;
+  id_bind   = ⟦⟦boxGraph boxNamed: 'id_bind'⟧ asJSFunc⟧;
+  id_vtable = ⟦⟦boxGraph boxNamed: 'id_vtable'⟧ asJSFunc⟧;
+}
+*/
+
+// Translate the code in id-simple.svg to access the right state...!
+/*
+id_vtable = (o) => ⟦o at: 'vtable'⟧;
+
+function id_bind(recv, selector) {
+  if (⟦recv name⟧ === 'Vtable' && selector === 'lookup')
+    return id_vtable_lookup;
+  return id_send(id_vtable(recv), 'lookup', selector);
+}
+
+function id_send(recv, selector, ...args) {
+  let method = id_bind(recv, selector);
+  if (!method)
+    throw [recv, 'Does Not Understand', selector, ...args];
+  let js_func = ⟦method asJSFunc⟧;
+  return js_func(recv, ...args);
+}
+
+function vtable_lookup(self, symbol) {
+  let method = ⟦self methodAt: symbol⟧;
+  if (method) return method;
+  let parent = ⟦self at: 'parent'⟧;
+  if (parent) return id_send(parent, 'lookup', symbol);
+}
+*/

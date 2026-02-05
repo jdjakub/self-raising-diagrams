@@ -92,18 +92,20 @@ restrictScope = function(element) {
   return oldScope;
 }
 all = selector => Array.from(currentScope.querySelectorAll(selector));
-some = selector => all(selector)[0];
+some = selector => {
+  const tmp = all(selector);
+  if (tmp.length === 0) return null;
+  return tmp[0];
+}
 byId = id => document.getElementById(id.trim());
 
+// Thanks https://stackoverflow.com/a/65090521
 replaceTag = function(node, tag) {
-  // Thanks https://stackoverflow.com/a/65090521
   const clone = svgel(tag, {});
-  // Copy all attributes (style etc.)
-  for (let j=node.attributes.length-1; j>=0; j--)
-    clone.setAttributeNode(node.attributes[j].cloneNode());
-  while (node.firstChild) {
+  for (const attr of node.attributes)
+    clone.setAttributeNode(attr.cloneNode());
+  while (node.firstChild)
     clone.appendChild(node.firstChild);
-  }
   node.replaceWith(clone);
   return clone;
 }
