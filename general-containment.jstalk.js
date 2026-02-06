@@ -702,6 +702,7 @@ vtables['Box']['methodAt:'] = (self, name) => {
   const method = ⟦self at: name⟧;
   // HACK duped from Box >> at:
   const para = self.domContainer.querySelector('[data-string="'+name+'"]');
+  if (!para) return null;
   const separator = self.domContainer.querySelector('.methods-are-below');
   if (!separator) throw [self, 'doesn\'t have methods'];
   const pt_y = para.getBBox().y;
