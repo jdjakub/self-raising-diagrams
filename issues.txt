@@ -80,6 +80,13 @@ Two-way references:
 - if x origin = y, y originOf ∋ x
 - if x target = y, y targetOf ∋ x
 
+Want to delay red-box code execution to after all processing has been applied. Or else provide
+hook points etc.
+
+Magic red connector connects to anything on one end, and ONLY a magic red box on the other end.
+
+When attaching connectors to shapes, it should be "point in shape OR point close enough to border"
+
 ------
 
 DOMMeta (Like OMeta but in the DOM tree)

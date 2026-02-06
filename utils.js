@@ -175,6 +175,16 @@ extractCircle = function(circPathElt) {
   const cx = xs[1][2];
   const ty = ys[1][2];
   const r = cy-ty;
+  // Now check that the other 3 "radii" are equal; don't circlify ellipses
+  const lx = xs[0];
+  const lr = cx-lx;
+  if (Math.abs(lr - r) > 0.0001) return; // SMELL espilon
+  const rx = xs[2][2];
+  const rr = rx-cx;
+  if (Math.abs(rr - r) > 0.0001) return; // SMELL espilon
+  const by = ys[3][2];
+  const br = by - cy;
+  if (Math.abs(br - r) > 0.0001) return; // SMELL espilon
   return {cx, cy, r};
 }
 

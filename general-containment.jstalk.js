@@ -57,7 +57,7 @@ vtables.point = {
   ['pickFrom:']: (self, shapes) => {
     shapes = ⟦self insideWhichShapes: shapes⟧;
     if (shapes.length > 0) return shapes[0];
-    else return null;
+    else return nilElem;
   },
   ['closestPointOn:']: (self, shape) => ⟦shape closestPtToPt: self⟧,
 };
@@ -97,6 +97,10 @@ vtables.domNode = {
     }
     return true;
   },
+  ['covers:']: (self, other) => {
+    const self_minus_other = inTopToBottomOrder(self, other);
+    return self_minus_other < 0;
+  },
   ['vertices']: (self) => {
     const bb = self.getBBox(); // SMELL duped
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
@@ -117,7 +121,10 @@ vtables.domNode = {
       if (rivalExists) {
         const rival = other;
         // If the rival sits within my current tightest container, rival is tighter
-        if (container === null || ⟦container encloses: rival⟧) container = rival;
+        // If it doesn't, but the rival covers my current container (it sits above in the draw order)
+        // then it takes priority
+        if (container === null || ⟦container encloses: rival⟧ || ⟦rival covers: container⟧)
+          container = rival;
       }
     });
     if (container) {
@@ -166,7 +173,7 @@ vtables.byTag['path'] = {
       if (d2 < 4) return true;
       return false;
     }
-    throw "Should be overridden";
+    return vtables.domNode['containsPt:'](self, pt); // HACK supersend. Also too coarse
   },
   ['encloses:']: (self, other) => {
     if (!⟦self isClosed⟧) return false;
@@ -387,10 +394,12 @@ vtables.byTag['g'] = {
       // SMELL what if new ID already in use
       if (targets.length > 1) throw [self, 'sets-id needs exactly 1 target'];
       const target = targets[0];
-      const newId = str.substring(1);
-      const clash = byId(newId);
-      if (clash) clash.id = target.id;
-      target.id = newId;
+      if (target.id !== 'nil') {
+        const newId = str.substring(1);
+        const clash = byId(newId);
+        if (clash) clash.id = target.id;
+        target.id = newId;
+      }
       self.classList.add('done');
     } else if (self.classList.contains('adds-class')) {
       // .myClass line adds myClass to container and self-deletes
@@ -523,11 +532,19 @@ function init() {
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
   all('.adds-class').forEach(p => ⟦p execute⟧); // must occur before sets-id
   all('.sets-id').forEach(p => ⟦p execute⟧);
-  all('.is-code').forEach(p => ⟦p execute⟧);
+  try {
+    all('.is-code').forEach(p => ⟦p execute⟧);
+  } catch (e) {
+    console.error(e);
+  }
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
-  all('.done').forEach(e => e.remove()); // WARNING: connections[*].connectors will be stale
+  //removeDone();
 
   return elems.length;
+}
+
+function removeDone() {
+  all('.done').forEach(e => e.remove()); // WARNING: connections[*].connectors will be stale
 }
 
 /*
