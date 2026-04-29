@@ -87,6 +87,65 @@ Magic red connector connects to anything on one end, and ONLY a magic red box on
 
 When attaching connectors to shapes, it should be "point in shape OR point close enough to border"
 
+A good framing is that a diagram region in notation N is a serialisation of an instance of N.
+
+To make individual notation regions work, it has to be recognised that elements and patterns have different meanings in different notations. Accordingly, they might respond to different messages. So dispatch ought to be along two orthogonal dimensions: class, and current notational context.
+
+Notations themselves are composites of mixins. Eg BoxGraph so far can be seen as a composition of "arrows connect shapes", "named shapes", and "named arrows" rules. BoxGraph is also relative to selection / style parameters. Sketch:
+
+StyleFilter: Magic Blue
+CanName: {Boxes}
+ArrowsFrom: {Boxes}
+ArrowsTo: {Boxes, Labels}
+
+
+(In response to Claude Opus 4.7 parametrisation discussion:)
+
+I'm inspired by the "Chains of Meanings" bottom-up recognition of syntactic, then semantic, structure.
+
+Content to have a parametrised "GraphNotation" class - not ready to claim a general "Notation" yet. (The latter would have to also work on my BitsTable packet diagram examples, and maybe others I haven't mentioned. BitsTable isn't really a graph with connectors.)
+
+The following `[]` syntax encapsulates my semi-formal descriptions
+
+gn := GraphNotation fromRegion: aSubtree filterBy: `[
+  stroke: blue OR isLabel
+]` obeyingRules: `[
+  - Edges are directed
+  - Edge origin is not a label
+  - Edge target is a label
+  - Edges can't have labels
+  - Nodes must have labels
+]` withDefinitions: `[
+  - Node = closed shape
+  - Edge = open path
+]`.
+
+gn edges "answers collection of edges"
+e := gn edges at: 1.
+e connections. "answers the nodes it connects in arbitrary order"
+e origin.
+e target.
+
+An important aspect of GraphNotation is that it doesn't look inside its nodes (here as usual, closed shapes). Anything fully inside a node, whether or not it matches its StyleFilter, does not become a node, edge, or label. This is what allows for spatially nested notational regions. A shape partially inside a node (e.g. an arrow from the outside terminating inside it) is considered for the graph. However, we want to support e.g. a node with a self-edge, as long as the edge geometry travels outside the node boundary; this means that, even though both edge endpoints are inside the node, this path should still be considered for the graph.
+
+The definitions of Node and Edge are semantic, hence local to the GraphNotation instance. Seems to me that you should be able to locally define a Node as anything that supports the "containsPt" message, i.e. anything that can be asked whether it contains an endpoint of an edge. Except - in order to support edges "just touching" a node - maybe we need a distance-to-boundary function instead.
+
+Likewise, an Edge is just something that can respond to an "endpoints" message. Crucially, this means edges don't have to be open stroked paths - "fat arrows" or other long closed shapes could be supported, as long as the shape type knows how to tell us its endpoints.
+
+The concepts of "closed shape" and "open shape" are assumed to somehow be already defined in the environment of the above pseudocode. Of course, the definition chain should gradually move towards being "more concrete" or "closer to the DOM". This is where I think Chains of Meaning or DOMMeta can fit in. The definition of "closed shape" applies across notations. The DOM classes in the code already support an "isClosed" message; maybe the Nodes and Edges can be defined by a predicate block like [:x | x isClosed ].
+
+So, given that we're outsourcing all these concrete details to the send-time environment of fromRegion:filterBy:obeyingRules:withDefinitions:, what should GraphNotation actually do in this constructor?
+
+Sketch:
+
+fromRegion: aSubtree filterBy: styleFilter obeyingRules: rules withDefinitions: defs
+  | nodes edges |
+  "First assume aSubtree has already been preprocessed so child containment = spatial containment"
+  nodes := aSubtree findAllMatching: (styleFilter and: defs nodePredicate) dontSearchChildrenOfMatches: true.
+  edges := aSubtree findAllMatching: (styleFilter and: defs edgePredicate and: `[somehow don't search children of elements already discovered to be nodes]`).
+  ???  
+
+
 ------
 
 DOMMeta (Like OMeta but in the DOM tree)

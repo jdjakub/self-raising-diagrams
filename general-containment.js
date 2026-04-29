@@ -112,6 +112,10 @@ vtables.domNode = {
     if (other instanceof Array) return send(other, 'distanceTo:', self);
     return Math.sqrt(distance2_line_segs_to_segs(send(self, 'lineSegments'), send(other, 'lineSegments')));
   },
+  ['signedDistanceToPt:']: (self, pt) => {
+    const dist = send(self, 'distanceTo:', pt);
+    return send(self, 'containsPt:', pt) ? -dist : dist;
+  },
   ['findTightestContainerIn:']: (self, elems) => { // -> containedIn
     // MUCH nicer code than annotateAllContainments plus treeifyContainments
     // I want to find my least / tightest container
@@ -144,7 +148,8 @@ vtables.domNode = {
   ['connectors']: (self) => {
     if (self.dataset.connectors) return setAttrToArray(self.dataset.connectors).map(byId);
     return [];
-  }
+  },
+  ['isArrowhead']: (self) => false,
 };
 
 vtables.byTag['path'] = {
@@ -217,6 +222,8 @@ vtables.byTag['path'] = {
     connections.forEach(e => addSetAttr(e.dataset, 'connectors', myId))
     return connections;
   },
+  ['isArrowhead']: (self) => self.parentElement.tagName === 'g'
+    && self.parentElement.parentElement.classList.contains('arrow-line'), // Mathcha-specific
 };
 
 vtables.byTag['polyline'] = {
@@ -716,6 +723,156 @@ vtables['Box']['asJSFunc'] = (self) => {
   const source = para.dataset.string;
   return eval(source); // >:D
 }
+
+// === CLAUDE OPUS 4.7 GENERATED ===
+
+// === GraphNotation ===
+//
+// A parametrised "notation-class" for graph-shaped diagrams.
+// Closed parametrisation: filter and definitions supplied as JS lambdas.
+// Pure: produces nodes and edges. Labelling is a separate layer (TBD).
+//
+// Each instance is configured for a particular DOM region (scope). Elements
+// outside the region, or failing the filter, are ignored. Within the region,
+// elements satisfying defs.isNode become nodes; elements satisfying defs.isEdge
+// (and not inside any node) become edges.
+//
+// Nodes are *opaque* to their containing GraphNotation: once an element is
+// claimed as a node, its DOM subtree is not searched for further nodes or
+// edges. (An inner notation-instance may search inside, with its own scope.)
+//
+// Assumes scope has been preprocessed so that DOM containment matches spatial
+// containment.
+//
+// Lazy: parsing deferred until nodes/edges are demanded.
+
+vtables['GraphNotation'] = {
+  _parent: null,
+
+  // scope:  DOM elem delimiting the region
+  // filter: elem -> bool, which elems participate at all
+  // defs:   { isNode: elem -> bool, isEdge: elem -> bool }
+  ['fromRegion:filterBy:withDefs:']: (self, scope, filter, defs) => {
+    self.scope = scope;
+    self.filter = filter;
+    self.defs = defs;
+    return self;
+  },
+
+  ['nodes']: (self) => {
+    if (self._nodes) return self._nodes;
+    const pred = e => self.filter(e) && self.defs.isNode(e);
+    const elems = send(self, 'findIn:', self.scope, 'matching:', pred, 'excluding:', new Set());
+    self._nodes = elems.map(e => send(self, 'wrapNode:', e));
+    return self._nodes;
+  },
+
+  ['edges']: (self) => {
+    if (self._edges) return self._edges;
+    const claimed = new Set(send(self, 'nodes').map(n => n.dom));
+    const pred = e => self.filter(e) && self.defs.isEdge(e);
+    const elems = send(self, 'findIn:', self.scope, 'matching:', pred, 'excluding:', claimed);
+    self._edges = elems.map(e => send(self, 'wrapEdge:', e));
+    return self._edges;
+  },
+
+  // Region-claiming traversal. Walks DOM tree from `root`, collecting elems
+  // matching `pred`. Skips anything in `excluded` (already claimed by a prior
+  // search). A match itself claims its subtree (don't descend into matches).
+  ['findIn:matching:excluding:']: (self, root, pred, excluded) => {
+    const matches = [];
+    const visit = (elem) => {
+      if (excluded.has(elem)) return;
+      if (pred(elem)) {
+        matches.push(elem);
+        return; // claimed: don't descend
+      }
+      for (const child of elem.children) visit(child);
+    };
+    visit(root);
+    return matches;
+  },
+
+  ['wrapNode:']: (self, elem) => ({ vtable: 'GraphNotation-Node', dom: elem, notation: self }),
+  ['wrapEdge:']: (self, elem) => ({ vtable: 'GraphNotation-Edge', dom: elem, notation: self }),
+
+  // Resolve a point to a node in this notation, if any. Use an empirical tolerance for e.g.
+  // edge connectors that "just touch" the node border.
+  ['nodeAtPt:']: (self, pt) => send(self, 'nodes').find(n =>
+    send(n, 'signedDistanceToPt:', pt) <= self.defs.endpointTolerance) || null,
+};
+
+// Shared protocol for the Node / Edge wrappers.
+vtables['GraphNotation-Common'] = {
+  // Forward unknown messages to the wrapped DOM element.
+  ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
+};
+
+vtables['GraphNotation-Node'] = {
+  _parent: vtables['GraphNotation-Common'],
+
+  ['containsPt:']: (self, pt) => send(self.dom, 'containsPt:', pt),
+  // Edges in the same notation that touch this node.
+  ['incidentEdges']: (self) => send(self.notation, 'edges').filter(e => send(e, 'connections').includes(self)),
+};
+
+vtables['GraphNotation-Edge'] = {
+  _parent: vtables['GraphNotation-Common'],
+
+  ['endpoints']: (self) => send(self.dom, 'endpoints'),
+  // The (up to two) nodes this edge connects, in path order. May contain
+  // null entries if an endpoint doesn't land on any node in this notation
+  // (e.g. magic-red connectors to "nothing", or arrows whose endpoint sits
+  // in blank space).
+  ['connections']: (self) => {
+    if (self._connections) return self._connections;
+    self._connections = send(self, 'endpoints').map(pt => send(self.notation, 'nodeAtPt:', pt));
+    return self._connections;
+  },
+
+  ['origin']: (self) => send(self, 'connections')[0],
+  ['target']: (self) => send(self, 'connections')[1],
+
+  ['isDirected']: (self) => send(self.dom, 'isDirected'),
+};
+
+// Convenience constructor.
+makeGraphNotation = function(scope, filter, defs) {
+  const gn = { vtable: 'GraphNotation' };
+  return send(gn, 'fromRegion:', scope, 'filterBy:', filter, 'withDefs:', defs);
+};
+
+/* === USAGE SKETCHES ===
+
+// "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
+const boxGN = makeGraphNotation(
+  document.documentElement,
+  e => true,
+  {
+    isNode: e => e.tagName === 'rect',
+    isEdge: e => ['polyline','line'].includes(e.tagName)
+      || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
+    endpointTolerance: 3,
+  }
+);
+send(boxGN, 'nodes');
+send(boxGN, 'edges');
+
+// LabelGraph: text paragraphs as nodes. No Labelling layer — nodes ARE labels.
+const labelGN = makeGraphNotation(
+  document.documentElement,
+  e => true,
+  {
+    isNode: e => e.classList.contains('is-paragraph'),
+    isEdge: e => ['polyline','line'].includes(e.tagName)
+      || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
+    endpointTolerance: 20,
+  }
+);
+
+*/
+
+// === ID OBJ MODEL STUFF ===
 
 /*
 parseAsObjModel = function() {
