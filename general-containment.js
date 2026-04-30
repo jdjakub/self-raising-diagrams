@@ -36,7 +36,7 @@ sendNoKw = function(recv, selector, ...args) {
   } while (!method && vtable);
   if (!method && !vtable) {
     if (selector === 'doesNotUnderstand:')
-      throw [recv," didn't understand: ",selector,...args];
+      throw [recv," didn't understand: ", args[0], args];
     else
       return sendNoKw(recv, 'doesNotUnderstand:', [selector, ...args]);
   }
@@ -105,6 +105,12 @@ vtables.domNode = {
     const bb = self.getBBox(); // SMELL duped
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
     return [ [l,t], [r,t], [r,b], [l,b] ];
+  },
+  ['centerPt']: (self) => {
+    const verts = send(self, 'vertices');
+    let sum = [0,0];
+    for (let v of verts) sum = vadd(sum, v);
+    return vmul(1/verts.length, sum);
   },
   ['isClosed']: (self) => true,
   ['lineSegments']: (self) => explode_poly_segs(send(self, 'vertices'), send(self, 'isClosed')),
@@ -241,6 +247,11 @@ vtables.byTag['polyline'] = {
     return vs;
   },
   ['encloses:']: () => false,
+  ['closestPtToPt:']: (self, pt)=> {
+    const segs = send(self, 'lineSegments');
+    const closest_seg = closest_line_seg_to_pt(pt, segs);
+    return closest_pt_on_line_seg(pt, ...closest_seg);
+  },
   ['specialize']: (self) => {
     let newTag = null;
     const points = send(self, 'vertices');
@@ -811,7 +822,6 @@ vtables['GraphNotation-Common'] = {
 vtables['GraphNotation-Node'] = {
   _parent: vtables['GraphNotation-Common'],
 
-  ['containsPt:']: (self, pt) => send(self.dom, 'containsPt:', pt),
   // Edges in the same notation that touch this node.
   ['incidentEdges']: (self) => send(self.notation, 'edges').filter(e => send(e, 'connections').includes(self)),
 };
@@ -819,7 +829,6 @@ vtables['GraphNotation-Node'] = {
 vtables['GraphNotation-Edge'] = {
   _parent: vtables['GraphNotation-Common'],
 
-  ['endpoints']: (self) => send(self.dom, 'endpoints'),
   // The (up to two) nodes this edge connects, in path order. May contain
   // null entries if an endpoint doesn't land on any node in this notation
   // (e.g. magic-red connectors to "nothing", or arrows whose endpoint sits
@@ -832,8 +841,6 @@ vtables['GraphNotation-Edge'] = {
 
   ['origin']: (self) => send(self, 'connections')[0],
   ['target']: (self) => send(self, 'connections')[1],
-
-  ['isDirected']: (self) => send(self.dom, 'isDirected'),
 };
 
 // Convenience constructor.
@@ -855,8 +862,6 @@ const boxGN = makeGraphNotation(
     endpointTolerance: 3,
   }
 );
-send(boxGN, 'nodes');
-send(boxGN, 'edges');
 
 // LabelGraph: text paragraphs as nodes. No Labelling layer — nodes ARE labels.
 const labelGN = makeGraphNotation(
@@ -871,6 +876,176 @@ const labelGN = makeGraphNotation(
 );
 
 */
+
+// === Labeller ===
+//
+// Given a base GraphNotation, a set of labels, and a set of labellables,
+// draw Labelling Linkage Lines (LLLs) attaching labels to labellables in a
+// one-to-one matching. Each label gets at most one labellable; each
+// labellable gets at most one label.
+//
+// Single-role: each Labeller handles one labellable-set. For multi-role
+// labelling (e.g. BoxGraph's "arrows first, then boxes"), instantiate
+// multiple Labellers and run in sequence — later passes naturally see
+// fewer available labels because earlier passes have drawn LLLs from them.
+//
+// Matching is greedy by distance: all (label, labellable) pairs within
+// maxDistance are sorted closest-first, and the walk claims each label and
+// each labellable at most once. This is a greedy approximation to optimal
+// bipartite matching, but is fine in practice — labels in real diagrams are
+// placed unambiguously close to their intended labellables, and pathological
+// cases are resolved by the user nudging the label.
+
+ATTACHMENT_LINE_CLASS = 'attachment-line';
+
+vtables['Labeller'] = {
+  _parent: null,
+
+  // base:        a GraphNotation instance whose scope hosts the LLLs
+  // labels:      base -> [label DOM elems]; called fresh each run, so it
+  //              can naturally exclude already-claimed labels
+  // labellables: base -> [labellable wrappers]
+  // attractor:   labellable -> point | shape (anything responding to
+  //              distanceTo: from the label side)
+  // attachAt:    (labellable, labelPt) -> point on labellable where LLL
+  //              should terminate
+  // maxDistance: labels beyond this from any labellable are skipped
+  ['attach:withLabels:labellables:attractor:attachAt:maxDistance:']:
+    (self, base, labels, labellables, attractor, attachAt, maxDistance) => {
+      self.base = base;
+      self.labels = labels;
+      self.labellables = labellables;
+      self.attractor = attractor;
+      self.attachAt = attachAt;
+      self.maxDistance = maxDistance;
+      return self;
+    },
+
+  // Run the labelling pass: enumerate (label, labellable) pairs within
+  // maxDistance, sort closest-first, and greedily claim each label and each
+  // labellable at most once. Returns the AttachmentGraph parsing the LLLs
+  // drawn by THIS pass.
+  ['run']: (self) => {
+    const labels = self.labels(self.base);
+    const labellables = self.labellables(self.base);
+    const candidates = [];
+    for (const label of labels) {
+      for (const m of labellables) {
+        const d = send(label, 'distanceTo:', self.attractor(m));
+        if (d <= self.maxDistance) candidates.push({ label, m, d });
+      }
+    }
+    candidates.sort((a, b) => a.d - b.d);
+    const claimedLabels = new Set();
+    const claimedMembers = new Set();
+    const drawnLines = [];
+    for (const c of candidates) {
+      if (claimedLabels.has(c.label) || claimedMembers.has(c.m)) continue;
+      claimedLabels.add(c.label);
+      claimedMembers.add(c.m);
+      drawnLines.push(send(self, 'drawLLL:', c.label, 'to:', c.m));
+    }
+    self._lastDrawn = drawnLines;
+    return send(self, 'attachmentGraph');
+  },
+
+  ['drawLLL:to:']: (self, label, member) => {
+    const labelPt = send(label, 'centerPt');
+    const memberPt = self.attachAt(member, labelPt);
+    return svgel('line', {
+      x1: labelPt[0], y1: labelPt[1],
+      x2: memberPt[0], y2: memberPt[1],
+      class: ATTACHMENT_LINE_CLASS,
+      style: 'stroke: magenta',
+    }, self.base.scope);
+  },
+
+  // The AttachmentGraph: a GraphNotation parsing the LLLs drawn by this
+  // run. Nodes are labels + labellables; edges are the LLLs.
+  ['attachmentGraph']: (self) => {
+    const drawn = new Set(self._lastDrawn || []);
+    const labelDoms = new Set(self.labels(self.base));
+    const labellableDoms = new Set(self.labellables(self.base).map(m => m.dom || m));
+    return makeGraphNotation(
+      self.base.scope,
+      e => drawn.has(e) || labelDoms.has(e) || labellableDoms.has(e),
+      {
+        isNode: e => labelDoms.has(e) || labellableDoms.has(e),
+        isEdge: e => drawn.has(e),
+        endpointTolerance: 1,
+      }
+    );
+  },
+};
+
+makeLabeller = function(base, labels, labellables, attractor, attachAt, maxDistance) {
+  const lab = { vtable: 'Labeller' };
+  return send(lab,
+    'attach:', base,
+    'withLabels:', labels,
+    'labellables:', labellables,
+    'attractor:', attractor,
+    'attachAt:', attachAt,
+    'maxDistance:', maxDistance);
+};
+
+// Helper: a labels-function that excludes labels already terminated-on by
+// any existing attachment-line in scope. Use as the `labels` arg for any
+// Labeller pass that should respect prior passes.
+unclaimedLabels = function(scope, allLabelsSelector) {
+  return () => {
+    const allLabels = Array.from(scope.querySelectorAll(allLabelsSelector));
+    const lines = Array.from(scope.querySelectorAll('.'+ATTACHMENT_LINE_CLASS));
+    // A label is claimed if any LLL's endpoint is inside its bounding box.
+    const claimed = new Set();
+    for (const line of lines) {
+      const endpoints = send(line, 'endpoints');
+      for (const label of allLabels) {
+        if (send(label, 'containsPt:', endpoints[0]) || send(label, 'containsPt:', endpoints[1]))
+          claimed.add(label);
+      }
+    }
+    return allLabels.filter(l => !claimed.has(l));
+  };
+};
+
+function parametric_boxgraph_init() {
+  // "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
+  boxGN = makeGraphNotation(
+    document.documentElement,
+    e => true,
+    {
+      isNode: e => e.tagName === 'rect',
+      isEdge: e => ['polyline','line'].includes(e.tagName)
+        || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
+      endpointTolerance: 3,
+    }
+  );
+  ALL_LABELS = '.is-paragraph:not(.is-multiline)';
+
+  // Pass 1: arrows claim labels nearest their origin points (no max distance —
+  // arrows need labels).
+  arrowLabeller = makeLabeller(
+    boxGN,
+    base => Array.from(base.scope.querySelectorAll(ALL_LABELS)),
+    base => send(base, 'edges'),
+    edge => send(edge, 'originPt'),
+    (edge, labelPt) => send(edge, 'originPt'),
+    Infinity
+  );
+  arrowAttachments = send(arrowLabeller, 'run');
+
+  // Pass 2: boxes claim from remaining labels, within 20px.
+  boxLabeller = makeLabeller(
+    boxGN,
+    unclaimedLabels(boxGN.scope, ALL_LABELS),
+    base => send(base, 'nodes'),
+    node => node.dom,
+    (node, labelPt) => send(node.dom, 'closestPtToPt:', labelPt),
+    20
+  );
+  boxAttachments = send(boxLabeller, 'run');
+}
 
 // === ID OBJ MODEL STUFF ===
 
