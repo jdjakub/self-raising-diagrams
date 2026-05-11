@@ -514,15 +514,38 @@ vtables.byTag['path']['targetPt'] = (self) => {
 }
 
 everything = {};
+// Universal entry point; mandatory for all diagrams
 function init() {
   // First, ensure "nil" exists
   nilElem = svgel('g', {id: 'nil'});
 
+  // Next, we must normalise the document. That means:
+  // 1. Specialise individual shapes as far as possible (eg path -> polygon -> rect)
+  //    (see principles/1-most-specialized-tag.svg)
+  // 2. Reshape the DOM tree to reflect spatial containment relations
+  //    (see principles/2-dom-tree-spatial-containment.svg)
+  // [FUTURE]
+  //   3. Ensure all closed shape nodes are in Closed Canonical Form:
+  //
+  //      <g> boundary-wrapper
+  //        <shape ... /> boundary-shape
+  //        <g> ... </g> shape-interior
+  //      </g>
+  //
+  //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
+  //
+  //      <g> connector-wrapper
+  //        <path ... /> connector-shaft
+  //        <g> ... </g> connector-heads
+  //      </g>
+  // [/FUTURE]
+  //
+  // First, gather all (MATHCHA-EXPORTED) shapes and text. 
   let elems = all('path.real, polygon');
   elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
   elems.forEach((el) => {
     let newEl = el;
-    let max_iter = 10;
+    let max_iter = 10; // SMELL arbitrary maximum
     do { // max specialize
       el = newEl;
       newEl = ⟦el specialize⟧;
@@ -532,9 +555,12 @@ function init() {
   });
 
   elems = Object.values(everything);
+  // Next, compute spatial containment tree; store in
+  // contained-in / contains dataset attributes
   elems.forEach(el => ⟦el findTightestContainerIn: elems⟧);
   
-  // MUCH nicer than makeDOMReflectContainmentTree
+  // Now, reroot each node inside its tightest container
+  // and erase the evidence :)
   all('[data-contained-in]').forEach(child => {
     ⟦child reroot⟧;
     delete child.dataset.containedIn;
@@ -543,6 +569,8 @@ function init() {
     delete e.dataset.contains;
   });
 
+  // Now, detect probe connectors for "magic red" ID / Code boxes
+  // FUTURE: should be an explicit GraphNotation or something
   const codeConnectors = Object.values(everything)
     .filter(x => !⟦x isClosed⟧)
     .filter(x => x.style.stroke === MAGIC_RED);
@@ -551,14 +579,20 @@ function init() {
   // TODO: need to save code to execute until ALL processing done
   // even with further formats. I.e. delay execution to point where
   // the diagram "means" that which was intended by the user
+
+  // Inspect each rect to see if it's a Magic red box.
+  // Will annotate inner paragraphs with .adds-class, .sets-id, or .is-code as applicable
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
+  // Add classes and set IDs first
   all('.adds-class').forEach(p => ⟦p execute⟧); // must occur before sets-id
   all('.sets-id').forEach(p => ⟦p execute⟧);
+  // Now, execute embedded JS
   try {
     all('.is-code').forEach(p => ⟦p execute⟧);
   } catch (e) {
     console.error(e);
   }
+  // Re-inspect each rect, mark as done if all inner paragraphs are done
   all('rect').forEach(r => ⟦r parseAsExecutable⟧);
   //removeDone();
 
@@ -581,6 +615,7 @@ Don't prematurely commit to the specific DOM.
 
 // === BoxGraph SEMANTIC LAYER ===
 // TODO: reify package BoxGraph
+// WARNING: likely to be obsoleted or reworked by Opus 4.7 collaboration
 
 vtables['BoxGraph-Common'] = {
   // Wrap underlying DOM element and inherit its methods
@@ -777,29 +812,36 @@ vtables['GraphNotation'] = {
   ['nodes']: (self) => {
     if (self._nodes) return self._nodes;
     const pred = e => self.filter(e) && self.defs.isNode(e);
-    const elems = ⟦self findIn: self.scope matching: pred excluding: new Set()⟧;
-    self._nodes = elems.map(e => ⟦self wrapNode: e⟧);
+    const matches = ⟦self findIn: self.scope matching: pred excluding: new Set()⟧;
+    self._nodes = matches.map(e => ⟦self wrapNode: e⟧);
     return self._nodes;
   },
 
   ['edges']: (self) => {
     if (self._edges) return self._edges;
-    const claimed = new Set(⟦self nodes⟧.map(n => n.dom));
+    const nodeDoms = new Set(⟦self nodes⟧.map(n => n.dom));
     const pred = e => self.filter(e) && self.defs.isEdge(e);
-    const elems = ⟦self findIn: self.scope matching: pred excluding: claimed⟧;
-    self._edges = elems.map(e => ⟦self wrapEdge: e⟧);
+    const matches = ⟦self findIn: self.scope matching: pred excluding: nodeDoms⟧;
+    self._edges = matches.map(e => ⟦self wrapEdge: e⟧);
     return self._edges;
   },
 
   // Region-claiming traversal. Walks DOM tree from `root`, collecting elems
   // matching `pred` and skipping anything in `excluded`. Importantly, when a
-  // shape matches/is-excluded, the entire wrapping <g> (its localRoot) is
-  // treated as opaque — siblings of the shape inside that wrapper are not
-  // visited. This handles SVG's wrapper-around-shape pattern, where after
-  // reroot, spatially-contained content sits as siblings of the matched shape.
+  // shape matches or is excluded, everything spatially contained within
+  // it gets skipped over. This is to keep the GraphNotation oblivious to the
+  // contents of its nodes.
   ['findIn:matching:excluding:']: (self, root, pred, excluded) => {
     const matches = [];
 
+    // Remember: currently, a shape and its contained children look like this:
+    // <g> wrapper
+    //   <shape ... /> <-- pred is called on this
+    //   <child 1 />   }
+    //   <child 2 />   }-- and we can only search these if the shape isn't
+    //   ...           }   matched or in the exclude list
+    // </g>
+    //
     // visit returns true iff `elem` is fully handled — either it directly
     // matched/was-excluded, or it's the wrapper of something that did. The
     // caller uses this to know when to stop iterating elem's siblings.
@@ -860,31 +902,30 @@ vtables['GraphNotation-Edge'] = {
   ['target']: (self) => ⟦self connections⟧[1],
 };
 
+isMathchaConnector = e => ['polyline','line'].includes(e.tagName)
+        || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead');
+
 /* === USAGE SKETCHES ===
 
 // "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
-const boxGN = makeGraphNotation(
-  document.documentElement,
-  e => true,
-  {
-    isNode: e => e.tagName === 'rect',
-    isEdge: e => ['polyline','line'].includes(e.tagName)
-      || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
-    endpointTolerance: 3,
-  }
-);
+const boxGN = ⟦ GraphNotation
+  fromRegion: document.documentElement
+    filterBy: e => true,
+    withDefs: {
+      isNode: e => e.tagName === 'rect',
+      isEdge: isMathchaConnector,
+      endpointTolerance: 3,
+    } ⟧;
 
 // LabelGraph: text paragraphs as nodes. No Labelling layer — nodes ARE labels.
-const labelGN = makeGraphNotation(
-  document.documentElement,
-  e => true,
-  {
-    isNode: e => e.classList.contains('is-paragraph'),
-    isEdge: e => ['polyline','line'].includes(e.tagName)
-      || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
-    endpointTolerance: 20,
-  }
-);
+const labelGN = ⟦ GraphNotation
+  fromRegion: document.documentElement
+    filterBy: e => true,
+    withDefs: {
+      isNode: e => e.classList.contains('is-paragraph'),
+      isEdge: isMathchaConnector,
+      endpointTolerance: 20,
+    } ⟧;
 
 */
 
@@ -921,10 +962,11 @@ vtables['Labeller'] = {
   // labels:      () -> [label DOM elems]; called fresh each run, so it
   //              can naturally exclude already-claimed labels
   // labellables: () -> [labellables]; wrappers or raw elems
-  // attractor:   labellable -> point | shape (anything responding to
-  //              distanceTo: from the label side)
+  // attractor:   labellable -> point | shape
+  //              will judge via ⟦ label distanceTo: attractor(labellable) ⟧
+  //              e.g. an arrow's attractor is its originPt; a rect's is itself
   // attachAt:    (labellable, labelPt) -> point on labellable where LLL
-  //              should terminate
+  //              should terminate (TODO: should just be closest pt on attractor?)
   // maxDistance: labels beyond this from any labellable are skipped
   ['inScope:withLabels:labellables:attractor:attachAt:maxDistance:']:
     (self, scope, labels, labellables, attractor, attachAt, maxDistance) => {
@@ -946,34 +988,32 @@ vtables['Labeller'] = {
     const labellables = self.labellables();
     const candidates = [];
     for (const label of labels) {
-      for (const m of labellables) {
-        const d = ⟦label distanceTo: self.attractor(m)⟧;
-        if (d <= self.maxDistance) candidates.push({ label, m, d });
+      for (const labellable of labellables) {
+        const d = ⟦label distanceTo: self.attractor(labellable)⟧;
+        if (d <= self.maxDistance) candidates.push({ label, labellable, d });
       }
     }
     candidates.sort((a, b) => a.d - b.d);
     const claimedLabels = new Set();
-    const claimedMembers = new Set();
+    const claimedLabellables = new Set();
     const drawnLines = new Set();
     for (const c of candidates) {
-      if (claimedLabels.has(c.label) || claimedMembers.has(c.m)) continue;
+      if (claimedLabels.has(c.label) || claimedLabellables.has(c.labellable)) continue;
       claimedLabels.add(c.label);
-      claimedMembers.add(c.m);
-      drawnLines.add(⟦self drawLLL: c.label to: c.m⟧);
+      claimedLabellables.add(c.labellable);
+      drawnLines.add(⟦self drawLLL: c.label to: c.labellable⟧);
     }
     self._drawnLines = drawnLines;
     self._claimedLabels = claimedLabels;
-    self._claimedMembers = claimedMembers;
+    self._claimedLabellables = claimedLabellables;
     return ⟦self attachmentGraph⟧;
   },
 
-  ['drawLLL:to:']: (self, label, member) => {
-    const labelPt = ⟦label centerPt⟧;
-    const memberPt = self.attachAt(member, labelPt);
+  ['drawLLL:to:']: (self, label, labellable) => {
+    const [x1,y1] = ⟦label centerPt⟧;
+    const [x2,y2] = self.attachAt(labellable, [x1,y1]);
     const wrapper = svgel('g', { class: ATTACHMENT_LINE_CLASS }, self.scope);
-    return svgel('line', {
-      x1: labelPt[0], y1: labelPt[1],
-      x2: memberPt[0], y2: memberPt[1],
+    return svgel('line', { x1, y1, x2, y2,
       style: 'stroke: magenta',
     }, wrapper);
   },
@@ -984,7 +1024,7 @@ vtables['Labeller'] = {
     const drawn = self._drawnLines || new Set();
     const labelDoms = self._claimedLabels || new Set();
     const labellableDoms = new Set(
-      Array.from(self._claimedMembers || []).map(m => m.dom || m)
+      Array.from(self._claimedLabellables || []).map(l => l.dom || l)
     );
     return send({ vtable: 'GraphNotation' },
       'fromRegion:', self.scope,
@@ -1018,7 +1058,7 @@ unclaimedLabels = function(scope, allLabelsSelector) {
   };
 };
 
- ALL_LABELS = '.is-paragraph:not(.is-multiline)';
+ALL_LABELS = '.is-paragraph:not(.is-multiline)';
 
 // boxGraph-example.svg
 function parametric_boxgraph_init(scope) {
@@ -1028,8 +1068,7 @@ function parametric_boxgraph_init(scope) {
     'filterBy:', e => true,
     'withDefs:', {
       isNode: e => e.tagName === 'rect',
-      isEdge: e => ['polyline','line'].includes(e.tagName)
-        || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
+      isEdge: isMathchaConnector,
       endpointTolerance: 3,
   });
 
@@ -1064,7 +1103,7 @@ function parametric_boxgraph_init(scope) {
 // as an inner notation's scope.
 function makeInnerScope(node) {
   const wrapper = ⟦node localRoot⟧;
-  const innerScope = svgel('g', { class: 'inner-notation-scope' }, wrapper);
+  const innerScope = svgel('g', { class: 'shape-interior' }, wrapper);
   Array.from(wrapper.children)
     .filter(c => c !== node && c !== innerScope)
     .forEach(c => innerScope.appendChild(c));
@@ -1127,9 +1166,8 @@ vtables['DefaultMetaNotation'] = {
         isNode: e => (e.tagName === 'rect' && isBlueStroke(e))
                   || (e.matches && e.matches(ALL_LABELS) 
                       && !self._labeller._claimedLabels.has(e)),
-        isEdge: e => isBlueStroke(e) && ['polyline','line','path'].includes(e.tagName)
-                  && !⟦e isClosed⟧ && !⟦e isArrowhead⟧,
-        endpointTolerance: 15,
+        isEdge: e => isBlueStroke(e) && isMathchaConnector(e),
+        endpointTolerance: 15, // Empirically determined from notational-dispatch-1.svg...
       });
     return self._graph;
   },
@@ -1138,10 +1176,10 @@ vtables['DefaultMetaNotation'] = {
   ['regions']: (self) => {
     if (self._regions) return self._regions;
     const graph = ⟦self graph⟧;  // also ensures labeller has run
-    const named = self._labeller._claimedMembers;
+    const named = self._labeller._claimedLabellables;
     self._regions = ⟦graph nodes⟧
-      .filter(n => named.has(n.dom))
-      .map(n => ⟦self wrapRegion: n⟧);
+      .filter(node => named.has(node.dom))
+      .map(node => ⟦self wrapRegion: node⟧);
     return self._regions;
   },
 
@@ -1168,6 +1206,7 @@ vtables['DefaultMetaNotation-Region'] = {
   },
 
   // The text of the label that this region's outgoing arrow points to.
+  // TODO: largely duplicated from `name`, factor out
   ['notationName']: (self) => {
     const graph = ⟦self.metaNotation graph⟧;
     const incident = ⟦graph edges⟧.filter(e =>
