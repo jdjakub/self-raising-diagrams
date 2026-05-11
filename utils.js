@@ -221,7 +221,9 @@ function isPointInPolygon(pt, poly) {
 function closest_pt_on_line_seg(pt, seg_p1, seg_p2) {
   const p1_to_pt = vsub(pt, seg_p1);
   const p1_to_p2 = vsub(seg_p2, seg_p1);
-  let pt_proj_0_to_1 = vdot(p1_to_pt,p1_to_p2) / vdot(p1_to_p2,p1_to_p2);
+  const denom = vdot(p1_to_p2, p1_to_p2);
+  if (denom === 0) return seg_p1;
+  let pt_proj_0_to_1 = vdot(p1_to_pt, p1_to_p2) / denom;
   pt_proj_0_to_1 = Math.min(Math.max(pt_proj_0_to_1, 0), 1); // Clamp [0,1]
   const closest_pt = vadd(seg_p1, vmul(pt_proj_0_to_1, p1_to_p2));
   return closest_pt;

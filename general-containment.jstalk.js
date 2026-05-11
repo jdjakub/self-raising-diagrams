@@ -43,7 +43,14 @@ sendNoKw = function(recv, selector, ...args) {
   return method(recv, ...args);
 }
 
+vtables.geometric = {
+  ['distanceTo:']: (self, other) =>
+    Math.sqrt(distance2_line_segs_to_segs(⟦self lineSegments⟧, ⟦other lineSegments⟧)),
+};
+
 vtables.point = {
+  _parent: vtables.geometric,
+  /*
   ['distanceTo:']: (self, other) => {
     if (other instanceof Array && other.length === 2) {
       return Math.sqrt(dist2(self, other));
@@ -51,7 +58,9 @@ vtables.point = {
       const closest = closest_line_seg_to_pt(self, ⟦other lineSegments⟧);
       return Math.sqrt(distance2_pt_to_line_seg(self, ...closest));
     }
-  },
+  },*/
+  ['lineSegments']: (self) => [[self, self]],
+  ['vertices']: (self) => [self],
   ['insideWhichShapes:']: (self, shapes) =>
     shapes.filter(s => ⟦s containsPt: self⟧).sort(inTopToBottomOrder),
   ['pickFrom:']: (self, shapes) => {
@@ -65,7 +74,7 @@ vtables.point = {
 nextId = 1;
 
 vtables.domNode = {
-  _parent: null,
+  _parent: vtables.geometric,
 
   ['id']: (self) => {
     // TODO: pull in + exec any red boxes on demand!?
@@ -90,13 +99,8 @@ vtables.domNode = {
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
     return l<=x && x<=r && t<=y && y<=b;
   },
-  ['encloses:']: (self, other) => {
-    const otherVs = ⟦other vertices⟧; // SMELL convex polys only
-    for (const v of otherVs) {
-      if (!⟦self containsPt: v⟧) return false;
-    }
-    return true;
-  },
+  ['encloses:']: (self, other) => 
+    ⟦other vertices⟧.every(v => ⟦self containsPt: v⟧),  // SMELL convex polys only
   ['covers:']: (self, other) => {
     const self_minus_other = inTopToBottomOrder(self, other);
     return self_minus_other < 0;
@@ -114,10 +118,10 @@ vtables.domNode = {
   },
   ['isClosed']: (self) => true,
   ['lineSegments']: (self) => explode_poly_segs(⟦self vertices⟧, ⟦self isClosed⟧),
-  ['distanceTo:']: (self, other) => {
+  /*['distanceTo:']: (self, other) => {
     if (other instanceof Array) return ⟦other distanceTo: self⟧;
     return Math.sqrt(distance2_line_segs_to_segs(⟦self lineSegments⟧, ⟦other lineSegments⟧));
-  },
+  },*/
   ['signedDistanceToPt:']: (self, pt) => {
     const dist = ⟦self distanceTo: pt⟧;
     return ⟦self containsPt: pt⟧ ? -dist : dist;
@@ -211,7 +215,7 @@ vtables.byTag['path'] = {
     }
     return null;
   },
-  ['localRoot']: (self) => self.parentElement,
+  ['localRoot']: (self) => self.parentElement, // SMELL: wrong for arrowheads
   ['endpoints']: (self) => {
     if (⟦self isClosed⟧) return [];
     return [ ⟦self pointAtFrac: 0⟧, ⟦self pointAtFrac: 1⟧ ];
@@ -741,7 +745,7 @@ vtables['Box']['asJSFunc'] = (self) => {
 //
 // A parametrised "notation-class" for graph-shaped diagrams.
 // Closed parametrisation: filter and definitions supplied as JS lambdas.
-// Pure: produces nodes and edges. Labelling is a separate layer (TBD).
+// Pure: produces nodes and edges. Labelling is a separate layer ("Labeller" below).
 //
 // Each instance is configured for a particular DOM region (scope). Elements
 // outside the region, or failing the filter, are ignored. Within the region,
@@ -788,18 +792,31 @@ vtables['GraphNotation'] = {
   },
 
   // Region-claiming traversal. Walks DOM tree from `root`, collecting elems
-  // matching `pred`. Skips anything in `excluded` (already claimed by a prior
-  // search). A match itself claims its subtree (don't descend into matches).
+  // matching `pred` and skipping anything in `excluded`. Importantly, when a
+  // shape matches/is-excluded, the entire wrapping <g> (its localRoot) is
+  // treated as opaque — siblings of the shape inside that wrapper are not
+  // visited. This handles SVG's wrapper-around-shape pattern, where after
+  // reroot, spatially-contained content sits as siblings of the matched shape.
   ['findIn:matching:excluding:']: (self, root, pred, excluded) => {
     const matches = [];
+
+    // visit returns true iff `elem` is fully handled — either it directly
+    // matched/was-excluded, or it's the wrapper of something that did. The
+    // caller uses this to know when to stop iterating elem's siblings.
     const visit = (elem) => {
-      if (excluded.has(elem)) return;
-      if (pred(elem)) {
-        matches.push(elem);
-        return; // claimed: don't descend
+      if (excluded.has(elem)) return true;
+      if (pred(elem)) { matches.push(elem); return true; }
+
+      for (const child of elem.children) {
+        const childHandled = visit(child);
+        // If child claimed itself AND elem is child's wrapper, elem is also
+        // handled and elem's remaining children belong to the same conceptual
+        // node — don't visit them.
+        if (childHandled && ⟦child localRoot⟧ === elem) return true;
       }
-      for (const child of elem.children) visit(child);
+      return false;
     };
+
     visit(root);
     return matches;
   },
@@ -843,12 +860,6 @@ vtables['GraphNotation-Edge'] = {
   ['target']: (self) => ⟦self connections⟧[1],
 };
 
-// Convenience constructor.
-makeGraphNotation = function(scope, filter, defs) {
-  const gn = { vtable: 'GraphNotation' };
-  return ⟦gn fromRegion: scope filterBy: filter withDefs: defs⟧;
-};
-
 /* === USAGE SKETCHES ===
 
 // "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
@@ -879,10 +890,15 @@ const labelGN = makeGraphNotation(
 
 // === Labeller ===
 //
-// Given a base GraphNotation, a set of labels, and a set of labellables,
-// draw Labelling Linkage Lines (LLLs) attaching labels to labellables in a
-// one-to-one matching. Each label gets at most one labellable; each
-// labellable gets at most one label.
+// Given a scope, a set of labels, and a set of labellables, draw Labelling
+// Linkage Lines (LLLs) attaching labels to labellables in a one-to-one
+// matching. Each label gets at most one labellable; each labellable gets at
+// most one label.
+//
+// Labellables can be GraphNotation node wrappers, raw DOM elements, or any
+// other objects — the supplied attractor and attachAt lambdas are what know
+// how to interpret them. A Labeller doesn't require a base GraphNotation;
+// any collection of elements can be labelled directly.
 //
 // Single-role: each Labeller handles one labellable-set. For multi-role
 // labelling (e.g. BoxGraph's "arrows first, then boxes"), instantiate
@@ -901,18 +917,18 @@ ATTACHMENT_LINE_CLASS = 'attachment-line';
 vtables['Labeller'] = {
   _parent: null,
 
-  // base:        a GraphNotation instance whose scope hosts the LLLs
-  // labels:      base -> [label DOM elems]; called fresh each run, so it
+  // scope:       DOM element delimiting the region (LLLs drawn into this)
+  // labels:      () -> [label DOM elems]; called fresh each run, so it
   //              can naturally exclude already-claimed labels
-  // labellables: base -> [labellable wrappers]
+  // labellables: () -> [labellables]; wrappers or raw elems
   // attractor:   labellable -> point | shape (anything responding to
   //              distanceTo: from the label side)
   // attachAt:    (labellable, labelPt) -> point on labellable where LLL
   //              should terminate
   // maxDistance: labels beyond this from any labellable are skipped
-  ['attach:withLabels:labellables:attractor:attachAt:maxDistance:']:
-    (self, base, labels, labellables, attractor, attachAt, maxDistance) => {
-      self.base = base;
+  ['inScope:withLabels:labellables:attractor:attachAt:maxDistance:']:
+    (self, scope, labels, labellables, attractor, attachAt, maxDistance) => {
+      self.scope = scope;
       self.labels = labels;
       self.labellables = labellables;
       self.attractor = attractor;
@@ -926,8 +942,8 @@ vtables['Labeller'] = {
   // labellable at most once. Returns the AttachmentGraph parsing the LLLs
   // drawn by THIS pass.
   ['run']: (self) => {
-    const labels = self.labels(self.base);
-    const labellables = self.labellables(self.base);
+    const labels = self.labels();
+    const labellables = self.labellables();
     const candidates = [];
     for (const label of labels) {
       for (const m of labellables) {
@@ -938,38 +954,42 @@ vtables['Labeller'] = {
     candidates.sort((a, b) => a.d - b.d);
     const claimedLabels = new Set();
     const claimedMembers = new Set();
-    const drawnLines = [];
+    const drawnLines = new Set();
     for (const c of candidates) {
       if (claimedLabels.has(c.label) || claimedMembers.has(c.m)) continue;
       claimedLabels.add(c.label);
       claimedMembers.add(c.m);
-      drawnLines.push(⟦self drawLLL: c.label to: c.m⟧);
+      drawnLines.add(⟦self drawLLL: c.label to: c.m⟧);
     }
-    self._lastDrawn = drawnLines;
+    self._drawnLines = drawnLines;
+    self._claimedLabels = claimedLabels;
+    self._claimedMembers = claimedMembers;
     return ⟦self attachmentGraph⟧;
   },
 
   ['drawLLL:to:']: (self, label, member) => {
     const labelPt = ⟦label centerPt⟧;
     const memberPt = self.attachAt(member, labelPt);
+    const wrapper = svgel('g', { class: ATTACHMENT_LINE_CLASS }, self.scope);
     return svgel('line', {
       x1: labelPt[0], y1: labelPt[1],
       x2: memberPt[0], y2: memberPt[1],
-      class: ATTACHMENT_LINE_CLASS,
       style: 'stroke: magenta',
-    }, self.base.scope);
+    }, wrapper);
   },
 
   // The AttachmentGraph: a GraphNotation parsing the LLLs drawn by this
   // run. Nodes are labels + labellables; edges are the LLLs.
   ['attachmentGraph']: (self) => {
-    const drawn = new Set(self._lastDrawn || []);
-    const labelDoms = new Set(self.labels(self.base));
-    const labellableDoms = new Set(self.labellables(self.base).map(m => m.dom || m));
-    return makeGraphNotation(
-      self.base.scope,
-      e => drawn.has(e) || labelDoms.has(e) || labellableDoms.has(e),
-      {
+    const drawn = self._drawnLines || new Set();
+    const labelDoms = self._claimedLabels || new Set();
+    const labellableDoms = new Set(
+      Array.from(self._claimedMembers || []).map(m => m.dom || m)
+    );
+    return send({ vtable: 'GraphNotation' },
+      'fromRegion:', self.scope,
+      'filterBy:', e => drawn.has(e) || labelDoms.has(e) || labellableDoms.has(e),
+      'withDefs:', {
         isNode: e => labelDoms.has(e) || labellableDoms.has(e),
         isEdge: e => drawn.has(e),
         endpointTolerance: 1,
@@ -978,24 +998,13 @@ vtables['Labeller'] = {
   },
 };
 
-makeLabeller = function(base, labels, labellables, attractor, attachAt, maxDistance) {
-  const lab = { vtable: 'Labeller' };
-  return send(lab,
-    'attach:', base,
-    'withLabels:', labels,
-    'labellables:', labellables,
-    'attractor:', attractor,
-    'attachAt:', attachAt,
-    'maxDistance:', maxDistance);
-};
-
 // Helper: a labels-function that excludes labels already terminated-on by
 // any existing attachment-line in scope. Use as the `labels` arg for any
 // Labeller pass that should respect prior passes.
 unclaimedLabels = function(scope, allLabelsSelector) {
   return () => {
     const allLabels = Array.from(scope.querySelectorAll(allLabelsSelector));
-    const lines = Array.from(scope.querySelectorAll('.'+ATTACHMENT_LINE_CLASS));
+    const lines = Array.from(scope.querySelectorAll('.'+ATTACHMENT_LINE_CLASS+' > line'));
     // A label is claimed if any LLL's endpoint is inside its bounding box.
     const claimed = new Set();
     for (const line of lines) {
@@ -1009,43 +1018,192 @@ unclaimedLabels = function(scope, allLabelsSelector) {
   };
 };
 
-function parametric_boxgraph_init() {
+ ALL_LABELS = '.is-paragraph:not(.is-multiline)';
+
+// boxGraph-example.svg
+function parametric_boxgraph_init(scope) {
   // "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
-  boxGN = makeGraphNotation(
-    document.documentElement,
-    e => true,
-    {
+  boxGN = send({ vtable: 'GraphNotation' },
+    'fromRegion:', scope,
+    'filterBy:', e => true,
+    'withDefs:', {
       isNode: e => e.tagName === 'rect',
       isEdge: e => ['polyline','line'].includes(e.tagName)
         || e.tagName === 'path' && !send(e, 'isClosed') && !send(e, 'isArrowhead'),
       endpointTolerance: 3,
-    }
-  );
-  ALL_LABELS = '.is-paragraph:not(.is-multiline)';
+  });
 
   // Pass 1: arrows claim labels nearest their origin points (no max distance —
   // arrows need labels).
-  arrowLabeller = makeLabeller(
-    boxGN,
-    base => Array.from(base.scope.querySelectorAll(ALL_LABELS)),
-    base => send(base, 'edges'),
-    edge => send(edge, 'originPt'),
-    (edge, labelPt) => send(edge, 'originPt'),
-    Infinity
+  arrowLabeller = send({ vtable: 'Labeller' },
+    'inScope:', boxGN.scope,
+    'withLabels:', () => Array.from(boxGN.scope.querySelectorAll(ALL_LABELS)),
+    'labellables:', () => ⟦boxGN edges⟧,
+    'attractor:', edge => ⟦edge originPt⟧,
+    'attachAt:', (edge, labelPt) => ⟦edge originPt⟧,
+    'maxDistance:', Infinity
   );
-  arrowAttachments = send(arrowLabeller, 'run');
+  arrowAttachments = ⟦arrowLabeller run⟧;
 
   // Pass 2: boxes claim from remaining labels, within 20px.
-  boxLabeller = makeLabeller(
-    boxGN,
-    unclaimedLabels(boxGN.scope, ALL_LABELS),
-    base => send(base, 'nodes'),
-    node => node.dom,
-    (node, labelPt) => send(node.dom, 'closestPtToPt:', labelPt),
-    20
+  boxLabeller = send({ vtable: 'Labeller' },
+    'inScope:', boxGN.scope,
+    'withLabels:', unclaimedLabels(boxGN.scope, ALL_LABELS),
+    'labellables:', () => ⟦boxGN nodes⟧,
+    'attractor:', node => node.dom,
+    'attachAt:', (node, labelPt) => ⟦node.dom closestPtToPt: labelPt⟧,
+    'maxDistance:', 20
   );
-  boxAttachments = send(boxLabeller, 'run');
+  boxAttachments = ⟦boxLabeller run⟧;
+
+  return {boxGN, boxAttachments, arrowAttachments};
 }
+
+// Restructure a node's wrapper so its non-rect siblings are gathered into a
+// new inner-scope <g>. Returns the new inner-scope element, suitable for use
+// as an inner notation's scope.
+function makeInnerScope(node) {
+  const wrapper = ⟦node localRoot⟧;
+  const innerScope = svgel('g', { class: 'inner-notation-scope' }, wrapper);
+  Array.from(wrapper.children)
+    .filter(c => c !== node && c !== innerScope)
+    .forEach(c => innerScope.appendChild(c));
+  return innerScope;
+}
+
+// === DefaultMetaNotation ===
+//
+// A meta-notation: interprets a region of the diagram as a set of
+// notation-instance regions. Each region is a labelled node whose outgoing
+// edge points to the name of the notation that should parse its contents.
+//
+// Built from: a Labeller (paragraphs attach to blue rects as names) and
+// a GraphNotation (blue rects + unclaimed paragraphs as nodes; blue arrows
+// as edges). The user-facing surface is `regions`, with each region
+// exposing `myName`, `notationName`, and `innerScope`.
+
+isBlueStroke = e => e.style && e.style.stroke === 'rgb(74, 144, 226)'; // Magic blue
+
+vtables['DefaultMetaNotation'] = {
+  _parent: null,
+
+  ['fromRegion:']: (self, scope) => {
+    self.scope = scope;
+    return self;
+  },
+
+  // Lazy: ensure the labelling pass has run; cache the AttachmentGraph.
+  ['labelAttachments']: (self) => {
+    if (self._labelAttachments) return self._labelAttachments;
+    const blueBoxes = () => Array.from(self.scope.querySelectorAll('rect')).filter(isBlueStroke);
+    const isInsideBlueBox = e => blueBoxes().some(box => box.parentElement.contains(e));
+    self._labeller = send({ vtable: 'Labeller' },
+      'inScope:', self.scope,
+      'withLabels:', () => Array.from(self.scope.querySelectorAll(ALL_LABELS))
+                                .filter(l => !isInsideBlueBox(l)),
+      'labellables:', () => Array.from(self.scope.querySelectorAll('rect')).filter(isBlueStroke),
+      'attractor:', box => box,
+      'attachAt:', (box, labelPt) => ⟦box closestPtToPt: labelPt⟧,
+      'maxDistance:', 30
+    );
+    self._labelAttachments = ⟦self._labeller run⟧;
+    return self._labelAttachments;
+  },
+
+  // Lazy: ensure labeller has run, then build the underlying graph.
+  ['graph']: (self) => {
+    if (self._graph) return self._graph;
+    // Pass 1: each blue box claims the closest paragraph within 30px as its
+    // label. The remaining (unclaimed) paragraphs become arrow-target nodes
+    // for the outer GraphNotation below.
+    ⟦self labelAttachments⟧;  // dependency: graph's isNode reads _claimedLabels
+    // Pass 2, the outer "BoxGraph meta-notation": blue boxes are nodes, AND any
+    // paragraph not claimed as a label is also a node (e.g. the "BoxGraph"
+    // arrow-target text). Edges are blue open paths.
+    self._graph = send({ vtable: 'GraphNotation' },
+      'fromRegion:', self.scope,
+      'filterBy:', e => true,
+      'withDefs:', {
+        isNode: e => (e.tagName === 'rect' && isBlueStroke(e))
+                  || (e.matches && e.matches(ALL_LABELS) 
+                      && !self._labeller._claimedLabels.has(e)),
+        isEdge: e => isBlueStroke(e) && ['polyline','line','path'].includes(e.tagName)
+                  && !⟦e isClosed⟧ && !⟦e isArrowhead⟧,
+        endpointTolerance: 15,
+      });
+    return self._graph;
+  },
+
+  // The named regions: labelled nodes wrapped with extra accessors.
+  ['regions']: (self) => {
+    if (self._regions) return self._regions;
+    const graph = ⟦self graph⟧;  // also ensures labeller has run
+    const named = self._labeller._claimedMembers;
+    self._regions = ⟦graph nodes⟧
+      .filter(n => named.has(n.dom))
+      .map(n => ⟦self wrapRegion: n⟧);
+    return self._regions;
+  },
+
+  ['wrapRegion:']: (self, gnNode) =>
+    ({ vtable: 'DefaultMetaNotation-Region', gnNode, metaNotation: self }),
+};
+
+vtables['DefaultMetaNotation-Region'] = {
+  _parent: null,
+
+  // Forward unknown messages to the wrapped GN-Node (which forwards to dom).
+  ['doesNotUnderstand:']: (self, [selector, ...args]) =>
+    sendNoKw(self.gnNode, selector, ...args),
+
+  // The label text attached to this region.
+  ['name']: (self) => {
+    const attach = ⟦self.metaNotation labelAttachments⟧;
+    const incident = ⟦attach edges⟧.filter(e =>
+      ⟦e connections⟧.some(n => n && n.dom === self.gnNode.dom));
+    if (incident.length === 0) return null;
+    const labelNode = ⟦incident[0] connections⟧.find(
+      n => n && n.dom !== self.gnNode.dom);
+    return labelNode ? labelNode.dom.dataset.string : null;
+  },
+
+  // The text of the label that this region's outgoing arrow points to.
+  ['notationName']: (self) => {
+    const graph = ⟦self.metaNotation graph⟧;
+    const incident = ⟦graph edges⟧.filter(e =>
+      ⟦e connections⟧.some(n => n && n.dom === self.gnNode.dom));
+    if (incident.length === 0) return null;
+    const otherEnd = ⟦incident[0] connections⟧.find(
+      n => n && n.dom !== self.gnNode.dom);
+    return otherEnd ? otherEnd.dom.dataset.string : null;
+  },
+
+  // The DOM subtree for the inner notation. Lazy.
+  ['innerScope']: (self) => {
+    if (self._innerScope) return self._innerScope;
+    self._innerScope = makeInnerScope(self.gnNode.dom);
+    return self._innerScope;
+  },
+};
+
+// notational-dispatch-1.svg
+parametric_meta_boxgraph_init = function() {
+  metaNotation = send({ vtable: 'DefaultMetaNotation' },
+    'fromRegion:', document.documentElement);
+  boxGraphs = [];
+  for (region of ⟦metaNotation regions⟧) {
+    const notationName = ⟦region notationName⟧;
+    if (notationName !== 'BoxGraph') continue;  // skip for now
+    const innerScope = ⟦region innerScope⟧;
+    const myName = ⟦region name⟧;
+    // build inner BoxGraph at innerScope
+    const bg = parametric_boxgraph_init(innerScope);
+    bg.name = myName;
+    window[myName] = bg;
+    boxGraphs.push(bg);
+  }
+  boxGraphs.forEach(bg => log(bg.name, ⟦bg.boxGN edges⟧[0]))
+};
 
 // === ID OBJ MODEL STUFF ===
 
