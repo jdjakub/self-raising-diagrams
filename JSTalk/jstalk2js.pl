@@ -51,7 +51,6 @@ sub find_matching {
 }
 
 sub skip_balanced {
-    # Skip over balanced brackets, parens, braces, strings, etc.
     my ($str, $pos) = @_;
     my $len = length($str);
     my $ch = substr($str, $pos, 1);
@@ -65,7 +64,6 @@ sub skip_balanced {
     } elsif ($ch eq '{') {
         return find_matching($str, $pos + 1, '{', '}');
     } elsif ($ch eq '"' || $ch eq "'" || $ch eq '`') {
-        # Simple string handling (doesn't handle escapes perfectly)
         my $quote = $ch;
         $pos++;
         while ($pos < $len) {
@@ -81,50 +79,6 @@ sub skip_balanced {
         return $pos - 1;
     }
     return $pos;
-}
-
-sub tokenize_message {
-    my ($content) = @_;
-    
-    $content =~ s/^\s+|\s+$//g;
-    
-    my @tokens;
-    my $pos = 0;
-    my $len = length($content);
-    my $current = '';
-    
-    while ($pos < $len) {
-        my $ch = substr($content, $pos, 1);
-        
-        if ($ch eq $OPEN || $ch eq '[' || $ch eq '(' || $ch eq '{' || $ch eq '"' || $ch eq "'" || $ch eq '`') {
-            my $end = skip_balanced($content, $pos);
-            $current .= substr($content, $pos, $end - $pos + 1);
-            $pos = $end + 1;
-        } elsif ($ch =~ /\s/) {
-            if ($current ne '') {
-                push @tokens, $current;
-                $current = '';
-            }
-            $pos++;
-        } elsif ($ch eq ':') {
-            # Check if this is part of ternary ?: or object literal
-            # Heuristic: if current token looks like an identifier, it's a keyword
-            if ($current ne '' && $current =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/) {
-                $current .= ':';
-                push @tokens, $current;
-                $current = '';
-            } else {
-                $current .= ':';
-            }
-            $pos++;
-        } else {
-            $current .= $ch;
-            $pos++;
-        }
-    }
-    push @tokens, $current if $current ne '';
-    
-    return @tokens;
 }
 
 sub has_top_level_comma {
@@ -145,44 +99,136 @@ sub has_top_level_comma {
     return 0;
 }
 
+# Tokenize preserving whitespace info
+# Returns array of [token, preceding_whitespace] pairs
+sub tokenize_message {
+    my ($content) = @_;
+    
+    my @result;
+    my $pos = 0;
+    my $len = length($content);
+    my $current = '';
+    my $preceding_ws = '';
+    
+    # Capture leading whitespace
+    while ($pos < $len && substr($content, $pos, 1) =~ /\s/) {
+        $preceding_ws .= substr($content, $pos, 1);
+        $pos++;
+    }
+    
+    while ($pos < $len) {
+        my $ch = substr($content, $pos, 1);
+        
+        if ($ch eq $OPEN || $ch eq '[' || $ch eq '(' || $ch eq '{' || $ch eq '"' || $ch eq "'" || $ch eq '`') {
+            my $end = skip_balanced($content, $pos);
+            $current .= substr($content, $pos, $end - $pos + 1);
+            $pos = $end + 1;
+        } elsif ($ch =~ /\s/) {
+            if ($current ne '') {
+                push @result, [$current, $preceding_ws];
+                $current = '';
+                $preceding_ws = '';
+            }
+            $preceding_ws .= $ch;
+            $pos++;
+        } elsif ($ch eq ':') {
+            if ($current ne '' && $current =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/) {
+                $current .= ':';
+                push @result, [$current, $preceding_ws];
+                $current = '';
+                $preceding_ws = '';
+            } else {
+                $current .= ':';
+            }
+            $pos++;
+        } else {
+            $current .= $ch;
+            $pos++;
+        }
+    }
+    push @result, [$current, $preceding_ws] if $current ne '';
+    
+    return @result;
+}
+
 sub parse_message_send {
     my ($content) = @_;
     
-    # Top-level comma means array literal, not message send
     return undef if has_top_level_comma($content);
     
     my @tokens = tokenize_message($content);
     
     return undef if @tokens == 0;
     
-    my $receiver = shift @tokens;
+    my ($receiver, $recv_ws) = @{shift @tokens};
     
     return undef if @tokens == 0;
     
-    # Unary message: exactly one token that's an identifier without colon
-    if (@tokens == 1 && $tokens[0] =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/) {
-        return [$receiver, "'$tokens[0]'"];
+    # Unary message
+    if (@tokens == 1 && $tokens[0][0] =~ /^[a-zA-Z_][a-zA-Z0-9_]*$/) {
+        my ($sel, $sel_ws) = @{$tokens[0]};
+        return [
+            [$receiver, ''],
+            ["'$sel'", $sel_ws]
+        ];
     }
     
-    return undef unless $tokens[0] =~ /^[a-zA-Z_][a-zA-Z0-9_]*:$/;
+    return undef unless $tokens[0][0] =~ /^[a-zA-Z_][a-zA-Z0-9_]*:$/;
     
-    my @parts = ($receiver);
+    my @parts = ([$receiver, '']);
     
     while (@tokens) {
-        my $tok = shift @tokens;
+        my ($tok, $ws) = @{shift @tokens};
+        
         if ($tok =~ /^[a-zA-Z_][a-zA-Z0-9_]*:$/) {
-            push @parts, "'$tok'";
+            push @parts, ["'$tok'", $ws];
             if (@tokens) {
-                push @parts, shift @tokens;
+                my ($arg, $arg_ws) = @{shift @tokens};
+                push @parts, [$arg, $arg_ws];
             }
         } else {
             if (@parts > 0) {
-                $parts[-1] .= ' ' . $tok;
+                $parts[-1][0] .= ' ' . $tok;
             }
         }
     }
     
     return \@parts;
+}
+
+sub format_send {
+    my ($parts) = @_;
+    
+    # Check if any whitespace contains newline
+    my $multiline = 0;
+    for my $p (@$parts) {
+        if ($p->[1] =~ /\n/) {
+            $multiline = 1;
+            last;
+        }
+    }
+    
+    if ($multiline) {
+        # Preserve formatting
+        my $out = 'send(';
+        for my $i (0 .. $#$parts) {
+            if ($i > 0) {
+                $out .= ',';
+                my $ws = $parts->[$i][1];
+                if ($ws =~ /\n/) {
+                    $out .= $ws;
+                } else {
+                    $out .= ' ';
+                }
+            }
+            $out .= $parts->[$i][0];
+        }
+        $out .= ')';
+        return $out;
+    } else {
+        # Single line
+        return 'send(' . join(', ', map { $_->[0] } @$parts) . ')';
+    }
 }
 
 sub transpile {
@@ -201,14 +247,11 @@ sub transpile {
                 $pos++;
             } else {
                 my $content = substr($input, $pos + 1, $end - $pos - 1);
-                # Recursively transpile nested content first
                 my $transpiled = transpile($content);
-                # Try to parse as message send
                 my $parts = parse_message_send($transpiled);
                 if (defined $parts) {
-                    $output .= 'send(' . join(', ', @$parts) . ')';
+                    $output .= format_send($parts);
                 } else {
-                    # Not a message send, preserve brackets
                     $output .= $OPEN . $transpiled . $CLOSE;
                 }
                 $pos = $end + 1;

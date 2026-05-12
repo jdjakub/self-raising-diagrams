@@ -82,3 +82,16 @@ according to the tag of the element, instead of containment being restricted to 
 in the console.
 
 ![Containment stress test](./screenshots/demo-general-containment.png)
+
+### Example 9 (notational-dispatch)
+A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. Console:
+
+```javascript
+init();
+meta_boxgraph_init(document.documentElement);
+send(bg1, 'asJSOG');
+send(bg2, 'asJSOG');
+send(tg3, 'asJS');
+```
+
+![Notational Dispatch](./screenshots/demo-notational-dispatch.png)
