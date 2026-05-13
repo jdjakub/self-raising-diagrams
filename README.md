@@ -88,10 +88,9 @@ A triumph of the message-sending architecture! Default "magic blue" meta-BoxGrap
 
 ```javascript
 init();
-meta_boxgraph_init(document.documentElement);
 send(bg1, 'asJSOG');
 send(bg2, 'asJSOG');
-send(tg3, 'asJS');
+send(tg1, 'asJS');
 ```
 
 ![Notational Dispatch](./screenshots/demo-notational-dispatch.png)

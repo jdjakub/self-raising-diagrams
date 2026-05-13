@@ -390,7 +390,7 @@ vtables.byTag['g'] = {
       const runs = Array.from(line_g.children).map(run_g =>
         run_g.firstChild.textContent
       );
-      return runs.join(' ');
+      return runs.join('');
     });
     self.dataset.string = lines.join('\n');
     if (self.children.length > 1) self.classList.add('is-multiline');
@@ -818,6 +818,7 @@ vtables['GraphNotation'] = {
     self._nodes = matches.map(e => ⟦self wrapNode: e⟧);
     return self._nodes;
   },
+  ['nodeForDom:']: (self, dom) => ⟦self nodes⟧.find(n => n.dom === dom) || null,
 
   ['edges']: (self) => {
     if (self._edges) return self._edges;
@@ -884,7 +885,18 @@ vtables['GraphNotation-Node'] = {
   _parent: vtables['GraphNotation-Common'],
 
   // Edges in the same notation that touch this node.
-  ['incidentEdges']: (self) => ⟦self.notation edges⟧.filter(e => ⟦e connections⟧.includes(self)),
+  ['incidentEdges']: (self) => ⟦self.notation edges⟧.filter(e =>
+    ⟦e connections⟧.some(n => n && n.dom === self.dom)),
+  // Nodes at the end of all incident edges
+  ['neighbors']: (self) => {
+    const result = [];
+    for (const edge of ⟦self incidentEdges⟧) {
+      for (const conn of ⟦edge connections⟧) {
+        if (conn && conn.dom !== self.dom) result.push(conn);
+      }
+    }
+    return result;
+  },
 };
 
 vtables['GraphNotation-Edge'] = {
@@ -955,10 +967,9 @@ const labelGN = ⟦ GraphNotation
 // placed unambiguously close to their intended labellables, and pathological
 // cases are resolved by the user nudging the label.
 
-ATTACHMENT_LINE_CLASS = 'attachment-line';
-
 vtables['Labeller'] = {
   _parent: null,
+  LLL_CLASS: 'attachment-line',
 
   // scope:       DOM element delimiting the region (LLLs drawn into this)
   // labels:      () -> [label DOM elems]; called fresh each run, so it
@@ -1014,7 +1025,8 @@ vtables['Labeller'] = {
   ['drawLLL:to:']: (self, label, labellable) => {
     const [x1,y1] = ⟦label centerPt⟧;
     const [x2,y2] = self.attachAt(labellable, [x1,y1]);
-    const wrapper = svgel('g', { class: ATTACHMENT_LINE_CLASS }, self.scope);
+    // note: static member ref
+    const wrapper = svgel('g', { class: vtables.Labeller.LLL_CLASS }, self.scope);
     return svgel('line', { x1, y1, x2, y2,
       style: 'stroke: magenta',
     }, wrapper);
@@ -1087,20 +1099,8 @@ vtables['LabelledGraph'] = {
   },
   ['anonEdges']: (self) => ⟦self edges⟧.filter(e => !⟦e name⟧),
 
-  ['wrapNode:']: (self, gnNode) => {
-    if (!self._nodeWrappers) self._nodeWrappers = new Map();
-    if (self._nodeWrappers.has(gnNode.dom)) return self._nodeWrappers.get(gnNode.dom);
-    const wrapper = { vtable: 'LabelledGraph-Node', gnNode, lg: self };
-    self._nodeWrappers.set(gnNode.dom, wrapper);
-    return wrapper;
-  },
-  ['wrapEdge:']: (self, gnEdge) => {
-    if (!self._edgeWrappers) self._edgeWrappers = new Map();
-    if (self._edgeWrappers.has(gnEdge.dom)) return self._edgeWrappers.get(gnEdge.dom);
-    const wrapper = { vtable: 'LabelledGraph-Edge', gnEdge, lg: self };
-    self._edgeWrappers.set(gnEdge.dom, wrapper);
-    return wrapper;
-  },
+  ['wrapNode:']: (self, gnNode) => ({ vtable: 'LabelledGraph-Node', gnNode, lg: self }),
+  ['wrapEdge:']: (self, gnEdge) => ({ vtable: 'LabelledGraph-Edge', gnEdge, lg: self }),
 };
 
 vtables['LabelledGraph-Node'] = {
@@ -1135,7 +1135,8 @@ vtables['LabelledGraph-Edge'] = {
 unclaimedLabels = function(scope, allLabelsSelector) {
   return () => {
     const allLabels = Array.from(scope.querySelectorAll(allLabelsSelector));
-    const lines = Array.from(scope.querySelectorAll('.'+ATTACHMENT_LINE_CLASS+' > line'));
+    const selector = '.' + vtables.Labeller.LLL_CLASS + ' > line';
+    const lines = Array.from(scope.querySelectorAll(selector));
     // A label is claimed if any LLL's endpoint is inside its bounding box.
     const claimed = new Set();
     for (const line of lines) {
@@ -1150,13 +1151,11 @@ unclaimedLabels = function(scope, allLabelsSelector) {
 };
 
 // Find the label attached to a given gn node/edge in an attachment graph.
-const nameFromAttachments = (att, gnElem) => {
-  const incidentEdges = ⟦att edges⟧.filter(e =>
-    ⟦e connections⟧.some(n => n && n.dom === gnElem.dom));
-  if (incidentEdges.length === 0) return null;
-  const other = ⟦incidentEdges[0] connections⟧.find(
-    n => n && n.dom !== gnElem.dom);
-  return other ? other.dom.dataset.string : null;
+const nameFromAttachments = (attGraph, gnElem) => {
+  const node = ⟦attGraph nodeForDom: gnElem.dom⟧;
+  if (!node) return null;
+  const neighbors = ⟦node neighbors⟧;
+  return neighbors.length > 0 ? neighbors[0].dom.dataset.string : null;
 };
 
 ALL_LABELS = '.is-paragraph:not(.is-multiline)';
@@ -1212,10 +1211,11 @@ vtables['BoxGraph'] = {
     let nextId = 1;
     const newName = () => 'anon'+nextId++;
     const names = new Map();
-    ⟦self nodes⟧.forEach(node => names.set(node, ⟦node name⟧ || newName()));
+    // Keying by DOM because it's a stable identity, while wrappers are created each call
+    ⟦self nodes⟧.forEach(node => names.set(node.gnNode.dom, ⟦node name⟧ || newName()));
     const triplets = Object.entries(edges).map(([key,edge]) => {
-      const origin = names.get(⟦edge origin⟧);
-      const target = names.get(⟦edge target⟧);
+      const origin = names.get(⟦edge origin⟧.gnNode.dom);
+      const target = names.get(⟦edge target⟧.gnNode.dom);
       if (!origin || !target) throw ['Naming error:', { self, names, key, edge, origin, target }];
       return [origin, key, target];
     });
@@ -1325,14 +1325,19 @@ vtables['DefaultMetaNotation'] = {
     ⟧;
   },
   // Override wrapNode to add notation-specific accessors.
-  ['wrapNode:']: (self, gnNode) => {
-    if (!self._nodeWrappers) self._nodeWrappers = new Map();
-    if (self._nodeWrappers.has(gnNode.dom)) return self._nodeWrappers.get(gnNode.dom);
-    const wrapper = { vtable: 'DefaultMetaNotation-Region', gnNode, lg: self };
-    self._nodeWrappers.set(gnNode.dom, wrapper);
-    return wrapper;
-  },
+  ['wrapNode:']: (self, gnNode) => ({ vtable: 'DefaultMetaNotation-Region', gnNode, lg: self }),
   ['namedRegions']: (self) => ⟦self namedNodes⟧,
+
+  ['instantiateAll']: (self) => {
+    const notationInstances = {};
+    for (const [myName, region] of Object.entries(⟦self namedRegions⟧)) {
+      const notationInstance = ⟦region instantiate⟧;
+      if (!notationInstance) continue;
+      notationInstance.name = myName;
+      notationInstances[myName] = notationInstance;
+    }
+    return notationInstances;
+  },
 };
 
 vtables['DefaultMetaNotation-Region'] = {
@@ -1350,30 +1355,30 @@ vtables['DefaultMetaNotation-Region'] = {
     self._innerScope = makeInnerScope(self.gnNode.dom);
     return self._innerScope;
   },
-};
-
-// notational-dispatch.svg
-meta_boxgraph_init = function(scope) {
-  metaNotation = send({ vtable: 'DefaultMetaNotation'}, 'fromRegion:', scope);
-  
-  notationInstances = [];
-  for (const [myName, region] of Object.entries(⟦metaNotation namedRegions⟧)) {
-    const notationName = ⟦region notationName⟧;
+  ['instantiate']: (self) => {
+    const notationName = ⟦self notationName⟧;
     const vtable = vtables[notationName];
     if (!vtable) {
       console.warn('No vtable for notation "'+notationName+'"; skipping region.');
-      continue;
+      return null;
     }
     // Assume vtable instances understand fromRegion: ...!
-    const domRegion = ⟦region innerScope⟧;
+    const domRegion = ⟦self innerScope⟧;
     // Construct!
-    const notationInstance = send({ vtable: notationName }, 'fromRegion:', domRegion);
-    notationInstance.name = myName;
-    window[myName] = notationInstance;
-    notationInstances.push(notationInstance);
-  }
+    return send({ vtable: notationName }, 'fromRegion:', domRegion);
+  },
+};
 
-  return notationInstances;
+// post-init entry point for diagrams in the default meta-notation
+// e.g. notational-dispatch.svg
+meta_boxgraph_init = function(scope) {
+  if (!scope) scope = document.documentElement;
+  metaNotation = send({ vtable: 'DefaultMetaNotation'}, 'fromRegion:', scope);
+
+  // Instantiate notations as globals
+  Object.entries(⟦metaNotation instantiateAll⟧).forEach(([name,inst]) => {
+    window[name] = inst;
+  });
 };
 
 // === ID OBJ MODEL STUFF ===
