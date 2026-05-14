@@ -184,9 +184,10 @@ vtables.byTag['path'] = {
   ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
   ['containsPt:']: (self, pt) => {
     if (!⟦self isClosed⟧) {
-      const {point, d2} = ⟦pt closestPointOn: self⟧;
+      /*const {point, d2} = ⟦pt closestPointOn: self⟧;
       if (d2 < 4) return true;
-      return false;
+      return false;*/
+      return self.isPointInStroke({ x: pt[0], y: pt[1] });
     }
     return vtables.domNode['containsPt:'](self, pt); // HACK supersend. Also too coarse
   },
@@ -309,7 +310,6 @@ vtables.byTag['polygon'] = {
   ['encloses:']: vtables.domNode['encloses:'], // HACK super?
 }
 
-MAGIC_RED = 'rgb(208, 2, 27)';
 vtables.byTag['rect'] = {
   _parent: vtables.byTag['polygon'],
 
@@ -318,28 +318,6 @@ vtables.byTag['rect'] = {
     return [ [x,y], [x+w,y], [x+w,y+h], [x,y+h] ];
   },
   ['specialize']: () => null,
-  ['parseAsExecutable']: (self) => {
-    // Check for executable boxes
-    if (self.style.stroke === MAGIC_RED) {
-      const lroot = ⟦self localRoot⟧;
-      const paras = Array.from(lroot.querySelectorAll('.is-paragraph'));
-      let done = true;
-      paras.forEach(p => {
-        if (!p.classList.contains('done')) done = false;
-        const str = p.dataset.string;
-        const lines = str.split('\n');
-        if (lines.length === 1 && str.startsWith('#')) {
-          p.classList.add('sets-id'); return true;
-        } else if (lines.every(l => l.startsWith('.'))) {
-          p.classList.add('adds-class'); return true;
-        } else {
-          p.classList.add('is-code'); return true;
-        }
-      });
-      if (done) self.classList.add('done');
-    }
-    return false;
-  },
 }
 
 vtables.byTag['circle'] = {
@@ -401,40 +379,6 @@ vtables.byTag['g'] = {
     if (self.classList.contains('is-paragraph')) return 'par';
     else return 'g';
   },
-  //SMELL domNode>>localRoot wrong for line/run <g>'s
-  ['execute']: (self) => {
-    const str = self.dataset.string;
-    const lines = str.split('\n');
-    const parent_g = self.parentElement;
-    const red_box = parent_g.firstChild; // SMELL nondeterminism
-    let targets = [parent_g.parentElement.firstChild]; // SMELL nondeterminism
-    const conns = ⟦red_box connectors⟧;
-    if (conns.length > 0) // Find the connections that aren't the red box itself
-      targets = conns.map(c => ⟦c connections⟧.filter(x => x !== red_box)[0]);
-    if (self.classList.contains('sets-id')) {
-      // #myId para sets target id=myId and self-deletes
-      // SMELL what if new ID already in use
-      if (targets.length > 1) throw [self, 'sets-id needs exactly 1 target'];
-      const target = targets[0];
-      if (target.id !== 'nil') {
-        const newId = str.substring(1);
-        const clash = byId(newId);
-        if (clash) clash.id = target.id;
-        target.id = newId;
-      }
-      self.classList.add('done');
-    } else if (self.classList.contains('adds-class')) {
-      // .myClass line adds myClass to container and self-deletes
-      lines.forEach(l => {
-        targets.forEach(target => target.classList.add(l.substring(1)));
-      });
-      self.classList.add('done');
-    } else if (self.classList.contains('is-code')) {
-      eval(str); // >:D
-      self.classList.add('done');
-    }
-    conns.forEach(c => c.classList.add('done'));
-  }
 }
 
 // Of a connector (open path) c, we must be able to ask:
@@ -511,96 +455,6 @@ vtables.byTag['path']['targetPt'] = (self) => {
     const endpoints = ⟦self endpoints⟧;
     return endpoints[1 - +self.dataset.originIndex];
   }
-}
-
-everything = {};
-// Universal entry point; mandatory for all diagrams
-function init() {
-  // First, ensure "nil" exists
-  nilElem = svgel('g', {id: 'nil'});
-
-  // Next, we must normalise the document. That means:
-  // 1. Specialise individual shapes as far as possible (eg path -> polygon -> rect)
-  //    (see principles/1-most-specialized-tag.svg)
-  // 2. Reshape the DOM tree to reflect spatial containment relations
-  //    (see principles/2-dom-tree-spatial-containment.svg)
-  // [FUTURE]
-  //   3. Ensure all closed shape nodes are in Closed Canonical Form:
-  //
-  //      <g> boundary-wrapper
-  //        <shape ... /> boundary-shape
-  //        <g> ... </g> shape-interior
-  //      </g>
-  //
-  //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
-  //
-  //      <g> connector-wrapper
-  //        <path ... /> connector-shaft
-  //        <g> ... </g> connector-heads
-  //      </g>
-  // [/FUTURE]
-  //
-  // First, gather all (MATHCHA-EXPORTED) shapes and text. 
-  let elems = all('path.real, polygon');
-  elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
-  elems.forEach((el) => {
-    let newEl = el;
-    let max_iter = 10; // SMELL arbitrary maximum
-    do { // max specialize
-      el = newEl;
-      newEl = ⟦el specialize⟧;
-      max_iter--;
-    } while (max_iter > 0 && newEl);
-    everything[ ⟦el id⟧ ] = el;
-  });
-
-  elems = Object.values(everything);
-  // Next, compute spatial containment tree; store in
-  // contained-in / contains dataset attributes
-  elems.forEach(el => ⟦el findTightestContainerIn: elems⟧);
-  
-  // Now, reroot each node inside its tightest container
-  // and erase the evidence :)
-  all('[data-contained-in]').forEach(child => {
-    ⟦child reroot⟧;
-    delete child.dataset.containedIn;
-  });
-  all('[data-contains]').forEach(e => {
-    delete e.dataset.contains;
-  });
-
-  // Now, detect probe connectors for "magic red" ID / Code boxes
-  // FUTURE: should be an explicit GraphNotation or something
-  const codeConnectors = Object.values(everything)
-    .filter(x => !⟦x isClosed⟧)
-    .filter(x => x.style.stroke === MAGIC_RED);
-  codeConnectors.forEach(c => ⟦c connections⟧);
-
-  // TODO: need to save code to execute until ALL processing done
-  // even with further formats. I.e. delay execution to point where
-  // the diagram "means" that which was intended by the user
-
-  // Inspect each rect to see if it's a Magic red box.
-  // Will annotate inner paragraphs with .adds-class, .sets-id, or .is-code as applicable
-  all('rect').forEach(r => ⟦r parseAsExecutable⟧);
-  // Add classes and set IDs first
-  all('.adds-class').forEach(p => ⟦p execute⟧); // must occur before sets-id
-  all('.sets-id').forEach(p => ⟦p execute⟧);
-  // Now, execute embedded JS
-  try {
-    all('.is-code').forEach(p => ⟦p execute⟧);
-  } catch (e) {
-    console.error(e);
-  }
-  // Re-inspect each rect, mark as done if all inner paragraphs are done
-  all('rect').forEach(r => ⟦r parseAsExecutable⟧);
-  //removeDone();
-
-  return elems.length;
-}
-
-function removeDone() {
-  all('.done').forEach(e => e.remove()); // WARNING: connections[*].connectors will be stale
 }
 
 /*
@@ -803,7 +657,11 @@ vtables['GraphNotation'] = {
 
   // scope:  DOM elem delimiting the region
   // filter: elem -> bool, which elems participate at all
-  // defs:   { isNode: elem -> bool, isEdge: elem -> bool }
+  // defs:   {
+  //   isNode: elem -> bool,
+  //   isEdge: elem -> bool,
+  //   endpointTolerance: pixel radius for `nodeAtPt:`
+  // }
   ['fromRegion:filterBy:withDefs:']: (self, scope, filter, defs) => {
     self.scope = scope;
     self.filter = filter;
@@ -942,6 +800,58 @@ const labelGN = ⟦ GraphNotation
     } ⟧;
 
 */
+
+vtables['EdgeDrivenGraphNotation'] = {
+  _parent: vtables['GraphNotation'],
+
+  // scope:         DOM element delimiting the region (typically document.documentElement)
+  // defs: {
+  //   edgesFn:       (scope) -> [edge DOM elems],
+  //   fixedNodesFn:  (scope) -> [pre-known node DOM elems] (e.g. red boxes),
+  //   candidateNodesFn: (scope) -> [maybe node DOM elems, which if hit by edge, will become nodes]
+  //   endpointTolerance: pixel radius for `nodeFromPt:`
+  // }
+  ['fromRegion:withDefs:']: (self, scope, defs) => {
+      self.scope = scope;
+      self.edgesFn = defs.edgesFn;
+      self.fixedNodesFn = defs.fixedNodesFn;
+      self.candidateNodesFn = defs.candidateNodesFn;
+      self.defs = defs;
+      return self;
+    },
+
+  ['nodes']: (self) => {
+    if (self._nodes) return self._nodes;
+    const candidates = self.candidateNodesFn(self.scope);  // could use findIn: 
+                                                      // for don't-recurse 
+    const nodeElems = new Set(self.fixedNodesFn(self.scope));
+    for (const edgeElem of self.edgesFn(self.scope)) {
+      if (self.defs.endpointTolerance === 0) { // HACK! red ID box probe lines use isPointOnStroke
+        // Necessary for now if candidates includes open paths
+        for (const conn of ⟦edgeElem connections⟧) { // WARN: document scope, ignores self.scope
+          if (!nodeElems.has(conn) && candidates.includes(conn))
+            nodeElems.add(conn);
+        }
+      } else {
+        for (const pt of ⟦edgeElem endpoints⟧) {
+          // Find a candidate within endpointTolerance — same logic as 
+          // base GN's nodeAtPt:, but restricted to the candidate pool
+          const target = candidates.find(c => 
+            ⟦c signedDistanceToPt: pt⟧ <= self.defs.endpointTolerance);
+          if (target) nodeElems.add(target);
+        }
+      }
+    }
+    self._nodes = [...nodeElems].map(e => ⟦self wrapNode: e⟧);
+    return self._nodes;
+  },
+
+  ['edges']: (self) => {
+    if (self._edges) return self._edges;
+    self._edges = self.edgesFn(self.scope).map(e => ⟦self wrapEdge: e⟧);
+    return self._edges;
+  },
+};
 
 // === Labeller ===
 //
@@ -1289,34 +1199,34 @@ vtables['DefaultMetaNotation'] = {
   _parent: vtables['LabelledGraph'],
 
   ['fromRegion:']: (self, scope) => {
-    // Pass 1: each blue box claims the closest paragraph within 30px as its
-    // label. The remaining (unclaimed) paragraphs become arrow-target nodes
-    // for the outer GraphNotation below.
+    // Pass 1: identify which paragraphs are notation-name targets
+    // (those that blue arrows terminate on). These become nodes in the
+    // graph alongside the blue boxes.
+    const notationGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
+      'fromRegion:', scope,
+      'withDefs:', {
+        edgesFn: s => Array.from(s.querySelectorAll('path,polyline,line'))
+                          .filter(e => isBlueStroke(e) && isMathchaConnector(e)),
+        fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isBlueStroke),
+        candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
+                                    .filter(l => !isInsideBlueBox(s, l)),
+        endpointTolerance: 15,
+    });
+    
+    // Pass 2: from the paragraphs not pulled into Pass 1 as notation-name
+    // targets, attach each to its closest blue box as that box's name.
+    const claimedAsNodes = new Set(⟦notationGraph nodes⟧.map(n => n.dom));
     const regionLabeller = send({ vtable: 'Labeller' },
       'inScope:', scope,
       'withLabels:', () => Array.from(scope.querySelectorAll(ALL_LABELS))
-                                .filter(l => !isInsideBlueBox(scope,l)),
+                                .filter(l => !isInsideBlueBox(scope, l))
+                                .filter(l => !claimedAsNodes.has(l)),
       'labellables:', () => Array.from(scope.querySelectorAll('rect')).filter(isBlueStroke),
       'attractor:', box => box,
       'attachAt:', (box, labelPt) => ⟦box closestPtToPt: labelPt⟧,
       'maxDistance:', 30
     );
     self.regionLabelAttachments = ⟦regionLabeller run⟧;
-
-    // Pass 2, the outer "BoxGraph meta-notation": blue boxes are nodes, AND any
-    // paragraph not claimed as a label is also a node (e.g. notation name labels
-    // like "BoxGraph" and "LabelGraph" to which the regions are pointing).
-    // Edges are blue open paths.
-    const notationGraph = send({ vtable: 'GraphNotation' },
-      'fromRegion:', scope,
-      'filterBy:', e => true,
-      'withDefs:', {
-        isNode: e => (e.tagName === 'rect' && isBlueStroke(e))
-                  || (e.matches && e.matches(ALL_LABELS) 
-                      && !regionLabeller._claimedLabels.has(e)),
-        isEdge: e => isBlueStroke(e) && isMathchaConnector(e),
-        endpointTolerance: 15, // Empirically determined from notational-dispatch-1.svg...
-    });
 
     return ⟦self
       fromGraph: notationGraph
@@ -1368,6 +1278,205 @@ vtables['DefaultMetaNotation-Region'] = {
     return send({ vtable: notationName }, 'fromRegion:', domRegion);
   },
 };
+
+MAGIC_RED = 'rgb(208, 2, 27)';
+// SMELL: much in common with DefaultMetaNotation, much duped
+isRedStroke = e => e.style && e.style.stroke === MAGIC_RED;
+redBoxes = scope => Array.from(scope.querySelectorAll('rect')).filter(isRedStroke);
+isInsideRedBox = (scope,e) => redBoxes(scope).some(box => box.parentElement.contains(e));
+
+vtables['CodeExecutionNotation'] = {
+  _parent: vtables['LabelledGraph'],
+
+  ['fromRegion:']: (self, scope) => {
+    // Pass 1: identify which paragraphs are syntax-name targets
+    // (those that red arrows terminate on). These become nodes in the
+    // graph alongside the red boxes.
+    const codeGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
+      'fromRegion:', scope,
+      'withDefs:', {
+        edgesFn: s => Array.from(s.querySelectorAll('path,polyline,line'))
+                          .filter(e => isRedStroke(e) && isMathchaConnector(e) && ⟦e isDirected⟧),
+        fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isRedStroke),
+        candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
+                                    .filter(l => !isInsideRedBox(s, l)),
+        endpointTolerance: 15,
+    });
+
+    return ⟦self
+      fromGraph: codeGraph
+      nodeNamer: n => null
+      edgeNamer: e => null
+    ⟧;
+  },
+  // Override wrapNode to add notation-specific accessors.
+  ['wrapNode:']: (self, gnNode) => ({ vtable: 'CodeExecutionNotation-Box', gnNode, lg: self }),
+  ['codeBoxes']: (self) => ⟦self nodes⟧.filter(n => n.gnNode.dom.tagName === 'rect'),
+
+  ['executeAll']: (self) => ⟦self codeBoxes⟧.forEach(box => ⟦box execute⟧),
+};
+
+vtables['CodeExecutionNotation-Box'] = {
+  _parent: vtables['LabelledGraph-Node'],
+
+  ['syntaxName']: (self) => {
+    const out = ⟦self outgoingEdges⟧;
+    if (out.length === 0) return null;
+    const target = ⟦out[0] target⟧;
+    // Expect a heavily wrapped g.is-paragraph
+    return target ? target.gnNode.dom.dataset.string : null;
+  },
+  ['innerScope']: (self) => {
+    if (self._innerScope) return self._innerScope;
+    self._innerScope = makeInnerScope(self.gnNode.dom);
+    return self._innerScope;
+  },
+  ['execute']: (self) => {
+    const syntaxName = ⟦self syntaxName⟧ || 'JS';
+    const vtable = vtables[syntaxName];
+    if (!vtable) {
+      console.warn('No vtable for syntax "'+syntaxName+'"; skipping code box.');
+      return;
+    }
+    // Assume vtable instances understand fromRegion: ...!
+    const domRegion = ⟦self innerScope⟧;
+    // Construct!
+    const js_func = send({ vtable: syntaxName }, 'compileRegion:', domRegion);
+    try {
+      js_func();
+      self.gnNode.dom.classList.add('done');
+    } catch (e) {
+      console.log(e);
+    }
+  },
+};
+
+vtables['JS'] = {
+  ['compileRegion:']: (self, scope) => {
+    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
+    const code_strings = code_paras.map(p => p.dataset.string);
+    const js_source = code_strings.join('\n\n');
+    return () => eval(js_source); // >:D
+  }
+};
+
+vtables['ST[JS]'] = {
+  ['compileRegion:']: (self, scope) => {
+    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
+    const code_strings = code_paras.map(p => p.dataset.string);
+    const source = code_strings.join('\n\n');
+    return () => log('Execute in ST[JS]:', source);
+  }
+};
+
+vtables['JS[ST]'] = {
+  ['compileRegion:']: vtables['ST[JS]']['compileRegion:'],
+};
+
+everything = {};
+// Universal entry point; mandatory for all diagrams
+function init() {
+  // First, ensure "nil" exists
+  nilElem = svgel('g', {id: 'nil'});
+
+  // Next, we must normalise the document. That means:
+  // 1. Specialise individual shapes as far as possible (eg path -> polygon -> rect)
+  //    (see principles/1-most-specialized-tag.svg)
+  // 2. Reshape the DOM tree to reflect spatial containment relations
+  //    (see principles/2-dom-tree-spatial-containment.svg)
+  // [FUTURE]
+  //   3. Ensure all closed shape nodes are in Closed Canonical Form:
+  //
+  //      <g> boundary-wrapper
+  //        <shape ... /> boundary-shape
+  //        <g> ... </g> shape-interior
+  //      </g>
+  //
+  //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
+  //
+  //      <g> connector-wrapper
+  //        <path ... /> connector-shaft
+  //        <g> ... </g> connector-heads
+  //      </g>
+  // [/FUTURE]
+  //
+  // First, gather all (MATHCHA-EXPORTED) shapes and text. 
+  let elems = all('path.real, polygon');
+  elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
+  elems.forEach((el) => {
+    let newEl = el;
+    let max_iter = 10; // SMELL arbitrary maximum
+    do { // max specialize
+      el = newEl;
+      newEl = ⟦el specialize⟧;
+      max_iter--;
+    } while (max_iter > 0 && newEl);
+    everything[ ⟦el id⟧ ] = el;
+  });
+
+  elems = Object.values(everything);
+  // Next, compute spatial containment tree; store in
+  // contained-in / contains dataset attributes
+  elems.forEach(el => ⟦el findTightestContainerIn: elems⟧);
+  
+  // Now, reroot each node inside its tightest container
+  // and erase the evidence :)
+  all('[data-contained-in]').forEach(child => {
+    ⟦child reroot⟧;
+    delete child.dataset.containedIn;
+  });
+  all('[data-contains]').forEach(e => {
+    delete e.dataset.contains;
+  });
+
+  // Now, detect probe connectors for "magic red" ID / Code boxes
+  const magicRedStroke = e => e.style.stroke === MAGIC_RED;
+  const idSetterBoxes = scope => Array.from(scope.querySelectorAll('rect'))
+    .filter(magicRedStroke).filter(e =>
+      ⟦e localRoot⟧.querySelector('.is-paragraph').dataset.string.startsWith('#')
+    );
+  idSetterGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
+    'fromRegion:', document.documentElement,
+    'withDefs:', {
+      edgesFn: scope => Array.from(scope.querySelectorAll('.connection'))
+        .filter(magicRedStroke).filter(e => !⟦e isDirected⟧),
+      fixedNodesFn: idSetterBoxes,
+      candidateNodesFn: () => Object.values(everything),
+      endpointTolerance: 0
+  });
+  // Execute ID setter boxes
+  ⟦idSetterGraph nodes⟧.filter(n => magicRedStroke(n.dom)).forEach(n => {
+    const lroot = ⟦n.dom localRoot⟧;
+    const para_g = lroot.querySelector('.is-paragraph');
+    const str = para_g.dataset.string;
+    // By default, the target is the container of the ID setter box
+    let target = lroot.parentElement.firstChild; // SMELL boundary-shape
+    const neighbors = ⟦n neighbors⟧;
+    if (neighbors.length > 1) throw ['ID setter needs exactly 1 target:', n];
+    // If node is connected to another via an edge, that neighbor is the target
+    if (neighbors.length > 0) target = neighbors[0].dom;
+    if (target.id !== 'nil') {
+        const newId = str.substring(1);
+        const clash = byId(newId);
+        if (clash) clash.id = target.id; // if newId already taken, swap
+        target.id = newId;
+      }
+    para_g.classList.add('done');
+    ⟦n incidentEdges⟧.forEach(e => e.dom.classList.add('done'));
+  });
+
+  removeDone();
+
+  // Now, execute embedded JS or syntactic sugar layers
+  codeExec = send({ vtable: 'CodeExecutionNotation' }, 'fromRegion:', document.documentElement);
+  ⟦codeExec executeAll⟧;
+
+  return elems.length;
+}
+
+function removeDone() {
+  all('.done').forEach(e => e.parentElement.remove()); // WARNING: connections[*].connectors will be stale
+}
 
 // post-init entry point for diagrams in the default meta-notation
 // e.g. notational-dispatch.svg
