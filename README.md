@@ -84,7 +84,7 @@ in the console.
 ![Containment stress test](./screenshots/demo-general-containment.png)
 
 ### Example 9 (notational-dispatch)
-A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. Console:
+A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. Note that it now demonstrates code-sugaring - see Example 10. Console:
 
 ```javascript
 init();
@@ -94,3 +94,12 @@ send(tg1, 'asJS');
 ```
 
 ![Notational Dispatch](./screenshots/demo-notational-dispatch.png)
+
+### Example 10 (hole-carving-test)
+Smalltalk{\[JS\]} is a sugar layer of Smalltalk message-sending syntax which permits embedded JS "holes" delimited via `{[ ]}` (currently only at a single level, but ideally one should be able to alternately nest the two syntaxes as desired). If magic-red boxes dispatch to their language processor vtable via an arrow (similar to Example 9's notational dispatch), who knows what is possible.
+
+```javascript
+init()
+```
+
+![Compilation Dispatch](./screenshots/demo-hole-carving-test.png)
