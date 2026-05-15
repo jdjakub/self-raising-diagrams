@@ -1360,17 +1360,15 @@ vtables['JS'] = {
   }
 };
 
-vtables['ST[JS]'] = {
+vtables['Smalltalk{[JS]}'] = {
   ['compileRegion:']: (self, scope) => {
     const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
     const code_strings = code_paras.map(p => p.dataset.string);
-    const source = code_strings.join('\n\n');
-    return () => log('Execute in ST[JS]:', source);
+    const stjs_source = code_strings.join('\n\n');
+    const js_source = compile_non_nested_holes(stjs_source);
+    console.debug('Compiled ST{[JS]} to:\n', js_source);
+    return () => eval(js_source);
   }
-};
-
-vtables['JS[ST]'] = {
-  ['compileRegion:']: vtables['ST[JS]']['compileRegion:'],
 };
 
 everything = {};

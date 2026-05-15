@@ -1,0 +1,46 @@
+meta StJS {
+  program   ::= <ws> <stmt>:s (<ws> '.' <ws> <stmt>:t)*:ts <ws> ('.' <ws>)? <end>
+                => { kind: 'program', stmts: [s, ...ts] };
+
+  stmt      ::= <lowerId>:n <ws> ':=' <ws> <expr>:e          => { kind: 'assign', target: n, value: e };
+                -- optional: ~<jsReserved> after lowerId if you want belt-and-braces
+              | <hole>:h ~(<ws> <unaryStep>) ~(<ws> <kwSel>) => { kind: 'raw', code: h.code };
+              | <expr>;
+
+  expr      ::= <unaryChain>:r (<ws> <kwSel>:k <ws> <unaryChain>:a => {k:k, a:a})+:ps
+                => { kind: 'send', recv: r, pairs: ps };
+              | <unaryChain>;
+
+  kwSel     ::= <lowerId>:n ':' => n + ':';
+  lowerId   ::= [a-z_] [a-zA-Z_0-9]*;
+
+  unaryChain       ::= <primary>:p (<ws> <unaryStep>:t)*:ts     => ts.reduce(applyStep, p);
+  unaryStep        ::= <unaryMsg> | <continuationHole>;
+  unaryMsg         ::= <lowerId>:n ~(<ws> ':') => { step: 'unary', sel: n };
+  continuationHole ::= <hole>:h => { step: 'cont', code: h.code };
+
+  primary   ::= <vtableRef>
+              | '(' <ws> <expr>:e <ws> ')' => e;
+              | <literal>
+              | <hole>:h                   => { kind: 'raw', code: h.code };
+              | <lowerId>:n ~(<ws> ':')    => { kind: 'var', name: n };
+                -- emits n verbatim; covers true/false/null/undefined as keywords
+
+  vtableRef ::= <upperId>:n              => { kind: 'vtable', name: n }
+              | "#'" (~"'" <_>)*:n "'"  => { kind: 'vtable', name: n };
+  upperId   ::= [A-Z]  [a-zA-Z_0-9]*;
+
+  literal   ::= <numberChars>:s   => { kind: 'literal', code: s };
+                | <stringChars>:s   => { kind: 'literal', code: s };
+
+  numberChars  ::= '-'? <digit>+ ('.' <digit>+)?;
+  stringChars  ::= "'" ('\\' <_> | ~"'" <_>)* "'";
+  digit        ::= [0-9];
+  hole         ::= <_>:t ?(t.kind === 'hole') => t;
+  ws           ::= [ \t\n\r]*;
+
+-- host-language helper (not a production):
+-- applyStep(acc, t):
+--   t.step === 'unary' -> { kind: 'send', recv: acc, pairs: [{ k: t.sel }] }
+--   t.step === 'cont'  -> { kind: 'cont', expr: acc, code: t.code }
+}
