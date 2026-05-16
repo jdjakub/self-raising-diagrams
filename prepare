@@ -10,5 +10,6 @@ SCRIPT=${2%.js}
 sed -z -E -i \
   "s|(<svg[^>]*>)|\\1\n\
 \t<script href=\"./utils.js\"></script>\n\
+\t<script href=\"./sweettalk-js-transpiler.js\"></script>\n\
 \t<script href=\"./${SCRIPT}.js\"></script>|" \
  $1

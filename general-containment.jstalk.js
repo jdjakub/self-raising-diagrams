@@ -160,6 +160,7 @@ vtables.domNode = {
     return [];
   },
   ['isArrowhead']: (self) => false,
+  ['onClick:']: (self, handler) => { self.onclick = handler; },
 };
 
 vtables.byTag['path'] = {
@@ -1360,16 +1361,29 @@ vtables['JS'] = {
   }
 };
 
-vtables['Smalltalk{[JS]}'] = {
+vtables['SweetTalk{[JS]}'] = {
   ['compileRegion:']: (self, scope) => {
     const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
     const code_strings = code_paras.map(p => p.dataset.string);
     const stjs_source = code_strings.join('\n\n');
-    const js_source = compile_non_nested_holes(stjs_source);
-    console.debug('Compiled ST{[JS]} to:\n', js_source);
+    const js_source = compile_nested_holes(stjs_source);
+    console.debug('Compiled SweetTalk{[JS]} to:\n', js_source);
     return () => eval(js_source);
   }
 };
+
+vtables['JS{[SweetTalk]}'] = {
+  ['compileRegion:']: (self, scope) => {
+    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
+    const code_strings = code_paras.map(p => p.dataset.string);
+    const jsst_source = code_strings.join('\n\n');
+    // Same as ST{[JS]}, just wrap in one big JS hole with empty ST outer layer
+    const stjs_source = HOLE_DELIMS[0]+' '+jsst_source+' '+HOLE_DELIMS[1];
+    const js_source = compile_nested_holes(stjs_source);
+    console.debug('Compiled SweetTalk{[JS]} to:\n', js_source);
+    return () => eval(js_source);
+  }
+}
 
 everything = {};
 // Universal entry point; mandatory for all diagrams

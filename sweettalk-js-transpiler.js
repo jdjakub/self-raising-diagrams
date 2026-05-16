@@ -1,3 +1,4 @@
+// SweetTalk: nothing but a pile of syntactic sugars, based on Smalltalk syntax.
 
 split_punctuation = function(frag) {
   const spans = [];
@@ -74,7 +75,7 @@ tokenize_ST_frag = function(st_frag) {
   });
   const tokenized = substrings.map(s => {
     if (s.quoted) return s.toString(); // unbox
-    const de_puncted = s.replaceAll('\n',' ').split(/\s+/).map(split_punctuation);
+    const de_puncted = s.replaceAll(/[\n\t\r]/g,' ').split(' ').map(split_punctuation);
     return de_puncted.flat();
   });
   return tokenized.flat().filter(s => s.length > 0);
@@ -82,18 +83,20 @@ tokenize_ST_frag = function(st_frag) {
 
 // === Mostly Claude Opus 4.7 generated ===
 
-
 classify_token = function(tok) {
   if (typeof tok !== 'string') {
     if (tok && tok.kind === 'hole') return 'HOLE';
     throw 'Unknown token: ' + JSON.stringify(tok);
   }
   if (tok === '#')  return 'HASH';
+  if (tok === '@')  return 'ATSIGN';
   if (tok === '(')  return 'PAREN_OPEN';
   if (tok === ')')  return 'PAREN_CLOSE';
   if (tok === '.')  return 'PERIOD';
   if (tok === ':=') return 'ASSIGN';
   const c0 = tok.at(0);
+  if (c0 === '#') return 'ID_REF'; // DOM ID sugar e.g. #my-fav-element
+  if (c0 === '@') return 'VTABLE_REF'; // Complex vtable name e.g. @'Smalltalk{[JS]}'
   if (c0 === "'") return 'STRING_LIT';
   if (c0 === '-' || (c0 >= '0' && c0 <= '9')) {
     if (/^-?\d+(\.\d+)?$/.test(tok)) return 'NUM_LIT';
@@ -108,7 +111,7 @@ classify_token = function(tok) {
 
 // ST[JS] transpiler. Takes [st_frag1, js_hole1, st_frag2, js_hole2, ...]
 // (alternating, starting with ST) and returns a string of JS.
-
+ 
 function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, ... ] */) {
   // ---- Step 1: build a flat token stream of strings + hole objects ----
   const tokens = [];
@@ -116,7 +119,7 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     if (i % 2 === 0) tokens.push(...tokenize_ST_frag(st_with_holes[i]));
     else             tokens.push({ kind: 'hole', code: st_with_holes[i] });
   }
-
+ 
   // ---- Step 2: recursive-descent parse ----
   let pos = 0;
   const kindAt  = (n=0) => pos+n >= tokens.length ? null : classify_token(tokens[pos+n]);
@@ -125,14 +128,21 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     if (kindAt() !== k) throw 'Expected ' + k + ', got ' + kindAt() + ' at token ' + pos;
     return consume();
   };
-
+ 
   const parsePrimary = () => {
     const k = kindAt();
     if (k === 'IDENT_UPPER') return { kind: 'vtable', name: consume() };
+    if (k === 'VTABLE_REF')  return { kind: 'vtable', name: consume().slice(1) };
+    if (k === 'ATSIGN') {
+      consume();
+      const s = expect('STRING_LIT');
+      return { kind: 'vtable', name: s.slice(1, -1) };
+    }
+    if (k === 'ID_REF') return { kind: 'byId', name: consume().slice(1) };
     if (k === 'HASH') {
       consume();
       const s = expect('STRING_LIT');
-      return { kind: 'vtable', name: s.slice(1, -1) }; // strip quotes
+      return { kind: 'byId', name: s.slice(1, -1) };
     }
     if (k === 'PAREN_OPEN') {
       consume();
@@ -145,7 +155,7 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     if (k === 'IDENT_LOWER') return { kind: 'var', name: consume() };
     throw 'Expected primary, got ' + k + ' at token ' + pos;
   };
-
+ 
   const parseUnaryChain = () => {
     let acc = parsePrimary();
     while (true) {
@@ -156,19 +166,34 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     }
     return acc;
   };
-
+ 
+  // A leading hole that's followed by something starting a non-extending primary
+  // is a JS prefix on the whole unary chain (the symmetric counterpart to the
+  // continuation-hole's suffix). Triggers when next token starts a primary that
+  // ISN'T IDENT_LOWER or HOLE (those cases stay as rawValue + unary/continuation).
+  const PREFIX_TRIGGER = ['PAREN_OPEN', 'IDENT_UPPER', 'HASH', 'ATSIGN',
+                          'ID_REF', 'VTABLE_REF', 'NUM_LIT', 'STRING_LIT'];
+  const parseWrappedUnaryChain = () => {
+    let prefix = null;
+    if (kindAt(0) === 'HOLE' && PREFIX_TRIGGER.includes(kindAt(1))) {
+      prefix = consume().code;
+    }
+    const chain = parseUnaryChain();
+    return prefix !== null ? { kind: 'prefix', code: prefix, inner: chain } : chain;
+  };
+ 
   const parseExpr = () => {
-    const recv = parseUnaryChain();
+    const recv = parseWrappedUnaryChain();
     if (kindAt() !== 'KW') return recv;
     const pairs = [];
     while (kindAt() === 'KW') {
       const k = consume();
-      const a = parseUnaryChain();
+      const a = parseWrappedUnaryChain();
       pairs.push({ k, a });
     }
     return { kind: 'send', recv, pairs };
   };
-
+ 
   const parseStmt = () => {
     // assignment: lowerId ':=' expr
     if (kindAt(0) === 'IDENT_LOWER' && kindAt(1) === 'ASSIGN') {
@@ -183,7 +208,7 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     }
     return parseExpr();
   };
-
+ 
   const parseProgram = () => {
     if (kindAt() === null) return { kind: 'program', stmts: [] };
     const stmts = [parseStmt()];
@@ -195,11 +220,11 @@ function ST_with_holes_to_JS(st_with_holes /* = [ st_frag1, js_hole1, st_frag2, 
     if (kindAt() !== null) throw 'Expected end of input, got ' + kindAt() + ' at token ' + pos;
     return { kind: 'program', stmts };
   };
-
+ 
   // ---- Step 3: codegen ----
   return ST_AST_to_JS(parseProgram());
 }
-
+ 
 // Pure tree-walker so the AST is inspectable for debugging.
 ST_AST_to_JS = function(node) {
   const gen = ST_AST_to_JS;
@@ -216,14 +241,79 @@ ST_AST_to_JS = function(node) {
       return 'send(' + parts.join(', ') + ')';
     }
     case 'cont':    return gen(node.expr) + node.code;
+    case 'prefix':  return node.code + gen(node.inner);
     case 'vtable':  return "{vtable: '" + node.name + "'}";
+    case 'byId':    return "byId('" + node.name + "')";
     case 'literal': return node.code;
     case 'var':     return node.name;
     default:        throw 'Unknown AST kind: ' + node.kind;
   }
 };
+ 
+// ---- Nested-holes support ----
+// Tree shape: each node is an array of items. Each item is either a string (text in
+// the node's language) or a child array (a hole in the OTHER language). Root is ST.
+ 
+HOLE_DELIMS = ['{[', ']}'];
+ 
+carve_nested_holes = str => {
+  const root = [];
+  const stack = [root];
+  let buf = '';
+  let i = 0;
+  const flush = () => { if (buf) { stack[stack.length-1].push(buf); buf = ''; } };
+  while (i < str.length) {
+    if (str.startsWith(HOLE_DELIMS[0], i)) {
+      flush();
+      const child = [];
+      stack[stack.length-1].push(child);
+      stack.push(child);
+      i += HOLE_DELIMS[0].length;
+    } else if (str.startsWith(HOLE_DELIMS[1], i)) {
+      flush();
+      stack.pop();
+      if (stack.length === 0) throw 'Unmatched ]} at position ' + i;
+      i += HOLE_DELIMS[1].length;
+    } else {
+      buf += str[i++];
+    }
+  }
+  flush();
+  if (stack.length !== 1) throw 'Unmatched {[';
+  return root;
+};
+ 
+// Recursively compile a carved tree. isST=true means the node is in ST mode.
+compile_carved = (node, isST) => {
+  if (isST) {
+    // Build frags array, alternating ST text / JS hole codes, starting with ST.
+    const frags = [];
+    let expectST = true;
+    for (const part of node) {
+      if (typeof part === 'string') {
+        if (!expectST) frags.push('');
+        frags.push(part);
+        expectST = false;
+      } else {
+        if (expectST) frags.push('');
+        frags.push(compile_carved(part, false));
+        expectST = true;
+      }
+    }
+    return ST_with_holes_to_JS(frags);
+  } else {
+    // JS mode: concatenate, recursively compiling ST children.
+    return node.map(part =>
+      typeof part === 'string' ? part : compile_carved(part, true)
+    ).join('');
+  }
+};
+ 
+compile_nested_holes = str => compile_carved(carve_nested_holes(str), true);
 
-HOLE_DELIMS = ['{[',']}'];
 carve_non_nested_holes = str => str.split(HOLE_DELIMS[0]).flatMap(s => s.split(HOLE_DELIMS[1]));
-
 compile_non_nested_holes = str => ST_with_holes_to_JS(carve_non_nested_holes(str));
+
+// For minimal typing in the console. E.g:
+// e(`#btn3 onClick: {[ () => log('Hello World!') ]}`)
+e = str => eval(compile_nested_holes(str));

@@ -1,3 +1,19 @@
+# Project dependencies + installation
+I can't stand web frameworks, or installing things, or restarting local servers after reboot. So, running the examples requires:
+- A modern web browser (tested in Firefox)
+- That's it
+
+Perl is required to compile JSTalk to JS (`JSTalk/jstalk2js.pl`) but it's just an optional sugar layer.
+The shell script `prepare` will insert script references into your SVG file, but you can paste them in manually:
+
+```html
+<script href="./utils.js"></script>
+<script href="./sweettalk-js-transpiler.js"></script>
+<script href="./general-containment.js"></script>
+```
+
+Then, after opening the SVG file., `init()` should work in the browser dev console.
+
 # Self-Raising Diagrams
 A text file is a static medium. Source code is self-raising text: the static text raises itself into a dynamic run-time environment (usually unvisualised).
 
@@ -23,8 +39,8 @@ Some parts of the diagram are object-level: they're part of the intended output.
 
 The idea here is: we look for a rectangle whose border is the special meta-colour, and collect the `<text>`s inside it into a JSON object. We use the `format` key to understand which passes understand this diagram (and are safe to run on it). The `labelGraph` format parser will know that the green rectangle is a comment box (to be ignored) by virtue of its specific border colour, and will interpret these shapes differently to `boxGraph`.
 
-# Current instructions
-Currently, we recognise a simple visual notation of boxes, arrows, and text labels (the "`boxGraph`" format). An arrow is labelled by the text element closest to its origin point. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
+# Outdated instructions
+Currently\[citation needed\], we recognise a simple visual notation of boxes, arrows, and text labels (the "`boxGraph`" format). An arrow is labelled by the text element closest to its origin point. A text element not attached to an arrow may name a nearby box, if it is close enough. Each box means a JS object, and each arrow means a property, with the "obvious" semantics on that. The JS object will have its `name` property set to the box's name if it has one.
 
 ![Begin with a de-spatialising pass, ending up with DOM id's set and visual elements added to confirm correctness. Finish with a JS object graph.](./old-approaches/v1/boxes-arrows-labels-overview.svg)
 
@@ -84,19 +100,19 @@ in the console.
 ![Containment stress test](./screenshots/demo-general-containment.png)
 
 ### Example 9 (notational-dispatch)
-A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. Note that it now demonstrates code-sugaring - see Example 10. Console:
+A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. The bootstrap code in the magic-red code box demonstrates the SweetTalk sugar layer - see also Example 10. Console:
 
 ```javascript
 init();
-send(bg1, 'asJSOG');
-send(bg2, 'asJSOG');
-send(tg1, 'asJS');
+send(bg1, 'asJSOG'); // JavaScript Object Graph
+send(bg2, 'asJSOG'); // ditto
+send(tg1, 'asJS');   // JS code relative to a function called "arrow"
 ```
 
 ![Notational Dispatch](./screenshots/demo-notational-dispatch.png)
 
 ### Example 10 (hole-carving-test)
-Smalltalk{\[JS\]} is a sugar layer of Smalltalk message-sending syntax which permits embedded JS "holes" delimited via `{[ ]}` (currently only at a single level, but ideally one should be able to alternately nest the two syntaxes as desired). If magic-red boxes dispatch to their language processor vtable via an arrow (similar to Example 9's notational dispatch), who knows what is possible.
+SweetTalk{\[JS\]} is a sugar layer of Smalltalk message-sending syntax which permits embedded JS "holes" delimited via `{[ ]}`. These holes may nest, thereby alternating between the two syntaxes. If magic-red boxes dispatch to their language processor vtable via an arrow (similar to Example 9's notational dispatch), who knows what is possible.
 
 ```javascript
 init()
