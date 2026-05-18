@@ -309,7 +309,39 @@ vtables.byTag['polygon'] = {
     return isPointInPolygon(pt, vs);
   },
   ['encloses:']: vtables.domNode['encloses:'], // HACK super?
+  ['intersectWith:']: (self, other) => {
+    const    myVerts = convex_poly_verts_ccw(⟦self vertices⟧);
+    const otherVerts = convex_poly_verts_ccw(⟦other vertices⟧);
+    const isect = convex_polys_intersection(myVerts, otherVerts);
+    if (isect) return send({vtable: 'Polygon'}, 'fromVertices:', isect);
+    else return null;
+  },
+  ['center']: self => {
+    const vs = ⟦self vertices⟧;
+    return vmul(1/vs.length, sum(vs));
+  },
 }
+
+vtables['Polygon'] = {
+  ['fromVertices:']: (self, vs) => {
+    self.vertices = vs;
+    return self;
+  },
+  ['vertices']: self => self.vertices,
+  ['closestNormalTo:']: (self, vec) => {
+    const mySegs = explode_poly_segs(self.vertices);
+    const normals = mySegs.map(normal_for_seg);
+    const nvec = vnormed(vec);
+    // Want to maximise dot = cosine (1 = 0 angle)
+    return normals.thatWhichMinimizes(n => -vdot(nvec,n));
+  },
+  ['longestDiameterParallelTo:']: (self, vec) => {
+    const nvec = vnormed(vec);
+    const projected = self.vertices.map(v => vdot(v, nvec));
+    const [min, max] = [Math.min(...projected), Math.max(...projected)];
+    return max - min;
+  },
+};
 
 vtables.byTag['rect'] = {
   _parent: vtables.byTag['polygon'],
@@ -319,6 +351,10 @@ vtables.byTag['rect'] = {
     return [ [x,y], [x+w,y], [x+w,y+h], [x,y+h] ];
   },
   ['specialize']: () => null,
+  ['topLeft']: self => nums(attrs(self, 'x', 'y')),
+  ['topLeft:']: (self, [x,y]) => {
+    attr(self, {x, y});
+  },
 }
 
 vtables.byTag['circle'] = {
@@ -1169,6 +1205,23 @@ vtables['TextGraph'] = {
   }
 };
 
+vtables['ActiveButton'] = {
+  ['fromRegion:']: (self, scope) => {
+    const rects = Array.from(scope.querySelectorAll('rect'));
+    const with_text = rects.filter(r => r.parentElement.querySelector('.is-paragraph'));
+    const on_click = e => {
+      const func = e.target.js_func;
+      if (func) log(func());
+    };
+    with_text.forEach(r => {
+      const func = send({ vtable: 'JS' }, 'compileRegion:', r.parentElement);
+      r.js_func = func;
+      r.onclick = on_click;
+    });
+    return self;
+  },
+};
+
 // Restructure a node's wrapper so its non-rect siblings are gathered into a
 // new inner-scope <g>. Returns the new inner-scope element, suitable for use
 // as an inner notation's scope.
@@ -1301,7 +1354,7 @@ vtables['CodeExecutionNotation'] = {
         fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isRedStroke),
         candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
                                     .filter(l => !isInsideRedBox(s, l)),
-        endpointTolerance: 15,
+        endpointTolerance: 20,
     });
 
     return ⟦self
@@ -1347,7 +1400,7 @@ vtables['CodeExecutionNotation-Box'] = {
       js_func();
       self.gnNode.dom.classList.add('done');
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   },
 };
@@ -1361,13 +1414,16 @@ vtables['JS'] = {
   }
 };
 
-vtables['SweetTalk{[JS]}'] = {
+vtables['Sucrose'] = {
   ['compileRegion:']: (self, scope) => {
     const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
     const code_strings = code_paras.map(p => p.dataset.string);
-    const stjs_source = code_strings.join('\n\n');
-    const js_source = compile_nested_holes(stjs_source);
-    console.debug('Compiled SweetTalk{[JS]} to:\n', js_source);
+    const sucrose_source = code_strings.join('\n\n');
+    const js_source = compile_with_directive(sucrose_source, {
+      SweetTalk: ST_with_holes_to_JS,
+      Descartes: compile_descartes_with_holes
+    });
+    console.debug('Compiled Sucrose to:\n', js_source);
     return () => eval(js_source);
   }
 };

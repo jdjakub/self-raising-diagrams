@@ -47,6 +47,7 @@ attrs = (el, ...keys) => keys.map(k => attr(el, k));
 props = (o,  ...keys) => keys.map(k => o[k]);
 
 svg_parent = document.documentElement; // Default parent for new SVG elements
+svg = svg_parent;
 
 create_element = (tag, attrs, parent, namespace) => {
   let elem = document.createElementNS(namespace, tag);
@@ -67,6 +68,8 @@ whereis = (pt_or_x,maybe_y) => {
   return svgel('circle', {cx, cy, r: 5, style: 'fill: magenta', class: 'debug-pt'});
 }
 
+showpts = pts => pts.map(pt => pt.join(',')).join(' ');
+
 inTopToBottomOrder = (a, b) => {
   if (a === b) return 0;
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1;
@@ -81,6 +84,19 @@ vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
 dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
 vnormed = v => vmul(1/Math.sqrt(vdot(v,v)), v);
 vswap = ([x,y]) => [y,x];
+vmag = v => Math.sqrt(vdot(v,v));
+
+isvec = (...xs) => xs.every(x => x instanceof Array);
+
+// Arith functions to which Descartes compiles
+add = (a, b) => isvec(a, b) ? vadd(a, b) : (a+b);
+sub = (a, b) => isvec(a, b) ? vsub(a, b) : (a-b);
+dot = vdot;
+mul = (a, b) => isvec(a) ? vmul(b,a) : isvec(b) ? vmul(a,b) : (a*b);
+neg = x => mul(-1, x);
+sum = xs => xs.reduce(add, isvec(...xs) ? [0,0] : 0);
+mag = x => isvec(x) ? vmag(x) : Math.abs(x);
+// TODO: the rest
 
 vtoa = ([x,y]) => x + ' ' + y;
 atov = s => s ? s.split(' ').map(Number.parseFloat) : undefined;
@@ -275,6 +291,11 @@ function explode_poly_segs(points, closed=true) {
   return segs;
 }
 
+function normal_for_seg([p1,p2]) {
+  const [vx,vy] = vnormed(vsub(p2,p1));
+  return [-vy,vx];
+}
+
 polyFromPath = function(cmds) {
   const vertices = [ [0,0] ];
   const penPos = (newPos) => {
@@ -349,4 +370,89 @@ function closestPointOnPath(path, [px,py], coarseSamples = 50, refinements = 10)
     point: [finalPt.x, finalPt.y],
     d2: distAt(finalT)
   };
+}
+
+// Clip polygon `subject` against the half-plane defined by the directed edge
+// from `edgeA` to `edgeB`.  Points on or to the left of (edgeA→edgeB) are
+// considered "inside".  Returns the clipped polygon (possibly empty).
+function clip_poly_by_half_plane(subject, edgeA, edgeB) {
+  if (subject.length === 0) return [];
+
+  // Signed "which side" test.  Positive ⟹ left of / on the directed edge.
+  const side = (pt) => {
+    const [ex, ey] = vsub(edgeB, edgeA);   // edge direction
+    const [px, py] = vsub(pt,    edgeA);   // pt relative to edge start
+    return ex * py - ey * px;              // 2-D cross product
+  };
+
+  // Intersection of segment (a→b) with the infinite line through edgeA→edgeB.
+  const intersect = (a, b) => {
+    const [dx, dy] = vsub(b, a);
+    const [ex, ey] = vsub(edgeB, edgeA);
+    let denom = ex * dy - ey * dx;
+    denom = -denom; // HACK! Empirically needed to work ... what's wrong...
+    // Parallel lines — caller guarantees this won't be reached when denom ≈ 0
+    const t = (ex * (a[1] - edgeA[1]) - ey * (a[0] - edgeA[0])) / denom;
+    return vadd(a, vmul(t, [dx, dy]));
+  };
+
+  const output = [];
+  for (let i = 0; i < subject.length; i++) {
+    const current  = subject[i];
+    const previous = subject[(i + subject.length - 1) % subject.length];
+    const currentInside  = side(current)  >= 0;
+    const previousInside = side(previous) >= 0;
+
+    if (previousInside && currentInside) {
+      // Both inside: keep current.
+      output.push(current);
+    } else if (previousInside && !currentInside) {
+      // Leaving: emit the crossing point.
+      output.push(intersect(previous, current));
+    } else if (!previousInside && currentInside) {
+      // Entering: emit crossing point then current.
+      output.push(intersect(previous, current));
+      output.push(current);
+    }
+    // Both outside: emit nothing.
+  }
+  return output;
+}
+
+// Return the intersection polygon of two convex polygons, or null if they
+// do not overlap.  Both polygons must be given as arrays of [x, y] vertices
+// in *counter-clockwise* order (the standard mathematical convention).
+// (Mathcha exports clockwise polygons, so callers may need to reverse first —
+//  see convex_poly_verts_ccw below.)
+//
+// Algorithm: Sutherland-Hodgman.  Clip the subject polygon successively
+// against each directed edge of the clip polygon.  Each edge defines a
+// half-plane; a convex polygon is the intersection of its half-planes.
+function convex_polys_intersection(polyA, polyB) {
+  // polyA is the subject; polyB supplies the clipping half-planes.
+  let clipped = polyA.slice();
+
+  for (let i = 0; i < polyB.length; i++) {
+    if (clipped.length === 0) return null;   // Clipped away entirely.
+    const edgeA = polyB[i];
+    const edgeB = polyB[(i + 1) % polyB.length];
+    clipped = clip_poly_by_half_plane(clipped, edgeA, edgeB);
+  }
+
+  return clipped.length === 0 ? null : clipped;
+}
+
+// Helper: ensure a polygon's vertices are in CCW order.
+// Pass the result to convex_polys_intersection when your source (e.g. Mathcha)
+// gives CW vertices.
+function convex_poly_verts_ccw(verts) {
+  // Compute the signed area via the shoelace formula.
+  // Positive ⟹ already CCW; negative ⟹ CW, so reverse.
+  let signed_area = 0;
+  for (let i = 0; i < verts.length; i++) {
+    const [x1, y1] = verts[i];
+    const [x2, y2] = verts[(i + 1) % verts.length];
+    signed_area += (x1 * y2 - x2 * y1);
+  }
+  return signed_area >= 0 ? verts.slice() : verts.slice().reverse();
 }

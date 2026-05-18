@@ -100,7 +100,7 @@ in the console.
 ![Containment stress test](./screenshots/demo-general-containment.png)
 
 ### Example 9 (notational-dispatch)
-A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. The bootstrap code in the magic-red code box demonstrates the SweetTalk sugar layer - see also Example 10. Console:
+A triumph of the message-sending architecture! Default "magic blue" meta-BoxGraph wrapping different notational regions in the same diagram, and indicating the names of notation classes to send `fromRegion:` to in order to unpickle the run-time object represented by each region. The bootstrap code in the magic-red code box demonstrates the Sucrose sugar layer including SweetTalk - see also Example 10. Console:
 
 ```javascript
 init();
@@ -112,7 +112,7 @@ send(tg1, 'asJS');   // JS code relative to a function called "arrow"
 ![Notational Dispatch](./screenshots/demo-notational-dispatch.png)
 
 ### Example 10 (hole-carving-test)
-SweetTalk{\[JS\]} is a sugar layer of Smalltalk message-sending syntax which permits embedded JS "holes" delimited via `{[ ]}`. These holes may nest, thereby alternating between the two syntaxes. If magic-red boxes dispatch to their language processor vtable via an arrow (similar to Example 9's notational dispatch), who knows what is possible.
+Sucrose is a sugar layer which permits mixing of mood-specific syntaxes via user-defined "holes". These holes may nest. TODO: SweetTalk and Descartes langs in `solid-physics-demo.svg`
 
 ```javascript
 init()

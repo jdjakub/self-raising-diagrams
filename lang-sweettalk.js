@@ -249,71 +249,8 @@ ST_AST_to_JS = function(node) {
     default:        throw 'Unknown AST kind: ' + node.kind;
   }
 };
- 
-// ---- Nested-holes support ----
-// Tree shape: each node is an array of items. Each item is either a string (text in
-// the node's language) or a child array (a hole in the OTHER language). Root is ST.
- 
-HOLE_DELIMS = ['{[', ']}'];
- 
-carve_nested_holes = str => {
-  const root = [];
-  const stack = [root];
-  let buf = '';
-  let i = 0;
-  const flush = () => { if (buf) { stack[stack.length-1].push(buf); buf = ''; } };
-  while (i < str.length) {
-    if (str.startsWith(HOLE_DELIMS[0], i)) {
-      flush();
-      const child = [];
-      stack[stack.length-1].push(child);
-      stack.push(child);
-      i += HOLE_DELIMS[0].length;
-    } else if (str.startsWith(HOLE_DELIMS[1], i)) {
-      flush();
-      stack.pop();
-      if (stack.length === 0) throw 'Unmatched ]} at position ' + i;
-      i += HOLE_DELIMS[1].length;
-    } else {
-      buf += str[i++];
-    }
-  }
-  flush();
-  if (stack.length !== 1) throw 'Unmatched {[';
-  return root;
-};
- 
-// Recursively compile a carved tree. isST=true means the node is in ST mode.
-compile_carved = (node, isST) => {
-  if (isST) {
-    // Build frags array, alternating ST text / JS hole codes, starting with ST.
-    const frags = [];
-    let expectST = true;
-    for (const part of node) {
-      if (typeof part === 'string') {
-        if (!expectST) frags.push('');
-        frags.push(part);
-        expectST = false;
-      } else {
-        if (expectST) frags.push('');
-        frags.push(compile_carved(part, false));
-        expectST = true;
-      }
-    }
-    return ST_with_holes_to_JS(frags);
-  } else {
-    // JS mode: concatenate, recursively compiling ST children.
-    return node.map(part =>
-      typeof part === 'string' ? part : compile_carved(part, true)
-    ).join('');
-  }
-};
- 
-compile_nested_holes = str => compile_carved(carve_nested_holes(str), true);
-
-carve_non_nested_holes = str => str.split(HOLE_DELIMS[0]).flatMap(s => s.split(HOLE_DELIMS[1]));
-compile_non_nested_holes = str => ST_with_holes_to_JS(carve_non_nested_holes(str));
 
 // For minimal typing in the console. E.g:
 // e(`#btn3 onClick: {[ () => log('Hello World!') ]}`)
-e = str => eval(compile_nested_holes(str));
+// TODO: update for new hole carving
+//e = str => eval(compile_nested_holes(str));
