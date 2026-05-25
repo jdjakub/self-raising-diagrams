@@ -4,7 +4,7 @@ vtables = { byTag: {}, };
 // e.g. send(rectElem, 'doSomething:', blah1, 'with:', blah2, 'and:', blah3)
 // = sendNoKw(rectElem, 'doSomething:with:and:', blah1, blah2, blah3)
 // NOTE: JSTalk macro syntactic sugar
-//   ⟦ rectElem doSomething: blah1 with: blah2 and: blah3 ⟧
+//   send(rectElem, 'doSomething:', blah1, 'with:', blah2, 'and:', blah3)
 // should expand (jstalk2js.pl) into the above send().
 // BTW: the VS Code extension.js auto-replaces [[ -> ⟦ and ]] -> ⟧ as you type
 // If the sugar isn't working for you, just work with the verbose .js output file
@@ -45,7 +45,7 @@ sendNoKw = function(recv, selector, ...args) {
 
 vtables.geometric = {
   ['distanceTo:']: (self, other) =>
-    Math.sqrt(distance2_line_segs_to_segs(⟦self lineSegments⟧, ⟦other lineSegments⟧)),
+    Math.sqrt(distance2_line_segs_to_segs(send(self, 'lineSegments'), send(other, 'lineSegments'))),
 };
 
 vtables.point = {
@@ -55,20 +55,20 @@ vtables.point = {
     if (other instanceof Array && other.length === 2) {
       return Math.sqrt(dist2(self, other));
     } else { // Assumes < domNode
-      const closest = closest_line_seg_to_pt(self, ⟦other lineSegments⟧);
+      const closest = closest_line_seg_to_pt(self, send(other, 'lineSegments'));
       return Math.sqrt(distance2_pt_to_line_seg(self, ...closest));
     }
   },*/
   ['lineSegments']: (self) => [[self, self]],
   ['vertices']: (self) => [self],
   ['insideWhichShapes:']: (self, shapes) =>
-    shapes.filter(s => ⟦s containsPt: self⟧).sort(inTopToBottomOrder),
+    shapes.filter(s => send(s, 'containsPt:', self)).sort(inTopToBottomOrder),
   ['pickFrom:']: (self, shapes) => {
-    shapes = ⟦self insideWhichShapes: shapes⟧;
+    shapes = send(self, 'insideWhichShapes:', shapes);
     if (shapes.length > 0) return shapes[0];
     else return nilElem;
   },
-  ['closestPointOn:']: (self, shape) => ⟦shape closestPtToPt: self⟧,
+  ['closestPointOn:']: (self, shape) => send(shape, 'closestPtToPt:', self),
 };
 
 nextId = 1;
@@ -80,7 +80,7 @@ vtables.domNode = {
     // TODO: pull in + exec any red boxes on demand!?
     let id = attr(self, 'id');
     if (!id) {
-      const prefix = ⟦self idPrefix⟧;
+      const prefix = send(self, 'idPrefix');
       id = prefix+(nextId++);
       attr(self, 'id', id);
     }
@@ -100,7 +100,7 @@ vtables.domNode = {
     return l<=x && x<=r && t<=y && y<=b;
   },
   ['encloses:']: (self, other) => 
-    ⟦other vertices⟧.every(v => ⟦self containsPt: v⟧),  // SMELL convex polys only
+    send(other, 'vertices').every(v => send(self, 'containsPt:', v)),  // SMELL convex polys only
   ['covers:']: (self, other) => {
     const self_minus_other = inTopToBottomOrder(self, other);
     return self_minus_other < 0;
@@ -111,50 +111,50 @@ vtables.domNode = {
     return [ [l,t], [r,t], [r,b], [l,b] ];
   },
   ['centerPt']: (self) => {
-    const verts = ⟦self vertices⟧;
+    const verts = send(self, 'vertices');
     let sum = [0,0];
     for (let v of verts) sum = vadd(sum, v);
     return vmul(1/verts.length, sum);
   },
   ['isClosed']: (self) => true,
-  ['lineSegments']: (self) => explode_poly_segs(⟦self vertices⟧, ⟦self isClosed⟧),
+  ['lineSegments']: (self) => explode_poly_segs(send(self, 'vertices'), send(self, 'isClosed')),
   /*['distanceTo:']: (self, other) => {
-    if (other instanceof Array) return ⟦other distanceTo: self⟧;
-    return Math.sqrt(distance2_line_segs_to_segs(⟦self lineSegments⟧, ⟦other lineSegments⟧));
+    if (other instanceof Array) return send(other, 'distanceTo:', self);
+    return Math.sqrt(distance2_line_segs_to_segs(send(self, 'lineSegments'), send(other, 'lineSegments')));
   },*/
   ['signedDistanceToPt:']: (self, pt) => {
-    const dist = ⟦self distanceTo: pt⟧;
-    return ⟦self containsPt: pt⟧ ? -dist : dist;
+    const dist = send(self, 'distanceTo:', pt);
+    return send(self, 'containsPt:', pt) ? -dist : dist;
   },
   ['findTightestContainerIn:']: (self, elems) => { // -> containedIn
     // MUCH nicer code than annotateAllContainments plus treeifyContainments
     // I want to find my least / tightest container
     let container = null; // Infinitely big initial container
     elems.filter(other => self !== other).forEach(other => {
-      const rivalExists = ⟦other encloses: self⟧;
+      const rivalExists = send(other, 'encloses:', self);
       if (rivalExists) {
         const rival = other;
         // If the rival sits within my current tightest container, rival is tighter
         // If it doesn't, but the rival covers my current container (it sits above in the draw order)
         // then it takes priority
-        if (container === null || ⟦container encloses: rival⟧ || ⟦rival covers: container⟧)
+        if (container === null || send(container, 'encloses:', rival) || send(rival, 'covers:', container))
           container = rival;
       }
     });
     if (container) {
-      addSetAttr(container.dataset, 'contains', ⟦self id⟧);
-      self.dataset.containedIn = ⟦container id⟧;
+      addSetAttr(container.dataset, 'contains', send(self, 'id'));
+      self.dataset.containedIn = send(container, 'id');
     }
   },
   ['specialize']: (self) => null,
   ['localRoot']: (self) => self,
   ['reroot']: (self) => { // Given: containedIn
     let soonToBeParent = byId(self.dataset.containedIn);
-    const parentRoot = ⟦soonToBeParent localRoot⟧;
-    const myRoot = ⟦self localRoot⟧;
+    const parentRoot = send(soonToBeParent, 'localRoot');
+    const myRoot = send(self, 'localRoot');
     parentRoot.appendChild(myRoot);
   },
-  ['atPoint:pickFrom:']: (self, pt, shapes) => ⟦pt pickFrom: shapes.filter(s => s !== self)⟧,
+  ['atPoint:pickFrom:']: (self, pt, shapes) => send(pt, 'pickFrom:', shapes.filter(s => s !== self)),
   ['connectors']: (self) => {
     if (self.dataset.connectors) return setAttrToArray(self.dataset.connectors).map(byId);
     return [];
@@ -182,10 +182,23 @@ vtables.byTag['path'] = {
     const pt = self.getPointAtLength(frac * total);
     return [pt.x, pt.y];
   },
+  ['tangentAtFrac:']: (self, frac /* 0 to 1 */) => {
+    const epsilon = 0.0001;
+    const pt = send(self, 'pointAtFrac:', frac);
+    let delta;
+    if (frac > epsilon) {
+      const prevPt = send(self, 'pointAtFrac:', frac-epsilon);
+      delta = vsub(pt, prevPt);
+    } else {
+      const postPt = send(self, 'pointAtFrac:', frac+epsilon);
+      delta = vsub(postPt, pt);
+    }
+    return vnormed(delta);
+  },
   ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
   ['containsPt:']: (self, pt) => {
-    if (!⟦self isClosed⟧) {
-      /*const {point, d2} = ⟦pt closestPointOn: self⟧;
+    if (!send(self, 'isClosed')) {
+      /*const {point, d2} = send(pt, 'closestPointOn:', self);
       if (d2 < 4) return true;
       return false;*/
       return self.isPointInStroke({ x: pt[0], y: pt[1] });
@@ -193,15 +206,15 @@ vtables.byTag['path'] = {
     return vtables.domNode['containsPt:'](self, pt); // HACK supersend. Also too coarse
   },
   ['encloses:']: (self, other) => {
-    if (!⟦self isClosed⟧) return false;
+    if (!send(self, 'isClosed')) return false;
     else return vtables.domNode['encloses:'](self, other); // HACK supersend
   },
   ['specialize']: (self) => {
     let newTag = null;
-    if (!⟦self isCurved⟧) { // => Polygon | Polyline
-      const polyPts = polyFromPath(⟦self commands⟧).map(v => v.join(',')).join(' ');
+    if (!send(self, 'isCurved')) { // => Polygon | Polyline
+      const polyPts = polyFromPath(send(self, 'commands')).map(v => v.join(',')).join(' ');
       attr(self, 'points', polyPts);
-      newTag = ⟦self isClosed⟧? 'polygon' : 'polyline';
+      newTag = send(self, 'isClosed')? 'polygon' : 'polyline';
     } else {
       // SMELL: duped from normalizeCircles
       const params = extractCircle(self);
@@ -219,18 +232,18 @@ vtables.byTag['path'] = {
   },
   ['localRoot']: (self) => self.parentElement, // SMELL: wrong for arrowheads
   ['endpoints']: (self) => {
-    if (⟦self isClosed⟧) return [];
-    return [ ⟦self pointAtFrac: 0⟧, ⟦self pointAtFrac: 1⟧ ];
+    if (send(self, 'isClosed')) return [];
+    return [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
   },
   ['connections']: (self) => {
     if (self.dataset.connects) return self.dataset.connects.split(' ').map(byId);
     if (self.dataset.origin && self.dataset.target
       && self.dataset.origin !== 'nil' && self.dataset.target !== 'nil')
       return [self.dataset.origin, self.dataset.target].map(byId);
-    const endpoints = ⟦self endpoints⟧;
-    const connections = endpoints.map(pt => ⟦self atPoint: pt pickFrom: Object.values(everything)⟧);
-    self.dataset.connects = connections.map(c => ⟦c id⟧).join(' ');
-    const myId = ⟦self id⟧;
+    const endpoints = send(self, 'endpoints');
+    const connections = endpoints.map(pt => send(self, 'atPoint:', pt, 'pickFrom:', Object.values(everything)));
+    self.dataset.connects = connections.map(c => send(c, 'id')).join(' ');
+    const myId = send(self, 'id');
     connections.forEach(e => addSetAttr(e.dataset, 'connectors', myId))
     return connections;
   },
@@ -247,20 +260,20 @@ vtables.byTag['polyline'] = {
   ['isClosed']: () => false,
   ['isCurved']: () => false,
   ['commands']: (self) => {
-    let vs = ⟦self vertices⟧;
+    let vs = send(self, 'vertices');
     vs = vs.map(v => ['L', v]);
     vs[0][0] = 'M';
     return vs;
   },
   ['encloses:']: () => false,
   ['closestPtToPt:']: (self, pt)=> {
-    const segs = ⟦self lineSegments⟧;
+    const segs = send(self, 'lineSegments');
     const closest_seg = closest_line_seg_to_pt(pt, segs);
     return closest_pt_on_line_seg(pt, ...closest_seg);
   },
   ['specialize']: (self) => {
     let newTag = null;
-    const points = ⟦self vertices⟧;
+    const points = send(self, 'vertices');
     if (points.length === 2) {
       attr(self, {x1: points[0][0], y1: points[0][1], x2: points[1][0], y2: points[1][1]});
       newTag = 'line';
@@ -287,7 +300,7 @@ vtables.byTag['polygon'] = {
   ['isClosed']: () => true,
   ['specialize']: (self) => {
     let newTag = null;
-    const vertices = ⟦self vertices⟧;
+    const vertices = send(self, 'vertices');
     if (vertices.length === 4) {
       const [tl,tr,br,bl] = vertices;
       // NB: requires axis-aligned and clockwise starting from top-left
@@ -305,20 +318,24 @@ vtables.byTag['polygon'] = {
     return null;
   },
   ['containsPt:']: (self, pt) => {
-    const vs = ⟦self vertices⟧;
+    const vs = send(self, 'vertices');
     return isPointInPolygon(pt, vs);
   },
   ['encloses:']: vtables.domNode['encloses:'], // HACK super?
   ['intersectWith:']: (self, other) => {
-    const    myVerts = convex_poly_verts_ccw(⟦self vertices⟧);
-    const otherVerts = convex_poly_verts_ccw(⟦other vertices⟧);
+    const    myVerts = convex_poly_verts_ccw(send(self, 'vertices'));
+    const otherVerts = convex_poly_verts_ccw(send(other, 'vertices'));
     const isect = convex_polys_intersection(myVerts, otherVerts);
     if (isect) return send({vtable: 'Polygon'}, 'fromVertices:', isect);
     else return null;
   },
   ['center']: self => {
-    const vs = ⟦self vertices⟧;
+    const vs = send(self, 'vertices');
     return vmul(1/vs.length, sum(vs));
+  },
+  ['translateBy:']: (self, vec) => {
+    const vs = send(self, 'vertices').map(v => vadd(v,vec));
+    attr(self, 'points', vs.map(v => v.join(',')).join(' '));
   },
 }
 
@@ -355,6 +372,7 @@ vtables.byTag['rect'] = {
   ['topLeft:']: (self, [x,y]) => {
     attr(self, {x, y});
   },
+  ['translateBy:']: (self, vec) => send(self, 'topLeft:', vadd(send(self, 'topLeft') ,vec)),
 }
 
 vtables.byTag['circle'] = {
@@ -439,8 +457,8 @@ vtables.byTag['g'] = {
 
 vtables.byTag['path']['target'] = (self) => {
   if (self.dataset.target) return byId(self.dataset.target);
-  const endpoints = ⟦self endpoints⟧;
-  const lroot = ⟦self localRoot⟧;
+  const endpoints = send(self, 'endpoints');
+  const lroot = send(self, 'localRoot');
   const arrowheads = Array.from(lroot.querySelectorAll('g'));
   let originPt = null;
   let target = nilElem;
@@ -451,48 +469,88 @@ vtables.byTag['path']['target'] = (self) => {
     const originIndex = d0 < d1 ? 1 : 0;
     self.dataset.originIndex = originIndex;
     originPt = endpoints[originIndex];
-    target = ⟦self atPoint: targetPt pickFrom: Object.values(everything)⟧;
+    target = send(self, 'atPoint:', targetPt, 'pickFrom:', Object.values(everything));
   }
   self.dataset.origin = 'nil';
   self.dataset.target = 'nil';
   if (originPt) {
-    const origin = ⟦self atPoint: originPt pickFrom: Object.values(everything)⟧;
+    const origin = send(self, 'atPoint:', originPt, 'pickFrom:', Object.values(everything));
     if (origin) {
-      self.dataset.origin = ⟦origin id⟧;
-      addSetAttr(origin.dataset, 'connectors', ⟦self id⟧);
+      self.dataset.origin = send(origin, 'id');
+      addSetAttr(origin.dataset, 'connectors', send(self, 'id'));
     }
   }
   if (target) {
-    self.dataset.target = ⟦target id⟧;
-    addSetAttr(target.dataset, 'connectors', ⟦self id⟧);
+    self.dataset.target = send(target, 'id');
+    addSetAttr(target.dataset, 'connectors', send(self, 'id'));
   }
   return target;
 }
 
 vtables.byTag['path']['origin'] = (self) => {
   if (self.dataset.origin) return byId(self.dataset.origin);
-  ⟦self target⟧;
+  send(self, 'target');
   return byId(self.dataset.origin);
 }
 
 vtables.byTag['path']['isDirected'] = (self) => {
-  ⟦self target⟧;
+  send(self, 'target');
   return !isNaN(parseInt(self.dataset.originIndex));
 }
 
 vtables.byTag['path']['originPt'] = (self) => {
-  if (⟦self isDirected⟧) {
-    const endpoints = ⟦self endpoints⟧;
+  if (send(self, 'isDirected')) {
+    const endpoints = send(self, 'endpoints');
     return endpoints[+self.dataset.originIndex];
   }
 }
 
 vtables.byTag['path']['targetPt'] = (self) => {
-  if (⟦self isDirected⟧) {
-    const endpoints = ⟦self endpoints⟧;
-    return endpoints[1 - +self.dataset.originIndex];
+  if (send(self, 'isDirected')) {
+    const lroot = send(self, 'localRoot'); // WARN duped from >>target
+    const arrowheads = Array.from(lroot.querySelectorAll('g'));
+    if (arrowheads.length === 1) {
+      const m = arrowheads[0].transform.baseVal[0].matrix;
+      return [m.e, m.f];
+    }
   }
 }
+
+// Update a named visual vector arrow, or init if applicable.
+// Mathcha-dependent
+vupd = (name, value, origin, prototypeId) => {
+  let arrow = byId('vec-'+name);
+  if (!arrow) {
+    const prototype = byId(prototypeId).parentElement;
+    arrow = prototype.cloneNode(/*deep=*/true);
+    arrow.firstChild.id = 'vec-'+name;
+    svg_parent.appendChild(arrow);
+  } else arrow = arrow.parentElement;
+  const shaft = arrow.firstChild;
+  const head = arrow.querySelector('g');
+  if (shaft.tagName !== 'line') throw [shaft, ' not a <line>'];
+  if (!send(shaft, 'isDirected')) throw [shaft, ' not directed'];
+  const oi = +shaft.dataset.originIndex;
+  if (!origin) origin = send(shaft, 'originPt');
+  else {
+    attr(shaft, oi === 0 ? 'x1' : 'x2', origin[0]);
+    attr(shaft, oi === 0 ? 'y1' : 'y2', origin[1]);
+  }
+  const target = vadd(origin, value);
+  attr(shaft, oi === 0 ? 'x2' : 'x1', target[0]);
+  attr(shaft, oi === 0 ? 'y2' : 'y1', target[1]);
+
+  const m = head.transform.baseVal[0].matrix;
+  m.e = target[0]; m.f = target[1];
+  // New get the angle right
+  const dv = vsub(target,origin);
+  let n = [1,0];
+  if (vmag(dv) > 0.001) n = vnormed(dv);
+  // Empirically determined based on Mathcha's arrowhead coord sys
+  /* [ */ m.a = -n[0]; m.c =  n[1]; // e ]
+  /* [ */ m.b = -n[1]; m.d = -n[0]; // f ]
+  //       look back     look left
+};
 
 /*
 In order for a generic shape (1D/2D) to claim a label, we want to use
@@ -513,8 +571,8 @@ vtables['BoxGraph-Common'] = {
   // Wrap underlying DOM element and inherit its methods
   ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
   ['label:']: (self, labelPara) => {
-    self.dom.dataset.label = ⟦labelPara id⟧;
-    labelPara.dataset.labelFor = ⟦self id⟧;
+    self.dom.dataset.label = send(labelPara, 'id');
+    labelPara.dataset.labelFor = send(self, 'id');
   },
 }
 
@@ -532,11 +590,11 @@ vtables['Box'] = {
   //    self label: label.
   ['claimLabel']: (self) => {
     const labels = all('.is-paragraph:not(.is-multiline):not([data-label-for])');
-    const outerLabels = labels.filter(l => !⟦self encloses: l⟧);
-    const labelDists = outerLabels.map(l => [l, ⟦self distanceTo: l⟧]).filter(([l,d]) => d < 20);
+    const outerLabels = labels.filter(l => !send(self, 'encloses:', l));
+    const labelDists = outerLabels.map(l => [l, send(self, 'distanceTo:', l)]).filter(([l,d]) => d < 20);
     if (labelDists.length > 0) {
       const [label] = labelDists.thatWhichMinimizes(([l,d]) => d);
-      if (label) ⟦self label: label⟧;
+      if (label) send(self, 'label:', label);
     }
   },
   ['name']: (self) => {
@@ -569,20 +627,20 @@ vtables['Arrow'] = {
   //   self label: label.
   ['claimLabel']: (self) => {
     const labels = all('.is-paragraph:not(.is-multiline)');
-    const label = labels.thatWhichMinimizes(l => ⟦⟦self originPt⟧ distanceTo: l⟧);
-    ⟦self label: label⟧;
+    const label = labels.thatWhichMinimizes(l => send(send(self, 'originPt'), 'distanceTo:', l));
+    send(self, 'label:', label);
   },
 }
 
 vtables.byTag['rect']['parseAsBox'] = (self) => {
   const box = { vtable: 'Box' }; // HACK constructors
-  ⟦box initFromDOM: self⟧;
+  send(box, 'initFromDOM:', self);
   return box;
 }
 
 vtables.byTag['path']['parseAsConnector'] = (self) => {
   const arrow = { vtable: 'Arrow' }; // HACK constructors
-  ⟦arrow initFromDOM: self⟧;
+  send(arrow, 'initFromDOM:', self);
   return arrow;
 }
 
@@ -590,12 +648,12 @@ vtables['BoxGraph-Legacy'] = {
   _parent: null,
 
   ['parse']: (self) => {
-    self.connectors = all('polyline, path.real, line').map(l => ⟦l parseAsConnector⟧);
-    self.realArrows = self.connectors.filter(a => ⟦a isDirected⟧);
-    self.realArrows.forEach(arr => ⟦arr claimLabel⟧);
+    self.connectors = all('polyline, path.real, line').map(l => send(l, 'parseAsConnector'));
+    self.realArrows = self.connectors.filter(a => send(a, 'isDirected'));
+    self.realArrows.forEach(arr => send(arr, 'claimLabel'));
 
-    self.boxes = all('rect').map(r => ⟦r parseAsBox⟧);
-    self.boxes.forEach(b => ⟦b claimLabel⟧);
+    self.boxes = all('rect').map(r => send(r, 'parseAsBox'));
+    self.boxes.forEach(b => send(b, 'claimLabel'));
   },
   ['boxNamed:']: (self, name) => {
     const label = some('g[data-string="'+name+'"');
@@ -606,7 +664,7 @@ vtables['BoxGraph-Legacy'] = {
 // Run on boxGraph-example.svg after init()
 parseBoxGraph = function() {
   boxGraph = { vtable: 'BoxGraph-Legacy' }; // HACK constructors
-  return ⟦boxGraph parse⟧;
+  return send(boxGraph, 'parse');
 }
 
 generateJSOG = function() {
@@ -642,20 +700,20 @@ generateJSOG = function() {
 // For id-vanilla.svg
 
 vtables['Arrow']['checkIfSeparator'] = (self) => {
-  if (⟦self isDirected⟧) return false;
+  if (send(self, 'isDirected')) return false;
   self.dom.classList.add('methods-are-below');
   return true;
 }
 
 vtables['Box']['methodAt:'] = (self, name) => {
-  const method = ⟦self at: name⟧;
+  const method = send(self, 'at:', name);
   // HACK duped from Box >> at:
   const para = self.domContainer.querySelector('[data-string="'+name+'"]');
   if (!para) return null;
   const separator = self.domContainer.querySelector('.methods-are-below');
   if (!separator) throw [self, 'doesn\'t have methods'];
   const pt_y = para.getBBox().y;
-  const y = ⟦separator.arrow endpoints⟧[0][1];
+  const y = send(separator.arrow, 'endpoints')[0][1];
   if (pt_y > y) return method; // methods live below separator
   return null;
 }
@@ -709,18 +767,18 @@ vtables['GraphNotation'] = {
   ['nodes']: (self) => {
     if (self._nodes) return self._nodes;
     const pred = e => self.filter(e) && self.defs.isNode(e);
-    const matches = ⟦self findIn: self.scope matching: pred excluding: new Set()⟧;
-    self._nodes = matches.map(e => ⟦self wrapNode: e⟧);
+    const matches = send(self, 'findIn:', self.scope, 'matching:', pred, 'excluding:', new Set());
+    self._nodes = matches.map(e => send(self, 'wrapNode:', e));
     return self._nodes;
   },
-  ['nodeForDom:']: (self, dom) => ⟦self nodes⟧.find(n => n.dom === dom) || null,
+  ['nodeForDom:']: (self, dom) => send(self, 'nodes').find(n => n.dom === dom) || null,
 
   ['edges']: (self) => {
     if (self._edges) return self._edges;
-    const nodeDoms = new Set(⟦self nodes⟧.map(n => n.dom));
+    const nodeDoms = new Set(send(self, 'nodes').map(n => n.dom));
     const pred = e => self.filter(e) && self.defs.isEdge(e);
-    const matches = ⟦self findIn: self.scope matching: pred excluding: nodeDoms⟧;
-    self._edges = matches.map(e => ⟦self wrapEdge: e⟧);
+    const matches = send(self, 'findIn:', self.scope, 'matching:', pred, 'excluding:', nodeDoms);
+    self._edges = matches.map(e => send(self, 'wrapEdge:', e));
     return self._edges;
   },
 
@@ -752,7 +810,7 @@ vtables['GraphNotation'] = {
         // If child claimed itself AND elem is child's wrapper, elem is also
         // handled and elem's remaining children belong to the same conceptual
         // node — don't visit them.
-        if (childHandled && ⟦child localRoot⟧ === elem) return true;
+        if (childHandled && send(child, 'localRoot') === elem) return true;
       }
       return false;
     };
@@ -766,8 +824,8 @@ vtables['GraphNotation'] = {
 
   // Resolve a point to a node in this notation, if any. Use an empirical tolerance for e.g.
   // edge connectors that "just touch" the node border.
-  ['nodeAtPt:']: (self, pt) => ⟦self nodes⟧.find(n =>
-    ⟦n signedDistanceToPt: pt⟧ <= self.defs.endpointTolerance) || null,
+  ['nodeAtPt:']: (self, pt) => send(self, 'nodes').find(n =>
+    send(n, 'signedDistanceToPt:', pt) <= self.defs.endpointTolerance) || null,
 };
 
 // Shared protocol for the Node / Edge wrappers.
@@ -780,13 +838,13 @@ vtables['GraphNotation-Node'] = {
   _parent: vtables['GraphNotation-Common'],
 
   // Edges in the same notation that touch this node.
-  ['incidentEdges']: (self) => ⟦self.notation edges⟧.filter(e =>
-    ⟦e connections⟧.some(n => n && n.dom === self.dom)),
+  ['incidentEdges']: (self) => send(self.notation, 'edges').filter(e =>
+    send(e, 'connections').some(n => n && n.dom === self.dom)),
   // Nodes at the end of all incident edges
   ['neighbors']: (self) => {
     const result = [];
-    for (const edge of ⟦self incidentEdges⟧) {
-      for (const conn of ⟦edge connections⟧) {
+    for (const edge of send(self, 'incidentEdges')) {
+      for (const conn of send(edge, 'connections')) {
         if (conn && conn.dom !== self.dom) result.push(conn);
       }
     }
@@ -803,12 +861,12 @@ vtables['GraphNotation-Edge'] = {
   // in blank space).
   ['connections']: (self) => {
     if (self._connections) return self._connections;
-    self._connections = ⟦self endpoints⟧.map(pt => ⟦self.notation nodeAtPt: pt⟧);
+    self._connections = send(self, 'endpoints').map(pt => send(self.notation, 'nodeAtPt:', pt));
     return self._connections;
   },
 
-  ['origin']: (self) => ⟦self connections⟧[0],
-  ['target']: (self) => ⟦self connections⟧[1],
+  ['origin']: (self) => send(self, 'connections')[0],
+  ['target']: (self) => send(self, 'connections')[1],
 };
 
 isMathchaConnector = e => ['polyline','line'].includes(e.tagName)
@@ -865,27 +923,27 @@ vtables['EdgeDrivenGraphNotation'] = {
     for (const edgeElem of self.edgesFn(self.scope)) {
       if (self.defs.endpointTolerance === 0) { // HACK! red ID box probe lines use isPointOnStroke
         // Necessary for now if candidates includes open paths
-        for (const conn of ⟦edgeElem connections⟧) { // WARN: document scope, ignores self.scope
+        for (const conn of send(edgeElem, 'connections')) { // WARN: document scope, ignores self.scope
           if (!nodeElems.has(conn) && candidates.includes(conn))
             nodeElems.add(conn);
         }
       } else {
-        for (const pt of ⟦edgeElem endpoints⟧) {
+        for (const pt of send(edgeElem, 'endpoints')) {
           // Find a candidate within endpointTolerance — same logic as 
           // base GN's nodeAtPt:, but restricted to the candidate pool
           const target = candidates.find(c => 
-            ⟦c signedDistanceToPt: pt⟧ <= self.defs.endpointTolerance);
+            send(c, 'signedDistanceToPt:', pt) <= self.defs.endpointTolerance);
           if (target) nodeElems.add(target);
         }
       }
     }
-    self._nodes = [...nodeElems].map(e => ⟦self wrapNode: e⟧);
+    self._nodes = [...nodeElems].map(e => send(self, 'wrapNode:', e));
     return self._nodes;
   },
 
   ['edges']: (self) => {
     if (self._edges) return self._edges;
-    self._edges = self.edgesFn(self.scope).map(e => ⟦self wrapEdge: e⟧);
+    self._edges = self.edgesFn(self.scope).map(e => send(self, 'wrapEdge:', e));
     return self._edges;
   },
 };
@@ -923,7 +981,7 @@ vtables['Labeller'] = {
   //              can naturally exclude already-claimed labels
   // labellables: () -> [labellables]; wrappers or raw elems
   // attractor:   labellable -> point | shape
-  //              will judge via ⟦ label distanceTo: attractor(labellable) ⟧
+  //              will judge via send(label, 'distanceTo:', attractor(labellable))
   //              e.g. an arrow's attractor is its originPt; a rect's is itself
   // attachAt:    (labellable, labelPt) -> point on labellable where LLL
   //              should terminate (TODO: should just be closest pt on attractor?)
@@ -949,7 +1007,7 @@ vtables['Labeller'] = {
     const candidates = [];
     for (const label of labels) {
       for (const labellable of labellables) {
-        const d = ⟦label distanceTo: self.attractor(labellable)⟧;
+        const d = send(label, 'distanceTo:', self.attractor(labellable));
         if (d <= self.maxDistance) candidates.push({ label, labellable, d });
       }
     }
@@ -961,16 +1019,16 @@ vtables['Labeller'] = {
       if (claimedLabels.has(c.label) || claimedLabellables.has(c.labellable)) continue;
       claimedLabels.add(c.label);
       claimedLabellables.add(c.labellable);
-      drawnLines.add(⟦self drawLLL: c.label to: c.labellable⟧);
+      drawnLines.add(send(self, 'drawLLL:', c.label, 'to:', c.labellable));
     }
     self._drawnLines = drawnLines;
     self._claimedLabels = claimedLabels;
     self._claimedLabellables = claimedLabellables;
-    return ⟦self attachmentGraph⟧;
+    return send(self, 'attachmentGraph');
   },
 
   ['drawLLL:to:']: (self, label, labellable) => {
-    const [x1,y1] = ⟦label centerPt⟧;
+    const [x1,y1] = send(label, 'centerPt');
     const [x2,y2] = self.attachAt(labellable, [x1,y1]);
     // note: static member ref
     const wrapper = svgel('g', { class: vtables.Labeller.LLL_CLASS }, self.scope);
@@ -1016,35 +1074,35 @@ vtables['LabelledGraph'] = {
 
   ['nodes']: (self) => {
     if (self._nodes) return self._nodes;
-    self._nodes = ⟦self.gn nodes⟧.map(n => ⟦self wrapNode: n⟧);
+    self._nodes = send(self.gn, 'nodes').map(n => send(self, 'wrapNode:', n));
     return self._nodes;
   },
   ['edges']: (self) => {
     if (self._edges) return self._edges;
-    self._edges = ⟦self.gn edges⟧.map(e => ⟦self wrapEdge: e⟧);
+    self._edges = send(self.gn, 'edges').map(e => send(self, 'wrapEdge:', e));
     return self._edges;
   },
 
   ['namedNodes']: (self) => {
     if (self._namedNodes) return self._namedNodes;
     self._namedNodes = {};
-    for (const n of ⟦self nodes⟧) {
-      const name = ⟦n name⟧;
+    for (const n of send(self, 'nodes')) {
+      const name = send(n, 'name');
       if (name) self._namedNodes[name] = n;
     }
     return self._namedNodes;
   },
-  ['anonNodes']: (self) => ⟦self nodes⟧.filter(n => !⟦n name⟧),
+  ['anonNodes']: (self) => send(self, 'nodes').filter(n => !send(n, 'name')),
   ['namedEdges']: (self) => {
     if (self._namedEdges) return self._namedEdges;
     self._namedEdges = {};
-    for (const e of ⟦self edges⟧) {
-      const name = ⟦e name⟧;
+    for (const e of send(self, 'edges')) {
+      const name = send(e, 'name');
       if (name) self._namedEdges[name] = e;
     }
     return self._namedEdges;
   },
-  ['anonEdges']: (self) => ⟦self edges⟧.filter(e => !⟦e name⟧),
+  ['anonEdges']: (self) => send(self, 'edges').filter(e => !send(e, 'name')),
 
   ['wrapNode:']: (self, gnNode) => ({ vtable: 'LabelledGraph-Node', gnNode, lg: self }),
   ['wrapEdge:']: (self, gnEdge) => ({ vtable: 'LabelledGraph-Edge', gnEdge, lg: self }),
@@ -1055,10 +1113,10 @@ vtables['LabelledGraph-Node'] = {
     sendNoKw(self.gnNode, sel, ...args),
 
   ['name']: (self) => self.lg.nodeNamer(self.gnNode),
-  ['outgoingEdges']: (self) => ⟦self.lg edges⟧.filter(e =>
-    ⟦e origin⟧ && ⟦e origin⟧.gnNode.dom === self.gnNode.dom),
-  ['incomingEdges']: (self) => ⟦self.lg edges⟧.filter(e =>
-    ⟦e connections⟧.some(n => n && n.gnNode.dom === self.gnNode.dom)),
+  ['outgoingEdges']: (self) => send(self.lg, 'edges').filter(e =>
+    send(e, 'origin') && send(e, 'origin').gnNode.dom === self.gnNode.dom),
+  ['incomingEdges']: (self) => send(self.lg, 'edges').filter(e =>
+    send(e, 'connections').some(n => n && n.gnNode.dom === self.gnNode.dom)),
 };
 
 vtables['LabelledGraph-Edge'] = {
@@ -1067,12 +1125,12 @@ vtables['LabelledGraph-Edge'] = {
 
   ['name']: (self) => self.lg.edgeNamer(self.gnEdge),
   ['origin']: (self) => {
-    const gnOrigin = ⟦self.gnEdge origin⟧;
-    return gnOrigin ? ⟦self.lg wrapNode: gnOrigin⟧ : null;
+    const gnOrigin = send(self.gnEdge, 'origin');
+    return gnOrigin ? send(self.lg, 'wrapNode:', gnOrigin) : null;
   },
   ['target']: (self) => {
-    const gnTarget = ⟦self.gnEdge target⟧;
-    return gnTarget ? ⟦self.lg wrapNode: gnTarget⟧ : null;
+    const gnTarget = send(self.gnEdge, 'target');
+    return gnTarget ? send(self.lg, 'wrapNode:', gnTarget) : null;
   },
 };
 
@@ -1087,9 +1145,9 @@ unclaimedLabels = function(scope, allLabelsSelector) {
     // A label is claimed if any LLL's endpoint is inside its bounding box.
     const claimed = new Set();
     for (const line of lines) {
-      const endpoints = ⟦line endpoints⟧;
+      const endpoints = send(line, 'endpoints');
       for (const label of allLabels) {
-        if (⟦label containsPt: endpoints[0]⟧ || ⟦label containsPt: endpoints[1]⟧)
+        if (send(label, 'containsPt:', endpoints[0]) || send(label, 'containsPt:', endpoints[1]))
           claimed.add(label);
       }
     }
@@ -1099,9 +1157,9 @@ unclaimedLabels = function(scope, allLabelsSelector) {
 
 // Find the label attached to a given gn node/edge in an attachment graph.
 const nameFromAttachments = (attGraph, gnElem) => {
-  const node = ⟦attGraph nodeForDom: gnElem.dom⟧;
+  const node = send(attGraph, 'nodeForDom:', gnElem.dom);
   if (!node) return null;
-  const neighbors = ⟦node neighbors⟧;
+  const neighbors = send(node, 'neighbors');
   return neighbors.length > 0 ? neighbors[0].dom.dataset.string : null;
 };
 
@@ -1127,42 +1185,41 @@ vtables['BoxGraph'] = {
     const arrowLabeller = send({ vtable: 'Labeller' },
       'inScope:', boxGN.scope,
       'withLabels:', () => Array.from(boxGN.scope.querySelectorAll(ALL_LABELS)),
-      'labellables:', () => ⟦boxGN edges⟧,
-      'attractor:', edge => ⟦edge originPt⟧,
-      'attachAt:', (edge, labelPt) => ⟦edge originPt⟧,
+      'labellables:', () => send(boxGN, 'edges'),
+      'attractor:', edge => send(edge, 'originPt'),
+      'attachAt:', (edge, labelPt) => send(edge, 'originPt'),
       'maxDistance:', Infinity
     );
-    self.arrowAttachments = ⟦arrowLabeller run⟧;
+    self.arrowAttachments = send(arrowLabeller, 'run');
 
     // Pass 2: boxes claim from remaining labels, within 20px.
     const boxLabeller = send({ vtable: 'Labeller' },
       'inScope:', boxGN.scope,
       'withLabels:', unclaimedLabels(boxGN.scope, ALL_LABELS),
-      'labellables:', () => ⟦boxGN nodes⟧,
+      'labellables:', () => send(boxGN, 'nodes'),
       'attractor:', node => node.dom,
-      'attachAt:', (node, labelPt) => ⟦node.dom closestPtToPt: labelPt⟧,
+      'attachAt:', (node, labelPt) => send(node.dom, 'closestPtToPt:', labelPt),
       'maxDistance:', 20
     );
-    self.boxAttachments = ⟦boxLabeller run⟧;
+    self.boxAttachments = send(boxLabeller, 'run');
 
-    return ⟦ self
-      fromGraph: boxGN
-      nodeNamer: n => nameFromAttachments(self.boxAttachments, n)
-      edgeNamer: e => nameFromAttachments(self.arrowAttachments, e)
-    ⟧;
+    return send(self,
+      'fromGraph:', boxGN,
+      'nodeNamer:', n => nameFromAttachments(self.boxAttachments, n),
+      'edgeNamer:', e => nameFromAttachments(self.arrowAttachments, e));
   },
 
   // TODO: install this via a magic red box in a diagram
   ['asJSOG']: (self) => {
-    const edges = ⟦self namedEdges⟧;
+    const edges = send(self, 'namedEdges');
     let nextId = 1;
     const newName = () => 'anon'+nextId++;
     const names = new Map();
     // Keying by DOM because it's a stable identity, while wrappers are created each call
-    ⟦self nodes⟧.forEach(node => names.set(node.gnNode.dom, ⟦node name⟧ || newName()));
+    send(self, 'nodes').forEach(node => names.set(node.gnNode.dom, send(node, 'name') || newName()));
     const triplets = Object.entries(edges).map(([key,edge]) => {
-      const origin = names.get(⟦edge origin⟧.gnNode.dom);
-      const target = names.get(⟦edge target⟧.gnNode.dom);
+      const origin = names.get(send(edge, 'origin').gnNode.dom);
+      const target = names.get(send(edge, 'target').gnNode.dom);
       if (!origin || !target) throw ['Naming error:', { self, names, key, edge, origin, target }];
       return [origin, key, target];
     });
@@ -1187,19 +1244,18 @@ vtables['TextGraph'] = {
           isEdge: isMathchaConnector,
           endpointTolerance: 20,
       });
-    return ⟦ self
-      fromGraph: graphNotation
-      nodeNamer: n => n.dom.dataset.string
-      edgeNamer: () => null
-    ⟧;
+    return send(self,
+      'fromGraph:', graphNotation,
+      'nodeNamer:', n => n.dom.dataset.string,
+      'edgeNamer:', () => null);
   },
 
   // TODO: install this via a magic red box in a diagram
   ['asJS']: (self) => {
-    const edges = ⟦self edges⟧;
+    const edges = send(self, 'edges');
     const lines = edges
-      .map(edge => [ ⟦edge origin⟧, ⟦edge target⟧ ])
-      .map(([o,t]) => [ ⟦o name⟧, ⟦t name⟧ ])
+      .map(edge => [ send(edge, 'origin'), send(edge, 'target') ])
+      .map(([o,t]) => [ send(o, 'name'), send(t, 'name') ])
       .map(([o,t]) => `arrow('${o}', '${t}')`);
     return lines.join(';\n');;
   }
@@ -1226,7 +1282,7 @@ vtables['ActiveButton'] = {
 // new inner-scope <g>. Returns the new inner-scope element, suitable for use
 // as an inner notation's scope.
 function makeInnerScope(node) {
-  const wrapper = ⟦node localRoot⟧;
+  const wrapper = send(node, 'localRoot');
   const innerScope = svgel('g', { class: 'shape-interior' }, wrapper);
   Array.from(wrapper.children)
     .filter(c => c !== node && c !== innerScope)
@@ -1269,7 +1325,7 @@ vtables['DefaultMetaNotation'] = {
     
     // Pass 2: from the paragraphs not pulled into Pass 1 as notation-name
     // targets, attach each to its closest blue box as that box's name.
-    const claimedAsNodes = new Set(⟦notationGraph nodes⟧.map(n => n.dom));
+    const claimedAsNodes = new Set(send(notationGraph, 'nodes').map(n => n.dom));
     const regionLabeller = send({ vtable: 'Labeller' },
       'inScope:', scope,
       'withLabels:', () => Array.from(scope.querySelectorAll(ALL_LABELS))
@@ -1277,25 +1333,24 @@ vtables['DefaultMetaNotation'] = {
                                 .filter(l => !claimedAsNodes.has(l)),
       'labellables:', () => Array.from(scope.querySelectorAll('rect')).filter(isBlueStroke),
       'attractor:', box => box,
-      'attachAt:', (box, labelPt) => ⟦box closestPtToPt: labelPt⟧,
+      'attachAt:', (box, labelPt) => send(box, 'closestPtToPt:', labelPt),
       'maxDistance:', 30
     );
-    self.regionLabelAttachments = ⟦regionLabeller run⟧;
+    self.regionLabelAttachments = send(regionLabeller, 'run');
 
-    return ⟦self
-      fromGraph: notationGraph
-      nodeNamer: n => nameFromAttachments(self.regionLabelAttachments, n)
-      edgeNamer: e => null
-    ⟧;
+    return send(self,
+      'fromGraph:', notationGraph,
+      'nodeNamer:', n => nameFromAttachments(self.regionLabelAttachments, n),
+      'edgeNamer:', e => null);
   },
   // Override wrapNode to add notation-specific accessors.
   ['wrapNode:']: (self, gnNode) => ({ vtable: 'DefaultMetaNotation-Region', gnNode, lg: self }),
-  ['namedRegions']: (self) => ⟦self namedNodes⟧,
+  ['namedRegions']: (self) => send(self, 'namedNodes'),
 
   ['instantiateAll']: (self) => {
     const notationInstances = {};
-    for (const [myName, region] of Object.entries(⟦self namedRegions⟧)) {
-      const notationInstance = ⟦region instantiate⟧;
+    for (const [myName, region] of Object.entries(send(self, 'namedRegions'))) {
+      const notationInstance = send(region, 'instantiate');
       if (!notationInstance) continue;
       notationInstance.name = myName;
       notationInstances[myName] = notationInstance;
@@ -1308,9 +1363,9 @@ vtables['DefaultMetaNotation-Region'] = {
   _parent: vtables['LabelledGraph-Node'],
 
   ['notationName']: (self) => {
-    const out = ⟦self outgoingEdges⟧;
+    const out = send(self, 'outgoingEdges');
     if (out.length === 0) return null;
-    const target = ⟦out[0] target⟧;
+    const target = send(out[0], 'target');
     // Expect a heavily wrapped g.is-paragraph
     return target ? target.gnNode.dom.dataset.string : null;
   },
@@ -1320,14 +1375,14 @@ vtables['DefaultMetaNotation-Region'] = {
     return self._innerScope;
   },
   ['instantiate']: (self) => {
-    const notationName = ⟦self notationName⟧;
+    const notationName = send(self, 'notationName');
     const vtable = vtables[notationName];
     if (!vtable) {
       console.warn('No vtable for notation "'+notationName+'"; skipping region.');
       return null;
     }
     // Assume vtable instances understand fromRegion: ...!
-    const domRegion = ⟦self innerScope⟧;
+    const domRegion = send(self, 'innerScope');
     // Construct!
     return send({ vtable: notationName }, 'fromRegion:', domRegion);
   },
@@ -1350,33 +1405,32 @@ vtables['CodeExecutionNotation'] = {
       'fromRegion:', scope,
       'withDefs:', {
         edgesFn: s => Array.from(s.querySelectorAll('path,polyline,line'))
-                          .filter(e => isRedStroke(e) && isMathchaConnector(e) && ⟦e isDirected⟧),
+                          .filter(e => isRedStroke(e) && isMathchaConnector(e) && send(e, 'isDirected')),
         fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isRedStroke),
         candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
                                     .filter(l => !isInsideRedBox(s, l)),
         endpointTolerance: 20,
     });
 
-    return ⟦self
-      fromGraph: codeGraph
-      nodeNamer: n => null
-      edgeNamer: e => null
-    ⟧;
+    return send(self,
+      'fromGraph:', codeGraph,
+      'nodeNamer:', n => null,
+      'edgeNamer:', e => null);
   },
   // Override wrapNode to add notation-specific accessors.
   ['wrapNode:']: (self, gnNode) => ({ vtable: 'CodeExecutionNotation-Box', gnNode, lg: self }),
-  ['codeBoxes']: (self) => ⟦self nodes⟧.filter(n => n.gnNode.dom.tagName === 'rect'),
+  ['codeBoxes']: (self) => send(self, 'nodes').filter(n => n.gnNode.dom.tagName === 'rect'),
 
-  ['executeAll']: (self) => ⟦self codeBoxes⟧.forEach(box => ⟦box execute⟧),
+  ['executeAll']: (self) => send(self, 'codeBoxes').forEach(box => send(box, 'execute')),
 };
 
 vtables['CodeExecutionNotation-Box'] = {
   _parent: vtables['LabelledGraph-Node'],
 
   ['syntaxName']: (self) => {
-    const out = ⟦self outgoingEdges⟧;
+    const out = send(self, 'outgoingEdges');
     if (out.length === 0) return null;
-    const target = ⟦out[0] target⟧;
+    const target = send(out[0], 'target');
     // Expect a heavily wrapped g.is-paragraph
     return target ? target.gnNode.dom.dataset.string : null;
   },
@@ -1386,14 +1440,14 @@ vtables['CodeExecutionNotation-Box'] = {
     return self._innerScope;
   },
   ['execute']: (self) => {
-    const syntaxName = ⟦self syntaxName⟧ || 'JS';
+    const syntaxName = send(self, 'syntaxName') || 'JS';
     const vtable = vtables[syntaxName];
     if (!vtable) {
       console.warn('No vtable for syntax "'+syntaxName+'"; skipping code box.');
       return;
     }
     // Assume vtable instances understand fromRegion: ...!
-    const domRegion = ⟦self innerScope⟧;
+    const domRegion = send(self, 'innerScope');
     // Construct!
     const js_func = send({ vtable: syntaxName }, 'compileRegion:', domRegion);
     try {
@@ -1418,7 +1472,8 @@ vtables['Sucrose'] = {
   ['compileRegion:']: (self, scope) => {
     const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
     const code_strings = code_paras.map(p => p.dataset.string);
-    const sucrose_source = code_strings.join('\n\n');
+    const sucrose_source = code_strings.join('\n\n') // Mathcha Unicode autocompletes
+      .replaceAll('⩾','>=').replaceAll('⩽','<=').replaceAll('⟹','=>').replaceAll('≡','==');
     const js_source = compile_with_directive(sucrose_source, {
       SweetTalk: ST_with_holes_to_JS,
       Descartes: compile_descartes_with_holes
@@ -1470,27 +1525,27 @@ function init() {
   //
   // First, gather all (MATHCHA-EXPORTED) shapes and text. 
   let elems = all('path.real, polygon');
-  elems = elems.concat(all('g').filter(g => ⟦g parseAsParagraph⟧));
+  elems = elems.concat(all('g').filter(g => send(g, 'parseAsParagraph')));
   elems.forEach((el) => {
     let newEl = el;
     let max_iter = 10; // SMELL arbitrary maximum
     do { // max specialize
       el = newEl;
-      newEl = ⟦el specialize⟧;
+      newEl = send(el, 'specialize');
       max_iter--;
     } while (max_iter > 0 && newEl);
-    everything[ ⟦el id⟧ ] = el;
+    everything[ send(el, 'id') ] = el;
   });
 
   elems = Object.values(everything);
   // Next, compute spatial containment tree; store in
   // contained-in / contains dataset attributes
-  elems.forEach(el => ⟦el findTightestContainerIn: elems⟧);
+  elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
   
   // Now, reroot each node inside its tightest container
   // and erase the evidence :)
   all('[data-contained-in]').forEach(child => {
-    ⟦child reroot⟧;
+    send(child, 'reroot');
     delete child.dataset.containedIn;
   });
   all('[data-contains]').forEach(e => {
@@ -1501,25 +1556,25 @@ function init() {
   const magicRedStroke = e => e.style.stroke === MAGIC_RED;
   const idSetterBoxes = scope => Array.from(scope.querySelectorAll('rect'))
     .filter(magicRedStroke).filter(e =>
-      ⟦e localRoot⟧.querySelector('.is-paragraph').dataset.string.startsWith('#')
+      send(e, 'localRoot').querySelector('.is-paragraph').dataset.string.startsWith('#')
     );
   idSetterGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
     'fromRegion:', document.documentElement,
     'withDefs:', {
       edgesFn: scope => Array.from(scope.querySelectorAll('.connection'))
-        .filter(magicRedStroke).filter(e => !⟦e isDirected⟧),
+        .filter(magicRedStroke).filter(e => !send(e, 'isDirected')),
       fixedNodesFn: idSetterBoxes,
       candidateNodesFn: () => Object.values(everything),
       endpointTolerance: 0
   });
   // Execute ID setter boxes
-  ⟦idSetterGraph nodes⟧.filter(n => magicRedStroke(n.dom)).forEach(n => {
-    const lroot = ⟦n.dom localRoot⟧;
+  send(idSetterGraph, 'nodes').filter(n => magicRedStroke(n.dom)).forEach(n => {
+    const lroot = send(n.dom, 'localRoot');
     const para_g = lroot.querySelector('.is-paragraph');
     const str = para_g.dataset.string;
     // By default, the target is the container of the ID setter box
     let target = lroot.parentElement.firstChild; // SMELL boundary-shape
-    const neighbors = ⟦n neighbors⟧;
+    const neighbors = send(n, 'neighbors');
     if (neighbors.length > 1) throw ['ID setter needs exactly 1 target:', n];
     // If node is connected to another via an edge, that neighbor is the target
     if (neighbors.length > 0) target = neighbors[0].dom;
@@ -1530,14 +1585,14 @@ function init() {
         target.id = newId;
       }
     para_g.classList.add('done');
-    ⟦n incidentEdges⟧.forEach(e => e.dom.classList.add('done'));
+    send(n, 'incidentEdges').forEach(e => e.dom.classList.add('done'));
   });
 
   removeDone();
 
   // Now, execute embedded JS or syntactic sugar layers
   codeExec = send({ vtable: 'CodeExecutionNotation' }, 'fromRegion:', document.documentElement);
-  ⟦codeExec executeAll⟧;
+  send(codeExec, 'executeAll');
 
   return elems.length;
 }
@@ -1553,32 +1608,42 @@ meta_boxgraph_init = function(scope) {
   metaNotation = send({ vtable: 'DefaultMetaNotation'}, 'fromRegion:', scope);
 
   // Instantiate notations as globals
-  Object.entries(⟦metaNotation instantiateAll⟧).forEach(([name,inst]) => {
+  Object.entries(send(metaNotation, 'instantiateAll')).forEach(([name,inst]) => {
     window[name] = inst;
   });
+};
+
+// For minimal typing in the console. E.g:
+// e(`#btn3 onClick: {[ () => log('Hello World!') ]}`)
+e = str => {
+  const wrapped = `//! {[ SweetTalk ]} {< Descartes >}\n{[${str}]}`;
+  return eval(compile_with_directive(wrapped, {
+    SweetTalk: ST_with_holes_to_JS,
+    Descartes: compile_descartes_with_holes,
+  }));
 };
 
 // === ID OBJ MODEL STUFF ===
 
 /*
 parseAsObjModel = function() {
-  boxGraph.connectors.forEach(a => ⟦a checkIfSeparator⟧);
+  boxGraph.connectors.forEach(a => send(a, 'checkIfSeparator'));
 
-  const vt = ⟦boxGraph boxNamed: 'Vtable'⟧;
-  id_vtable_lookup = ⟦vt methodAt: 'lookup'⟧;
+  const vt = send(boxGraph, 'boxNamed:', 'Vtable');
+  id_vtable_lookup = send(vt, 'methodAt:', 'lookup');
 
-  id_send   = ⟦⟦boxGraph boxNamed: 'id_send'⟧ asJSFunc⟧;
-  id_bind   = ⟦⟦boxGraph boxNamed: 'id_bind'⟧ asJSFunc⟧;
-  id_vtable = ⟦⟦boxGraph boxNamed: 'id_vtable'⟧ asJSFunc⟧;
+  id_send   = send(send(boxGraph, 'boxNamed:', 'id_send'), 'asJSFunc');
+  id_bind   = send(send(boxGraph, 'boxNamed:', 'id_bind'), 'asJSFunc');
+  id_vtable = send(send(boxGraph, 'boxNamed:', 'id_vtable'), 'asJSFunc');
 }
 */
 
 // Translate the code in id-simple.svg to access the right state...!
 /*
-id_vtable = (o) => ⟦o at: 'vtable'⟧;
+id_vtable = (o) => send(o, 'at:', 'vtable');
 
 function id_bind(recv, selector) {
-  if (⟦recv name⟧ === 'Vtable' && selector === 'lookup')
+  if (send(recv, 'name') === 'Vtable' && selector === 'lookup')
     return id_vtable_lookup;
   return id_send(id_vtable(recv), 'lookup', selector);
 }
@@ -1587,14 +1652,14 @@ function id_send(recv, selector, ...args) {
   let method = id_bind(recv, selector);
   if (!method)
     throw [recv, 'Does Not Understand', selector, ...args];
-  let js_func = ⟦method asJSFunc⟧;
+  let js_func = send(method, 'asJSFunc');
   return js_func(recv, ...args);
 }
 
 function vtable_lookup(self, symbol) {
-  let method = ⟦self methodAt: symbol⟧;
+  let method = send(self, 'methodAt:', symbol);
   if (method) return method;
-  let parent = ⟦self at: 'parent'⟧;
+  let parent = send(self, 'at:', 'parent');
   if (parent) return id_send(parent, 'lookup', symbol);
 }
 */

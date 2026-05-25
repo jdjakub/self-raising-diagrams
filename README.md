@@ -119,3 +119,6 @@ init()
 ```
 
 ![Compilation Dispatch](./screenshots/demo-hole-carving-test.png)
+
+### Example 11 (solid-physics-test-2)
+Experimenting with visualising live vectors and colliding solid shapes.

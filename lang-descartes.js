@@ -3,9 +3,9 @@
 // Compiles infix arithmetic to runtime-polymorphic function calls:
 //   +   -> add        -  -> sub (binary) / neg (unary)
 //   *   -> mul        /  -> div
-//   ·   -> dot        x²,x³,…,x⁻²  -> pow
+//   ·   -> dot        ∧  -> wedge
 //   |x| -> mag      juxtaposition (x y) -> mul
-//   ∑   -> sum
+//   ∑   -> sum             x²,x³,…,x⁻²  -> pow
 //
 // JS pass-through for identifiers, numeric literals, function calls,
 // member access (a.b), and array indexing (a[i]).
@@ -52,7 +52,7 @@ tokenize_descartes = function(src) {
     const charKind = {
       '+': 'PLUS', '-': 'MINUS', '*': 'STAR', '/': 'SLASH', '·': 'CDOT',
       '(': 'LPAREN', ')': 'RPAREN', '[': 'LBRACK', ']': 'RBRACK',
-      '.': 'PERIOD', ',': 'COMMA', '|': 'BAR', '∑': 'SUM',
+      '.': 'PERIOD', ',': 'COMMA', '|': 'BAR', '∑': 'SUM', '∧': 'WEDGE',
     }[c];
     if (!charKind) throw 'Unrecognized char "' + c + '" at position ' + i;
     tokens.push({ kind: charKind, text: c, ws: hadWs });
@@ -90,7 +90,7 @@ parse_descartes = function(tokens) {
 
   const parseMul = () => {
     let left = parseJuxt();
-    while (peek() === 'STAR' || peek() === 'SLASH' || peek() === 'CDOT') {
+    while (peek() === 'STAR' || peek() === 'SLASH') {
       const k = consume().kind;
       const op = k === 'STAR' ? 'mul' : k === 'SLASH' ? 'div' : 'dot';
       const right = parseJuxt();
@@ -100,10 +100,20 @@ parse_descartes = function(tokens) {
   };
 
   const parseJuxt = () => {
-    let left = parseUnary();
+    let left = parseDotWedge();
     while (canStartAtom(peek()) && !(peek() === 'BAR' && inBar > 0)) {
-      const right = parseUnary();
+      const right = parseDotWedge();
       left = { kind: 'binop', op: 'mul', left, right };
+    }
+    return left;
+  };
+
+  const parseDotWedge = () => {
+    let left = parseUnary();
+    while (peek() === 'CDOT' || peek() === 'WEDGE') {
+      const op = consume().kind === 'CDOT' ? 'dot' : 'wedge';
+      const right = parseUnary();
+      left = { kind: 'binop', op, left, right };
     }
     return left;
   };

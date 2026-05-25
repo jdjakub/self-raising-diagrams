@@ -68,7 +68,7 @@ whereis = (pt_or_x,maybe_y) => {
   return svgel('circle', {cx, cy, r: 5, style: 'fill: magenta', class: 'debug-pt'});
 }
 
-showpts = pts => pts.map(pt => pt.join(',')).join(' ');
+showpts = pts => pts.map(pt => pt.map(x=>x.toPrecision(3)).join(',')).join(' ');
 
 inTopToBottomOrder = (a, b) => {
   if (a === b) return 0;
@@ -78,6 +78,7 @@ inTopToBottomOrder = (a, b) => {
 vadd = ([a, b], [c, d]) => [a+c, b+d];
 vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
+vwedge = ([a, b], [c, d]) => a*d - b*c;
 vmul = (k, [a,b]) => [k*a, k*b];
 vcmul = ([ka,kb],[a,b]) => [ka*a,kb*b];
 vmax = (x, [a,b]) => [Math.max(x,a),Math.max(x,b)];
@@ -86,13 +87,22 @@ vnormed = v => vmul(1/Math.sqrt(vdot(v,v)), v);
 vswap = ([x,y]) => [y,x];
 vmag = v => Math.sqrt(vdot(v,v));
 
+vinbasis = (e1,e2) => v => {
+  const e1_w_e2 = vwedge(e1, e2);
+  const v_w_e1 = vwedge(v, e1);
+  const v_w_e2 = vwedge(v, e2);
+  return [v_w_e2 / e1_w_e2, -v_w_e1 / e1_w_e2];
+};
+
 isvec = (...xs) => xs.every(x => x instanceof Array);
 
 // Arith functions to which Descartes compiles
 add = (a, b) => isvec(a, b) ? vadd(a, b) : (a+b);
 sub = (a, b) => isvec(a, b) ? vsub(a, b) : (a-b);
 dot = vdot;
+wedge = vwedge;
 mul = (a, b) => isvec(a) ? vmul(b,a) : isvec(b) ? vmul(a,b) : (a*b);
+div = (a, b) => mul(1/b, a);
 neg = x => mul(-1, x);
 sum = xs => xs.reduce(add, isvec(...xs) ? [0,0] : 0);
 mag = x => isvec(x) ? vmag(x) : Math.abs(x);
@@ -325,6 +335,15 @@ Array.prototype.thatWhichMinimizes = function(funcToMinimize) {
   return min_so_far[0];
 }
 
+Array.prototype.thatWhichMaximizes = function(funcToMaximize) {
+  let max_so_far = [null,-Infinity];
+  for (let x of this) {
+    const value = funcToMaximize(x);
+    if (value > max_so_far[1]) max_so_far = [x,value];
+  }
+  return max_so_far[0];
+}
+
 // TY Claude
 function closestPointOnPath(path, [px,py], coarseSamples = 50, refinements = 10) {
   const totalLength = path.getTotalLength();
@@ -455,4 +474,46 @@ function convex_poly_verts_ccw(verts) {
     signed_area += (x1 * y2 - x2 * y1);
   }
   return signed_area >= 0 ? verts.slice() : verts.slice().reverse();
+}
+
+// Returns true if open segments (p1,p2) and (p3,p4) intersect (excluding shared endpoints).
+function line_segs_intersect(p1, p2, p3, p4) {
+  const d1 = vsub(p2, p1);
+  const d2 = vsub(p4, p3);
+  const denom = d1[0]*d2[1] - d1[1]*d2[0];   // cross product of direction vectors
+  if (Math.abs(denom) < 1e-10) return false;   // parallel or collinear — treat as non-intersecting
+  const d3 = vsub(p3, p1);
+  const t = (d3[0]*d2[1] - d3[1]*d2[0]) / denom;
+  const u = (d3[0]*d1[1] - d3[1]*d1[0]) / denom;
+  return t > 0 && t < 1 && u > 0 && u < 1;    // strict: endpoints touching not counted
+}
+
+// Returns true if segment (p1, p2) intersects polygon `poly` (given as [x,y] vertex array).
+// "Intersects" includes the segment being fully inside the polygon.
+// `poly` is assumed closed; vertices need not be in any particular winding order.
+function line_seg_intersects_poly(p1, p2, poly) {
+  const edges = explode_poly_segs(poly, /*closed=*/true);
+  if (edges.some(([a, b]) => line_segs_intersect(p1, p2, a, b))) return true;
+  return isPointInPolygon(p1, poly);
+}
+
+// Returns the [x,y] point where the ray (origin: ray_start, direction: ray_dir)
+// first hits an edge of `poly`, or null if it misses entirely.
+// Works from inside or outside the polygon.
+function rayPolyHit(poly, ray_start, ray_dir) {
+  let best_t = Infinity;
+
+  for (const [a, b] of explode_poly_segs(poly, /*closed=*/true)) {
+    const edge = vsub(b, a);
+    const denom = ray_dir[0]*edge[1] - ray_dir[1]*edge[0];
+    if (Math.abs(denom) < 1e-10) continue;   // ray parallel to edge
+
+    const d = vsub(a, ray_start);
+    const t = (d[0]*edge[1]  - d[1]*edge[0])  / denom;  // ray parameter
+    const u = (d[0]*ray_dir[1] - d[1]*ray_dir[0]) / denom;  // edge parameter
+
+    if (t > 1e-10 && u >= 0 && u <= 1 && t < best_t) best_t = t;
+  }
+
+  return best_t === Infinity ? null : vadd(ray_start, vmul(best_t, ray_dir));
 }

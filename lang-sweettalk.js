@@ -249,8 +249,3 @@ ST_AST_to_JS = function(node) {
     default:        throw 'Unknown AST kind: ' + node.kind;
   }
 };
-
-// For minimal typing in the console. E.g:
-// e(`#btn3 onClick: {[ () => log('Hello World!') ]}`)
-// TODO: update for new hole carving
-//e = str => eval(compile_nested_holes(str));

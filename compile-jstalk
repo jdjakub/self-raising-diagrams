@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-perl JSTalk/jstalk2js.pl < general-containment.jstalk.js > general-containment.js
+perl JSTalk/jstalk2js.pl < main-engine.jstalk.js > main-engine.js
