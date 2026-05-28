@@ -446,13 +446,37 @@ vtables.byTag['g'] = {
 /* In DOMMeta terms, a Mathcha arrow is recognised something like:
   * g .arrow-line {
       path .connection .real :shaft ,
-      ( g { path :head1 } ) ? ,
-      ( g { path :head2 } ) ?
+      ( g { path } :head1 ) ? ,
+      ( g { path } :head2 ) ?
     }
   But remember: we also have "fat arrows". Generally, any shape can
   be parsed as a connector: just determine the two endpoints.
   However, such "generalised connector" behaviour should probably not
   live in Path.
+
+  Anyway. If there's an arrowhead, its tip is the endpoint, and the
+  shaft will be cut short for aesthetic reasons. So if we just rely
+  on the shaft path, it'll be a bit too short.
+
+  Arrowhead pivots around its tip; convenient convention. Its g
+  transform has these columns: [look back], [look left], [tip pos].
+  That is, the first col points opposite the head direction, and the
+  second points left. Not the convention I would pick but OK.
+
+  mathcha head = g transform=(col:back col:left col:tip) => ({fwd: neg(back), tip: tip})
+  mathcha shaft = path .connection .real
+  -- but here we probs want path or any "specialization subclass" eg polyline, line
+
+  arrow endpoints = targetPt:t originPt:o => [o,t]
+                  | head:h1 head:h2 ~head => [h1.tip, h2.tip]
+                  | shaft:s => send(s, 'endpoints')
+
+  arrow targetPt = head:h ~head => h.tip
+  arrow originPt = head:h ~head shaft:s => {
+      const eps = send(s, 'endpoints');
+      const ds = eps.map(p => |p-h.tip|);
+      return eps[ds[0] < ds[1] ? 1 : 0]; // get the "opposite" path endpoint to the head
+    }
 */
 
 vtables.byTag['path']['target'] = (self) => {

@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
 perl JSTalk/jstalk2js.pl < main-engine.jstalk.js > main-engine.js
+perl JSTalk/jstalk2js.pl < omnimeta.jstalk.js > omnimeta.js

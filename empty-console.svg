@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="701.2000325520834" height="382.3999837239583" style="
+        width:640px;
+        height:480px;
+        background: #FFF;
+        fill: none;
+">
+	<script href="./utils.js"></script>
+	<script href="./bracket-hole-carving.js"></script>
+	<script href="./lang-sweettalk.js"></script>
+	<script href="./lang-descartes.js"></script>
+	<script href="./main-engine.js"></script>
+        <script href="./omnimeta.js"></script>
+        </svg>

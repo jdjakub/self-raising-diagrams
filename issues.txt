@@ -248,3 +248,32 @@ coord = wildcard | variable | constant
 PATH PARSING
 
 cmd = 
+
+uhhhhhh
+
+C p1 _ x3,_
+
+=>
+
+C pt:p1 pt num:x3 "," num
+
+pt = num "," num
+
+"," = tok ','
+
+How would I prefer to express rect recognition?
+
+By piggybacking off a "test if a poly is a rect" function. Path stuff just needs to extract closed poly.
+
+now we're matching on a stream of points.
+
+perpTurn = a b c &`(b-a)·(c-b) ~= 0` _
+(look ahead three points a,b,c. Check predicate. If true, consume one point (a).)
+
+rect = perpTurn perpTurn perpTurn perpTurn
+(requires cyclic (nonterminating) stream of vertices!)
+
+= on float vecs should just be ~= by default
+
+parallelogram = a b c d &`b-a = c-d && c-b = d-a` => {v1: sub(b,a), v2: sub(c,b)}
+rect = &parallelogram:p &`p.v1 · p.v2 = 0` (.+):pts => {width: |p.v1|, height: |p.v2|, center: centroid(pts)}
