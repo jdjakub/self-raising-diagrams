@@ -132,6 +132,20 @@ vtables.OmniMeta = {
   },
 };
 
+// ── Entry point ──────────────────────────────────────────────────────────────
+match = function(grammar, input, startRule, args) {
+  const m = { vtable: grammar, cursor: null, memo: new Map() };
+  m.cursor = ⟦m initialCursor: input⟧;
+  try {
+    return args !== undefined ? ⟦m apply: startRule with: args⟧
+                              : ⟦m apply: startRule⟧;
+  } catch (f) {
+    if (f === fail) return MATCH_FAILED;
+    throw f;
+  }
+};
+
+
 // ── SeqSubstrate: linear-index cursor over any finite indexable input ────────
 // Cursor is an immutable { stream, idx }. Owns the cursor type. Element type is
 // irrelevant — chars, tokens, ASTs-as-lists, and vertices are all just elements,
@@ -200,19 +214,6 @@ vtables.NumberGrammar = {
     ]⟧,
 */
 
-// ── Entry point ──────────────────────────────────────────────────────────────
-match = function(grammar, input, startRule, args) {
-  const m = { vtable: grammar, cursor: null, memo: new Map() };
-  m.cursor = ⟦m initialCursor: input⟧;
-  try {
-    return args !== undefined ? ⟦m apply: startRule with: args⟧
-                              : ⟦m apply: startRule⟧;
-  } catch (f) {
-    if (f === fail) return MATCH_FAILED;
-    throw f;
-  }
-};
-
 // (See OmniMeta's `lend:input:rule:` method above for foreign-cursor sub-matches.)
 
 /*
@@ -220,4 +221,94 @@ match = function(grammar, input, startRule, args) {
 
     result = match(vtables.NumberGrammar, "12345", "number")   // => 12345
     bad    = match(vtables.NumberGrammar, "x99",  "number")    // => MATCH_FAILED
+*/
+
+// ── DictSubstrate ────────────────────────────────────────────────────────────
+// Cursor: { dict, consumed:Set }. Owns the cursor type.
+// Defaults work for plain JS objects; subclass and override the three
+// dict-access protocol methods for DOM attributes, Maps, etc.
+vtables.DictSubstrate = {
+  _parent: vtables.OmniMeta,
+
+  // ---- cursor protocol ----
+  ['initialCursor:']: (self, dict) => ({ dict, consumed: new Set() }),
+  ['cursorKey:']:     (self, c)    => [...c.consumed].sort().join('\x1f'),
+  // cursor:hasConsumedMoreThan: stays false (no total order ⇒ LR dormant)
+
+  // ---- dict-access protocol (override for non-JS-object backings) ----
+  ['keysOf:']:    (self, d)    => Object.keys(d),
+  ['lookup:in:']: (self, k, d) => d[k],
+  ['hasKey:in:']: (self, k, d) => Object.prototype.hasOwnProperty.call(d, k),
+
+  // ---- primitives ----
+  // anyKey — consume any unconsumed key (first in keysOf: order). Returns [k,v].
+  ['anyKey']: (self) => {
+    const { dict, consumed } = self.cursor;
+    for (const k of ⟦self keysOf: dict⟧) {
+      if (consumed.has(k)) continue;
+      self.cursor = { dict, consumed: new Set(consumed).add(k) };
+      return [k, ⟦self lookup: k in: dict⟧];
+    }
+    throw fail;
+  },
+
+  // key: — consume a specific named key. Returns the value.
+  ['key:']: (self, k) => {
+    const { dict, consumed } = self.cursor;
+    if (consumed.has(k))             throw fail;
+    if (!⟦self hasKey: k in: dict⟧)  throw fail;
+    self.cursor = { dict, consumed: new Set(consumed).add(k) };
+    return ⟦self lookup: k in: dict⟧;
+  },
+};
+
+/*
+  Console test (compiled JS, bare assignments):
+
+    // match a single key
+    match(vtables.DictSubstrate, {name:'Joel', age:29}, 'key:', ['name'])  // => 'Joel'
+    match(vtables.DictSubstrate, {name:'Joel'},          'key:', ['nope']) // => MATCH_FAILED
+
+    // openness: extra keys silently ignored, no `closed` needed
+    vtables.PersonGrammar = {
+      _parent: vtables.DictSubstrate,
+      ['person']: (self) => ({
+        name: ⟦self apply: 'key:' with: ['name']⟧,
+        age:  ⟦self apply: 'key:' with: ['age']⟧,
+      }),
+    }
+    match(vtables.PersonGrammar, {name:'Joel', age:29, hobby:'svg'}, 'person')
+    // => { name: 'Joel', age: 29 }   (hobby silently ignored — openness)
+*/
+
+// ── DOMAttrSubstrate ─────────────────────────────────────────────────────────
+// Same cursor, same primitives as DictSubstrate; overrides the three dict-access
+// protocol methods to read DOM attributes instead of JS object keys.
+// Values are ALWAYS strings (DOM contract); lend: into a sub-grammar for parsing.
+vtables.DOMAttrSubstrate = {
+  _parent: vtables.DictSubstrate,
+
+  ['keysOf:']:    (self, elt)    => [...elt.attributes].map(a => a.name),
+  ['lookup:in:']: (self, k, elt) => elt.getAttribute(k),
+  ['hasKey:in:']: (self, k, elt) => elt.hasAttribute(k),
+};
+
+/*
+  Console test (compiled JS, bare assignments):
+
+    elt = document.querySelector('rect')   // or whatever's handy
+
+    // direct attribute access
+    match(vtables.DOMAttrSubstrate, elt, 'key:', ['fill'])    // => 'red' (or whatever)
+
+    // openness: extra attributes ignored — exactly as we want for DOM
+    vtables.PositionedGrammar = {
+      _parent: vtables.DOMAttrSubstrate,
+      ['positioned']: (self) => ({
+        x: parseFloat(⟦self apply: 'key:' with: ['x']⟧),
+        y: parseFloat(⟦self apply: 'key:' with: ['y']⟧),
+      }),
+    }
+    match(vtables.PositionedGrammar, elt, 'positioned')
+    // => { x: 10, y: 20 }   (fill, stroke, class, etc. silently ignored)
 */
