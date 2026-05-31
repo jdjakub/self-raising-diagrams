@@ -481,20 +481,9 @@ vtables.byTag['g'] = {
 
 vtables.byTag['path']['target'] = (self) => {
   if (self.dataset.target) return byId(self.dataset.target);
-  const endpoints = send(self, 'endpoints');
-  const lroot = send(self, 'localRoot');
-  const arrowheads = Array.from(lroot.querySelectorAll('g'));
-  let originPt = null;
   let target = nilElem;
-  if (arrowheads.length === 1) {
-    const m = arrowheads[0].transform.baseVal[0].matrix;
-    const targetPt = [m.e, m.f];
-    const [d0,d1] = [dist2(targetPt,endpoints[0]), dist2(targetPt,endpoints[1])];
-    const originIndex = d0 < d1 ? 1 : 0;
-    self.dataset.originIndex = originIndex;
-    originPt = endpoints[originIndex];
-    target = send(self, 'atPoint:', targetPt, 'pickFrom:', Object.values(everything));
-  }
+  const targetPt = send(self, 'targetPt');
+  const originPt = send(self, 'originPt');
   self.dataset.origin = 'nil';
   self.dataset.target = 'nil';
   if (originPt) {
@@ -504,9 +493,12 @@ vtables.byTag['path']['target'] = (self) => {
       addSetAttr(origin.dataset, 'connectors', send(self, 'id'));
     }
   }
-  if (target) {
-    self.dataset.target = send(target, 'id');
-    addSetAttr(target.dataset, 'connectors', send(self, 'id'));
+  if (targetPt) {
+    target = send(self, 'atPoint:', targetPt, 'pickFrom:', Object.values(everything));
+    if (target) {
+      self.dataset.target = send(target, 'id');
+      addSetAttr(target.dataset, 'connectors', send(self, 'id'));
+    }
   }
   return target;
 }
@@ -517,28 +509,13 @@ vtables.byTag['path']['origin'] = (self) => {
   return byId(self.dataset.origin);
 }
 
-vtables.byTag['path']['isDirected'] = (self) => {
-  send(self, 'target');
-  return !isNaN(parseInt(self.dataset.originIndex));
-}
+vtables.byTag['path']['isDirected'] = (self) => send(self, 'targetPt') !== null;
 
-vtables.byTag['path']['originPt'] = (self) => {
-  if (send(self, 'isDirected')) {
-    const endpoints = send(self, 'endpoints');
-    return endpoints[+self.dataset.originIndex];
-  }
-}
+vtables.byTag['path']['originPt'] = (self) =>
+  match(vtables.MathchaArrow, send(self, 'localRoot'), 'originPt');
 
-vtables.byTag['path']['targetPt'] = (self) => {
-  if (send(self, 'isDirected')) {
-    const lroot = send(self, 'localRoot'); // WARN duped from >>target
-    const arrowheads = Array.from(lroot.querySelectorAll('g'));
-    if (arrowheads.length === 1) {
-      const m = arrowheads[0].transform.baseVal[0].matrix;
-      return [m.e, m.f];
-    }
-  }
-}
+vtables.byTag['path']['targetPt'] = (self) => 
+  match(vtables.MathchaArrow, send(self, 'localRoot'), 'targetPt');
 
 // Update a named visual vector arrow, or init if applicable.
 // Mathcha-dependent

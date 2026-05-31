@@ -121,19 +121,28 @@ vtables.OmniMeta = {
   // Future divergences anticipated: inheriting parent grammar parameters
   // (e.g. ε tolerance), debug/error context, etc.  — all read off `self`.
   ['lend:input:rule:']:      (self, grammar, input, rule) => {
-    const r = match(grammar, input, rule);
+    const r = matchStrict(grammar, input, rule);
     if (r === MATCH_FAILED) throw fail;
     return r;
   },
   ['lend:input:rule:with:']: (self, grammar, input, rule, args) => {
-    const r = match(grammar, input, rule, args);
+    const r = matchStrict(grammar, input, rule, args);
     if (r === MATCH_FAILED) throw fail;
     return r;
   },
 };
 
-// ── Entry point ──────────────────────────────────────────────────────────────
-match = function(grammar, input, startRule, args) {
+// ── Entry points ─────────────────────────────────────────────────────────────
+// `match` is the friendly form: returns null on failure. Single-line composable
+// at API boundaries. The project convention is that rules should not return
+// null as a legitimate match value — use undefined (which `opt:` already
+// returns) or a sentinel object if you genuinely need "matched but no result".
+//
+// `matchStrict` is the discriminating form: returns MATCH_FAILED on failure.
+// Used by `lend:` internally where the engine MUST tell "rule failed" from
+// "rule succeeded with null value"; available for any caller that needs the
+// same distinction.
+matchStrict = function(grammar, input, startRule, args) {
   const m = { vtable: grammar, cursor: null, memo: new Map() };
   m.cursor = ⟦m initialCursor: input⟧;
   try {
@@ -143,6 +152,11 @@ match = function(grammar, input, startRule, args) {
     if (f === fail) return MATCH_FAILED;
     throw f;
   }
+};
+ 
+match = function(grammar, input, startRule, args) {
+  const r = matchStrict(grammar, input, startRule, args);
+  return r === MATCH_FAILED ? null : r;
 };
 
 
@@ -311,4 +325,288 @@ vtables.DOMAttrSubstrate = {
     }
     match(vtables.PositionedGrammar, elt, 'positioned')
     // => { x: 10, y: 20 }   (fill, stroke, class, etc. silently ignored)
+*/
+
+// ── DOMMeta ──────────────────────────────────────────────────────────────────
+// Cursor: { dict, consumed:Set }  (inherited shape from DictSubstrate, where
+// `dict` is the current DOM element). Tree navigation produces a fresh cursor
+// with consumed reset; attribute matching mutates the consumed-set in place
+// (immutably). Backtracking restores both atomically via cursor restoration.
+vtables.DOMMeta = {
+  _parent: vtables.DOMAttrSubstrate,
+
+  // ---- tree navigation: each produces a fresh cursor at the new element ────
+  // Convention: throw fail if the navigation can't land somewhere.
+
+  ['parent']: (self) => {
+    const p = self.cursor.dict.parentElement;
+    if (!p) throw fail;
+    self.cursor = { dict: p, consumed: new Set() };
+    return p;
+  },
+
+  ['firstChild']: (self) => {
+    const c = self.cursor.dict.firstElementChild;
+    if (!c) throw fail;
+    self.cursor = { dict: c, consumed: new Set() };
+    return c;
+  },
+
+  ['firstChildWhere:']: (self, predFn) => {
+    for (const c of self.cursor.dict.children) {
+      if (predFn(c)) {
+        self.cursor = { dict: c, consumed: new Set() };
+        return c;
+      }
+    }
+    throw fail;
+  },
+
+  ['nthChild:']: (self, n) => {
+    const c = self.cursor.dict.children[n];
+    if (!c) throw fail;
+    self.cursor = { dict: c, consumed: new Set() };
+    return c;
+  },
+
+  // CSS-selector descent: cursor moves to first matching descendant.
+  ['querySelector:']: (self, sel) => {
+    const c = self.cursor.dict.querySelector(sel);
+    if (!c) throw fail;
+    self.cursor = { dict: c, consumed: new Set() };
+    return c;
+  },
+
+  // ---- backtracking-aware OMeta-style descendant search ───────────────────
+  // Apply `rule` at the first descendant where it succeeds; cursor lands there.
+  // Depth-first, pre-order (excluding self). Failure means no descendant matches.
+  ['findFirstMatching:']: (self, rule) => {
+    const root = self.cursor.dict;
+    const stack = [...root.children].reverse();   // pre-order, left-to-right
+    while (stack.length) {
+      const node = stack.pop();
+      const save = self.cursor;
+      self.cursor = { dict: node, consumed: new Set() };
+      try {
+        const v = ⟦self apply: rule⟧;
+        return v;                                  // cursor stays at the match
+      } catch (f) {
+        if (f !== fail) throw f;
+        self.cursor = save;                        // restore; try next descendant
+      }
+      for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]);
+    }
+    throw fail;
+  },
+};
+
+/*
+  Console test (compiled-JS form, bare assignments):
+
+    elt = document.querySelector('svg')
+
+    vtables.PathFinderGrammar = {
+      _parent: vtables.DOMMeta,
+      ['hasD']: (self) => sendNoKw(self, 'key:', 'd'),
+      ['anyPathD']: (self) => sendNoKw(self, 'findFirstMatching:', 'hasD'),
+    }
+    match(vtables.PathFinderGrammar, elt, 'anyPathD')
+    // => the `d` attribute string of the first descendant that has one
+*/
+
+// ── ChildSetSubstrate ────────────────────────────────────────────────────────
+// Cursor: { parent:Element, consumed:Set<Element> }.
+// "Match the children of `parent` as an unordered multiset, taking without
+// replacement." Each primitive success consumes one child by adding it to
+// consumed. Backtracking restores the whole cursor; consumption rolls back
+// automatically — cursor-state IS the rollback boundary.
+//
+// Designed to host abstract/concrete grammar pairs that match notation
+// components: e.g. an arrow grammar identifying two heads via a paired
+// DOM-rules grammar that tests individual children.
+vtables.ChildSetSubstrate = {
+  _parent: vtables.OmniMeta,
+
+  ['initialCursor:']: (self, elt) => ({ parent: elt, consumed: new Set() }),
+
+  // consumed.size suffices for many:'s progress guard (monotonic on
+  // successful consumption). Full equality for memo needs a stable
+  // serialisation (e.g. lazy ids via WeakMap); deferred.
+  ['cursorKey:']:     (self, c)   => c.consumed.size,
+  // No total order on consumed-sets ⇒ LR dormant.
+
+  // ---- primitives ──────────────────────────────────────────────────────────
+
+  // Consume any unconsumed child (first by document order); return the Element.
+  ['anyChild']: (self) => {
+    const { parent, consumed } = self.cursor;
+    for (const c of parent.children) {
+      if (consumed.has(c)) continue;
+      self.cursor = { parent, consumed: new Set(consumed).add(c) };
+      return c;
+    }
+    throw fail;
+  },
+
+  // Consume an unconsumed child satisfying a JS predicate.
+  ['childWhere:']: (self, predFn) => {
+    const { parent, consumed } = self.cursor;
+    for (const c of parent.children) {
+      if (consumed.has(c)) continue;
+      if (predFn(c)) {
+        self.cursor = { parent, consumed: new Set(consumed).add(c) };
+        return c;
+      }
+    }
+    throw fail;
+  },
+
+  // The workhorse: consume an unconsumed child for which `ruleName` in
+  // `grammar` succeeds. Lends to that grammar with a fresh sub-match at the
+  // candidate child; first success consumes that child and returns the
+  // foreign rule's match value. This is the cross-substrate join.
+  ['childMatching:inGrammar:']: (self, ruleName, grammar) => {
+    const { parent, consumed } = self.cursor;
+    for (const c of parent.children) {
+      if (consumed.has(c)) continue;
+      try {
+        const v = ⟦self lend: grammar input: c rule: ruleName⟧;
+        self.cursor = { parent, consumed: new Set(consumed).add(c) };
+        return v;
+      } catch (f) {
+        if (f !== fail) throw f;
+        // not this one; try next unconsumed child
+      }
+    }
+    throw fail;
+  },
+};
+
+/*
+  Console test (compiled-JS, bare assignments) — demonstrates the cross-grammar
+  pattern that AbstractArrow / MathchaArrow will be a specialisation of:
+
+    parentElt = document.querySelector('g')   // a <g> containing mixed children
+
+    // A tiny DOMMeta-side rules grammar: tests a single element.
+    vtables.SimpleShapeRules = {
+      _parent: vtables.DOMMeta,
+      ['circle']: (self) => {
+        sendNoKw(self, 'pred:', self.cursor.dict.tagName === 'circle');
+        return { kind: 'circle', elt: self.cursor.dict };
+      },
+    }
+
+    // A ChildSet-side grammar: orchestrates which children to consume.
+    vtables.CountCircles = {
+      _parent: vtables.ChildSetSubstrate,
+      ['circles']: (self) =>
+        sendNoKw(self, 'many:', () =>
+          sendNoKw(self, 'apply:with:', 'childMatching:inGrammar:',
+                   ['circle', vtables.SimpleShapeRules])),
+    }
+
+    match(vtables.CountCircles, parentElt, 'circles')
+    // => one entry per circle child; rect/text children silently skipped
+*/
+
+// ── AbstractArrow ────────────────────────────────────────────────────────────
+// Abstract grammar over a <g>'s children-as-multiset. Leaves `head` and `shaft`
+// abstract; concrete grammars override. The endpoints rule uses the
+// classify-then-project pattern we settled on: targetPt/originPt are
+// inspections (under `lookahead:`) that share one classification of the head,
+// so the original sketch's structure is preserved exactly.
+vtables.AbstractArrow = {
+  _parent: vtables.ChildSetSubstrate,
+  // head, shaft: abstract — concrete grammars override.
+
+  // arrow endpoints = &targetPt:t &originPt:o     => [o, t]
+  //                 | head:h1 head:h2 ~head       => [h1.tip, h2.tip]
+  //                 | shaft:s                     => ⟦s endpoints⟧
+  ['endpoints']: (self) => ⟦self or: [
+    () => {
+      const t = ⟦self lookahead: () => ⟦self apply: 'targetPt'⟧⟧;
+      const o = ⟦self lookahead: () => ⟦self apply: 'originPt'⟧⟧;
+      return [o, t];
+    },
+    () => {
+      const h1 = ⟦self apply: 'head'⟧;
+      const h2 = ⟦self apply: 'head'⟧;
+      ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+      return [h1.tip, h2.tip];
+    },
+    () => {
+      const s = ⟦self apply: 'shaft'⟧;
+      return ⟦s endpoints⟧;
+    },
+  ]⟧,
+
+  // arrow targetPt = head:h ~head => h.tip
+  ['targetPt']: (self) => {
+    const h = ⟦self apply: 'head'⟧;
+    ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+    return h.tip;
+  },
+
+  // arrow originPt = head:h ~head shaft:s => {
+  //   const eps = ⟦s endpoints⟧;
+  //   const ds  = eps.map(p => |p - h.tip|);
+  //   return eps[ds[0] < ds[1] ? 1 : 0];   // the path-endpoint FARTHER from h.tip
+  // }
+  ['originPt']: (self) => {
+    const h   = ⟦self apply: 'head'⟧;
+    ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+    const s   = ⟦self apply: 'shaft'⟧;
+    const eps = ⟦s endpoints⟧;
+    return dist2(eps[0], h.tip) < dist2(eps[1], h.tip) ? eps[1] : eps[0];
+  },
+};
+
+// ── MathchaArrow: the adapter ────────────────────────────────────────────────
+vtables.MathchaArrow = {
+  _parent: vtables.AbstractArrow,
+
+  ['head']:  (self) => ⟦self apply: 'childMatching:inGrammar:'
+                             with: ['head',  vtables.MathchaHeadShaftRules]⟧,
+  ['shaft']: (self) => ⟦self apply: 'childMatching:inGrammar:'
+                             with: ['shaft', vtables.MathchaHeadShaftRules]⟧,
+};
+
+// ── MathchaHeadShaftRules: per-element classifiers ───────────────────────────
+vtables.MathchaHeadShaftRules = {
+  _parent: vtables.DOMMeta,
+
+  // mathcha head = g transform=(col:back col:left col:tip)
+  //                => {fwd: neg(back), tip: tip}
+  ['head']: (self) => {
+    const elt = self.cursor.dict;
+    ⟦self pred: elt.tagName === 'g'⟧;
+    ⟦self pred: elt.transform?.baseVal?.numberOfItems > 0⟧;
+    const m    = elt.transform.baseVal[0].matrix;
+    const back = [m.a, m.b];
+    const tip  = [m.e, m.f];
+    return { tip, fwd: neg(back) };
+  },
+
+  // mathcha shaft = path .connection .real
+  // (Returns the element itself; `endpoints` is answered by byTag['path']
+  // and inherited automatically by polyline/line/polygon shafts.)
+  ['shaft']: (self) => {
+    const elt = self.cursor.dict;
+    const cl = elt.classList;
+    ⟦self pred: ['path','polyline','line'].includes(elt.tagName)⟧;
+    ⟦self pred: cl.contains('connection') && cl.contains('real')⟧;
+    return elt;
+  },
+};
+
+/*
+  Console test (compiled-JS, bare assignments):
+
+    arrowG = document.querySelector('g.arrow')    // pick an arrow <g>
+
+    eps = match(vtables.MathchaArrow, arrowG, 'endpoints')
+    // directed (1 head):       [origin, target]
+    // double-headed (2 heads): [tip,    tip]
+    // plain line (0 heads):    [start,  end]
 */
