@@ -159,6 +159,8 @@ match = function(grammar, input, startRule, args) {
   return r === MATCH_FAILED ? null : r;
 };
 
+perform = match; // Signal intent for when the rule is primarily match-to-mutate
+
 
 // ── SeqSubstrate: linear-index cursor over any finite indexable input ────────
 // Cursor is an immutable { stream, idx }. Owns the cursor type. Element type is
@@ -519,7 +521,7 @@ vtables.ChildSetSubstrate = {
 vtables.AbstractArrow = {
   _parent: vtables.ChildSetSubstrate,
   // head, shaft: abstract — concrete grammars override.
-
+ 
   // arrow endpoints = &targetPt:t &originPt:o     => [o, t]
   //                 | head:h1 head:h2 ~head       => [h1.tip, h2.tip]
   //                 | shaft:s                     => ⟦s endpoints⟧
@@ -540,25 +542,49 @@ vtables.AbstractArrow = {
       return ⟦s endpoints⟧;
     },
   ]⟧,
-
+ 
   // arrow targetPt = head:h ~head => h.tip
   ['targetPt']: (self) => {
     const h = ⟦self apply: 'head'⟧;
     ⟦self not: () => ⟦self apply: 'head'⟧⟧;
     return h.tip;
   },
-
-  // arrow originPt = head:h ~head shaft:s => {
-  //   const eps = ⟦s endpoints⟧;
-  //   const ds  = eps.map(p => |p - h.tip|);
-  //   return eps[ds[0] < ds[1] ? 1 : 0];   // the path-endpoint FARTHER from h.tip
-  // }
-  ['originPt']: (self) => {
-    const h   = ⟦self apply: 'head'⟧;
+ 
+  // arrow targetPt: t = head:h ~head shaft:s
+  //   ⟹ ⟦s orientWith: h⟧  -- the explicit symmetry-breaking step
+  //      ⟦s target: t⟧      -- moves the appropriate DOM endpoint
+  //      ⟦h touch: t⟧       -- moves the head's tip to the new target
+  //      ⟦h lookAlong: ⟦s outwardTangentAtTarget⟧⟧  -- head aims away from shaft body
+  ['targetPt:']: (self, t) => {
+    const h = ⟦self apply: 'head'⟧;
     ⟦self not: () => ⟦self apply: 'head'⟧⟧;
-    const s   = ⟦self apply: 'shaft'⟧;
-    const eps = ⟦s endpoints⟧;
-    return dist2(eps[0], h.tip) < dist2(eps[1], h.tip) ? eps[1] : eps[0];
+    const s = ⟦self apply: 'shaft'⟧;
+    ⟦s orientWith: h⟧;
+    ⟦s target: t⟧;
+    ⟦h touch: t⟧;
+    ⟦h lookAlong: ⟦s outwardTangentAtTarget⟧⟧;
+  },
+ 
+  // arrow originPt = head:h ~head shaft:s  ⟹ ⟦s orientWith: h⟧; ⟦s origin⟧
+  ['originPt']: (self) => {
+    const h = ⟦self apply: 'head'⟧;
+    ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+    const s = ⟦self apply: 'shaft'⟧;
+    ⟦s orientWith: h⟧;
+    return ⟦s origin⟧;
+  },
+ 
+  // arrow originPt: o = head:h ~head shaft:s
+  //   ⟹ ⟦s orientWith: h⟧
+  //      ⟦s origin: o⟧
+  //      ⟦h lookAlong: vsub(h.tip, o)⟧   -- head's tip unchanged; only its angle.
+  ['originPt:']: (self, o) => {
+    const h = ⟦self apply: 'head'⟧;
+    ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+    const s = ⟦self apply: 'shaft'⟧;
+    ⟦s orientWith: h⟧;
+    ⟦s origin: o⟧;
+    ⟦h lookAlong: ⟦s outwardTangentAtTarget⟧⟧;
   },
 };
 
@@ -585,18 +611,16 @@ vtables.MathchaHeadShaftRules = {
     const m    = elt.transform.baseVal[0].matrix;
     const back = [m.a, m.b];
     const tip  = [m.e, m.f];
-    return { tip, fwd: neg(back) };
+    return { vtable: vtables.MathchaArrowhead, elt, tip, fwd: neg(back) };
   },
 
-  // mathcha shaft = path .connection .real
-  // (Returns the element itself; `endpoints` is answered by byTag['path']
-  // and inherited automatically by polyline/line/polygon shafts.)
+  // mathcha shaft = (path|polyline|line) .connection .real
   ['shaft']: (self) => {
     const elt = self.cursor.dict;
     const cl = elt.classList;
     ⟦self pred: ['path','polyline','line'].includes(elt.tagName)⟧;
     ⟦self pred: cl.contains('connection') && cl.contains('real')⟧;
-    return elt;
+    return { vtable: vtables.MathchaArrowShaft, elt };
   },
 };
 
@@ -610,3 +634,74 @@ vtables.MathchaHeadShaftRules = {
     // double-headed (2 heads): [tip,    tip]
     // plain line (0 heads):    [start,  end]
 */
+ 
+// ── AbstractArrowShaft ───────────────────────────────────────────────────────
+// Defines the directional API (origin/target getters & setters, outward tangents)
+// in terms of three SYMMETRIC primitives that subclasses must implement:
+//   endpointAt: i           → the endpoint at DOM-order index i
+//   endpointAt: i put: pt   → mutate the endpoint at DOM-order index i
+//   outwardTangentAt: i     → unit vector pointing AWAY from the shaft at i
+//
+// The directional API requires `orientWith:` to have been called first with
+// the relevant arrowhead — that's the single, explicit symmetry-breaking step.
+// Once oriented, origin/target/outwardTangentAt{Origin,Target} are defined
+// purely in terms of self.originIdx/targetIdx and the symmetric primitives.
+//
+// dataset.originIndex disappears — orientation is a transient wrapper field.
+vtables.AbstractArrowShaft = {
+  // — orientation —
+  ['orientWith:']: (self, arrowhead) => {
+    const e0 = ⟦self endpointAt: 0⟧;
+    const e1 = ⟦self endpointAt: 1⟧;
+    self.targetIdx = dist2(e0, arrowhead.tip) < dist2(e1, arrowhead.tip) ? 0 : 1;
+    self.originIdx = 1 - self.targetIdx;
+    return self;
+  },
+ 
+  // — oriented getters & setters (require orientWith: first) —
+  ['origin']:                 (self)     => ⟦self endpointAt: self.originIdx⟧,
+  ['target']:                 (self)     => ⟦self endpointAt: self.targetIdx⟧,
+  ['origin:']:                (self, pt) => ⟦self endpointAt: self.originIdx put: pt⟧,
+  ['target:']:                (self, pt) => ⟦self endpointAt: self.targetIdx put: pt⟧,
+  ['outwardTangentAtOrigin']: (self)     => ⟦self outwardTangentAt: self.originIdx⟧,
+  ['outwardTangentAtTarget']: (self)     => ⟦self outwardTangentAt: self.targetIdx⟧,
+};
+
+// ── MathchaArrowShaft becomes a marker wrapper ────────────────────────────
+// The classifier returns this so the directional API from AbstractArrowShaft
+// can run. All the real work passes through to the element via the existing
+// doesNotUnderstand: forwarder, which now finds endpointAt: / outwardTangentAt:
+// on byTag[elt.tagName] automatically.
+vtables.MathchaArrowShaft = {
+  _parent: vtables.AbstractArrowShaft,
+  ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.elt, sel, ...args),
+};
+
+vtables.AbstractArrowhead = {
+  // Abstract: every concrete head defines how to apply a position + direction.
+  // Subclasses implement placeAt:lookingAlong: against their own encoding.
+};
+
+vtables.MathchaArrowhead = {
+  _parent: vtables.AbstractArrowhead,
+ 
+  // The single source of Mathcha-head conventions — both directions.
+  // (Cross-reference: the READ side that produces {tip, fwd} from this same
+  // matrix encoding lives in MathchaHeadShaftRules.head.)
+  ['lookAlong:']: (self, fwd) => {
+    const n = vmag(fwd) > 0.001 ? vnormed(fwd) : [1, 0];
+    const m = self.elt.transform.baseVal[0].matrix;
+    // Empirically determined based on Mathcha's arrowhead coord sys
+    /* [ */ m.a = -n[0]; m.c =  n[1]; // e ]
+    /* [ */ m.b = -n[1]; m.d = -n[0]; // f ]
+    //       look back     look left
+  },
+ 
+  ['touch:']: (self, tip) => {
+    const m = self.elt.transform.baseVal[0].matrix;
+    m.e = tip[0]; m.f = tip[1];
+  },
+ 
+  // Everything else (id, parentElement, ...) flows through to the element.
+  ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.elt, sel, ...args),
+};

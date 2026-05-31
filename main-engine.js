@@ -195,6 +195,10 @@ vtables.byTag['path'] = {
     }
     return vnormed(delta);
   },
+  ['outwardTangentAt:']: (self, frac /* 0 to 1 */) => {
+    const tangent = send(self, 'tangentAtFrac:', frac);
+    return frac < 0.5 ? neg(tangent) : tangent;
+  },
   ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
   ['containsPt:']: (self, pt) => {
     if (!send(self, 'isClosed')) {
@@ -231,6 +235,14 @@ vtables.byTag['path'] = {
     return null;
   },
   ['localRoot']: (self) => self.parentElement, // SMELL: wrong for arrowheads
+  ['endpointAt:']: (self, i/* 0 or 1 */) => {
+    if (send(self, 'isClosed')) throw [self, ' is closed, no endpoints'];
+    if (i !== 0 && i !== 1) throw [i, ' must be 0 or 1'];
+    return send(self, 'pointAtFrac:', i);
+  },
+  ['endpointAt:put:']: (self, i/* 0 or 1 */, newPt) => {
+    throw ['endpointAt:put: not yet implemented for <path>', self];
+  },
   ['endpoints']: (self) => {
     if (send(self, 'isClosed')) return [];
     return [ send(self, 'pointAtFrac:', 0), send(self, 'pointAtFrac:', 1) ];
@@ -257,8 +269,19 @@ vtables.byTag['polyline'] = {
   ['vertices']: (self) => {
     return attr(self, 'points').trim().split(' ').map(v => v.split(',').map(Number));
   },
+  ['vertexAt:put:']: (self, i, pt) => {
+    const vs = send(self, 'vertices');
+    if (i<0) i = vs.length + i;
+    vs[i] = pt;
+    attr(self, 'points', vs.map(v => v.join(',')).join(' '));
+  },
   ['isClosed']: () => false,
   ['isCurved']: () => false,
+  ['endpointAt:put:']: (self, i /* 0 or 1 */, pt) => {
+    if (i === 1) i = -1;
+    else if (i !== 0) throw [i, 'must be 0 or 1'];
+    return send(self, 'vertexAt:', i, 'put:', pt);
+  },
   ['commands']: (self) => {
     let vs = send(self, 'vertices');
     vs = vs.map(v => ['L', v]);
@@ -291,6 +314,11 @@ vtables.byTag['line'] = {
   _parent: vtables.byTag['polyline'],
 
   ['vertices']: (self) => [attrs(self, 'x1', 'y1'), attrs(self, 'x2', 'y2')].map(pt => pt.map(parseFloat)),
+  ['vertexAt:put:']: (self, i, [x,y]) => {
+    if (i === 0) attr(self, {x1: x, y1: y});
+    else if (i === 1 || i === -1) attr(self, {x2: x, y2: y});
+    else throw ['Out of bounds: ', i];
+  },
   ['specialize']: () => null,
 };
 
@@ -527,30 +555,10 @@ vupd = (name, value, origin, prototypeId) => {
     arrow.firstChild.id = 'vec-'+name;
     svg_parent.appendChild(arrow);
   } else arrow = arrow.parentElement;
-  const shaft = arrow.firstChild;
-  const head = arrow.querySelector('g');
-  if (shaft.tagName !== 'line') throw [shaft, ' not a <line>'];
-  if (!send(shaft, 'isDirected')) throw [shaft, ' not directed'];
-  const oi = +shaft.dataset.originIndex;
-  if (!origin) origin = send(shaft, 'originPt');
-  else {
-    attr(shaft, oi === 0 ? 'x1' : 'x2', origin[0]);
-    attr(shaft, oi === 0 ? 'y1' : 'y2', origin[1]);
-  }
-  const target = vadd(origin, value);
-  attr(shaft, oi === 0 ? 'x2' : 'x1', target[0]);
-  attr(shaft, oi === 0 ? 'y2' : 'y1', target[1]);
-
-  const m = head.transform.baseVal[0].matrix;
-  m.e = target[0]; m.f = target[1];
-  // New get the angle right
-  const dv = vsub(target,origin);
-  let n = [1,0];
-  if (vmag(dv) > 0.001) n = vnormed(dv);
-  // Empirically determined based on Mathcha's arrowhead coord sys
-  /* [ */ m.a = -n[0]; m.c =  n[1]; // e ]
-  /* [ */ m.b = -n[1]; m.d = -n[0]; // f ]
-  //       look back     look left
+  if (!origin) {
+    origin = match(vtables.MathchaArrow, arrow, 'originPt');
+  } else perform(vtables.MathchaArrow, arrow, 'originPt:', [origin]);
+  perform(vtables.MathchaArrow, arrow, 'targetPt:', [vadd(origin,value)]);
 };
 
 /*
