@@ -239,6 +239,125 @@ vtables.NumberGrammar = {
     bad    = match(vtables.NumberGrammar, "x99",  "number")    // => MATCH_FAILED
 */
 
+// ── VertexGrammar: cyclic vertex-list matching on SeqSubstrate ───────────────
+// Cursor inherited unchanged ({stream, idx}); stream is an array of [x, y]
+// vertex pairs. Vertices arrive in arbitrary starting position and winding;
+// `initialCursor:` canonicalises them up front so every downstream rule sees
+// the same starting point and the same winding sign.
+//
+// Canonical form:
+//   1. The vertex with min-coords (lex-min on the [x, y] pair) is at index 0.
+//   2. The cycle is wound shoelace-positive — the shoelace formula returns
+//      a positive value for the canonical sequence. Polygons that arrive
+//      shoelace-negative get their cycle reversed (keeping the anchor vertex
+//      in place).
+vtables.VertexGrammar = {
+  _parent: vtables.SeqSubstrate,
+ 
+  ['initialCursor:']: (self, verts) => ({ stream: canonicalizeVerts(verts), idx: 0 }),
+ 
+  // polygon = anything+ end   (sanity: ≥3 vertices; consumes the full cycle).
+  // Returned `verts` are in canonical form — the same array the cursor walked.
+  ['polygon']: (self) => {
+    const verts = send(self, 'many1:', () => send(self, 'apply:', 'anything'));
+    send(self, 'apply:', 'end');
+    send(self, 'pred:', verts.length >= 3);
+    return { kind: 'polygon', verts };
+  },
+ 
+  // parallelogram = a b c d end
+  //   ⟹ requires {b-a == c-d} and {c-b == d-a}
+  //      (opposite sides equal as vectors traversed in canonical order)
+  // Returns {v1, v2} — the two basis edges anchored at vertex a.
+  ['parallelogram']: (self) => {
+    const a = send(self, 'apply:', 'anything');
+    const b = send(self, 'apply:', 'anything');
+    const c = send(self, 'apply:', 'anything');
+    const d = send(self, 'apply:', 'anything');
+    send(self, 'apply:', 'end');
+    send(self, 'pred:', vmag(vsub(vsub(b,a), vsub(c,d))) < EPS_VERTEX);
+    send(self, 'pred:', vmag(vsub(vsub(c,b), vsub(d,a))) < EPS_VERTEX);
+    return { kind: 'parallelogram', verts: [a,b,c,d], v1: vsub(b,a), v2: vsub(d,a) };
+  },
+ 
+  // rect = parallelogram where v1 ⊥ v2.
+  // Two-tier composition: parallelogram does the structural match;
+  // rect adds one perpendicularity predicate. Scale-invariant test:
+  // |v1·v2| < EPS · |v1| · |v2|  ⇔  |cos θ| < EPS.
+  ['rect']: (self) => {
+    const p = send(self, 'apply:', 'parallelogram');
+    const w = vmag(p.v1), h = vmag(p.v2);
+    send(self, 'pred:', Math.abs(vdot(p.v1, p.v2)) < EPS_VERTEX * w * h);
+    return { kind: 'rect', verts: p.verts, v1: p.v1, v2: p.v2, width: w, height: h };
+  },
+};
+ 
+// Tolerance for vertex-level vector equality and perpendicularity tests.
+// Absolute for length-like comparisons; scale-relative for angle-like
+// comparisons (multiplied through by |v1|·|v2|). Adequate for Mathcha
+// coordinate ranges; promote to a grammar-instance parameter if a use case
+// needs finer or coarser tuning per match.
+EPS_VERTEX = 0.01;
+ 
+// Rotate the cycle so the lex-min vertex is at index 0, and reverse it if
+// the shoelace sum is negative (so canonical input is always shoelace-positive).
+canonicalizeVerts = function(verts) {
+  if (verts.length < 3) return verts.slice();
+  let mi = 0;
+  for (let i = 1; i < verts.length; i++) {
+    const [xi, yi] = verts[i], [xm, ym] = verts[mi];
+    if (xi < xm || (xi === xm && yi < ym)) mi = i;
+  }
+  const rotated = verts.slice(mi).concat(verts.slice(0, mi));
+  if (shoelaceArea(rotated) < 0) {
+    // Reverse the cycle keeping the anchor vertex (index 0) in place.
+    return [rotated[0]].concat(rotated.slice(1).reverse());
+  }
+  return rotated;
+};
+ 
+// Signed area via the shoelace formula. Positive ⇔ the vertex sequence
+// traverses the cycle in the +-orientation defined by the formula itself
+// (a property of the input numbers; independent of any screen orientation).
+shoelaceArea = function(verts) {
+  let s = 0;
+  const n = verts.length;
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = verts[i];
+    const [x1, y1] = verts[(i + 1) % n];
+    s += x0 * y1 - x1 * y0;
+  }
+  return s / 2;
+};
+ 
+/*
+  Console test (compiled-JS, bare assignments):
+ 
+    // Axis-aligned square, vertices given in arbitrary starting position:
+    match(vtables.VertexGrammar, [[10,10],[0,10],[0,0],[10,0]], 'polygon')
+    // => { kind: 'polygon', verts: [[0,0],[10,0],[10,10],[0,10]] }
+ 
+    // The same square, reverse winding — canonicalisation makes it identical:
+    match(vtables.VertexGrammar, [[0,10],[10,10],[10,0],[0,0]], 'polygon')
+    // => same canonical verts
+ 
+    // Degenerate (<3 vertices) — polygon rejects:
+    match(vtables.VertexGrammar, [[0,0],[1,1]], 'polygon')           // => null
+ 
+    // Parallelogram (sheared, not a rect):
+    match(vtables.VertexGrammar, [[0,0],[10,0],[12,5],[2,5]], 'parallelogram')
+    // => { kind: 'parallelogram', v1: [10,0], v2: [2,5], verts: [...] }
+    match(vtables.VertexGrammar, [[0,0],[10,0],[12,5],[2,5]], 'rect') // => null
+ 
+    // Axis-aligned rect:
+    match(vtables.VertexGrammar, [[0,0],[10,0],[10,5],[0,5]], 'rect')
+    // => { kind: 'rect', width: 10, height: 5, ... }
+ 
+    // Rotated square (45°): vertices at the diamond points.
+    match(vtables.VertexGrammar, [[5,0],[10,5],[5,10],[0,5]], 'rect')
+    // => { kind: 'rect', width: ~7.07, height: ~7.07 }
+*/
+
 // ── DictSubstrate ────────────────────────────────────────────────────────────
 // Cursor: { dict, consumed:Set }. Owns the cursor type.
 // Defaults work for plain JS objects; subclass and override the three
@@ -511,8 +630,6 @@ vtables.ChildSetSubstrate = {
     match(vtables.CountCircles, parentElt, 'circles')
     // => one entry per circle child; rect/text children silently skipped
 */
-
-// ── Wrapper vtables (read accessors as fields + mutation methods) ────────────
 
 // ── AbstractArrow ────────────────────────────────────────────────────────────
 // Abstract grammar over a <g>'s children-as-multiset. Leaves `head` and `shaft`
