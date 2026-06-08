@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1641 1080" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <script href="../utils.js"></script>
+	<script href="../bracket-hole-carving.js"></script>
+	<script href="../lang-sweettalk.js"></script>
+	<script href="../lang-descartes.js"></script>
+	<script href="../main-engine.js"></script>
+    <script href="../omnimeta.js"></script>
+
+    <rect id="Description-of-the-notation" serif:id="Description of the notation" x="0" y="0" width="1641" height="1080" style="fill:none;"/>
+    <g id="Description-of-the-notation1" serif:id="Description of the notation">
+        <g id="Special-colours" serif:id="Special colours">
+            <g>
+                <rect x="32" y="84" width="35" height="35" style="fill:rgb(184,10,10);"/>
+                <g transform="matrix(24,0,0,24,307.928,110.068)">
+                </g>
+                <text x="83px" y="110.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">animation rule colour</text>
+            </g>
+            <g>
+                <rect x="32" y="135" width="35" height="35" style="fill:rgb(45,184,10);"/>
+                <g transform="matrix(24,0,0,24,337.256,161.068)">
+                </g>
+                <text x="83px" y="161.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">element labelling colour</text>
+            </g>
+            <g transform="matrix(24,0,0,24,208.376,58.068)">
+            </g>
+            <text x="32px" y="58.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">Special colours</text>
+        </g>
+        <g id="Motivating-example" serif:id="Motivating example">
+            <g transform="matrix(24,0,0,24,256.352,244.068)">
+            </g>
+            <text x="32px" y="244.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">Motivating example</text>
+            <g>
+                <g>
+                    <circle cx="93.5" cy="390.5" r="29.5" style="fill:rgb(238,238,238);stroke:black;stroke-width:2px;"/>
+                    <g transform="matrix(36,0,0,36,104.3,401.82)">
+                    </g>
+                    <text x="82.7px" y="401.82px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:36px;">x</text>
+                </g>
+                <path d="M128.04,370.331L118,371L123.489,362.566L128.04,370.331Z" style="fill:rgb(45,184,10);"/>
+                <path d="M156,348.724C156,348.724 134.986,361.043 124.211,367.359" style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <path d="M106.804,398.72L101,390.5L111.058,390.788L106.804,398.72Z" style="fill:rgb(45,184,10);"/>
+                <path d="M156,420C156,420 121.812,401.663 107.345,393.903" style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(24,0,0,24,205.833,348.443)">
+                </g>
+                <text x="161.385px" y="348.443px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);">disc</text>
+                <g transform="matrix(24,0,0,24,212.049,426.223)">
+                </g>
+                <text x="161.385px" y="426.223px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);">label</text>
+            </g>
+            <g>
+                <path d="M155.38,583.73L164.92,588.5L155.38,593.27L155.38,583.73Z" style="fill:rgb(184,10,10);"/>
+                <path d="M101,588.5L157.288,588.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(18,0,0,18,151.293,583.676)">
+                </g>
+                <text x="114.627px" y="583.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">click</text>
+                <path d="M351.301,583.73L360.841,588.5L351.301,593.27L351.301,583.73Z" style="fill:rgb(184,10,10);"/>
+                <path d="M296.92,588.5L353.209,588.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(24,0,0,24,88.724,595.068)">
+                </g>
+                <text x="44.276px" y="595.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">disc</text>
+                <g transform="matrix(24,0,0,24,284.716,595.068)">
+                </g>
+                <text x="177.124px" y="595.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">str<tspan x="204.244px 218.02px " y="595.068px 595.068px ">ok</tspan>e r<tspan x="257.596px 270.484px " y="595.068px 595.068px ">ed</tspan></text>
+                <g transform="matrix(18,0,0,18,338.384,583.676)">
+                </g>
+                <text x="319.376px" y="583.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">2s</text>
+                <g transform="matrix(24,0,0,24,503.693,595.068)">
+                </g>
+                <text x="372.989px" y="595.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">str<tspan x="400.109px 413.885px " y="595.068px 595.068px ">ok</tspan>e black</text>
+                <rect x="32" y="564" width="483.841" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+            </g>
+            <g>
+                <path d="M161.38,636.73L170.92,641.5L161.38,646.27L161.38,636.73Z" style="fill:rgb(184,10,10);"/>
+                <path d="M107,641.5L163.288,641.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(18,0,0,18,157.293,636.676)">
+                </g>
+                <text x="120.627px" y="636.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">click</text>
+                <path d="M357.301,636.73L366.841,641.5L357.301,646.27L357.301,636.73Z" style="fill:rgb(184,10,10);"/>
+                <path d="M302.92,641.5L359.209,641.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(24,0,0,24,94.832,648.068)">
+                </g>
+                <text x="44.168px" y="648.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">label</text>
+                <g transform="matrix(24,0,0,24,284.932,648.068)">
+                </g>
+                <text x="188.908px" y="648.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">scale 1.5</text>
+                <g transform="matrix(18,0,0,18,344.384,636.676)">
+                </g>
+                <text x="325.376px" y="636.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">2s</text>
+                <g transform="matrix(24,0,0,24,455.345,648.068)">
+                </g>
+                <text x="379.337px" y="648.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">scale 1</text>
+                <rect x="32" y="617" width="435.841" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+            </g>
+            <g>
+                <g>
+                    <circle cx="61.5" cy="831.5" r="29.5" style="fill:rgb(238,238,238);stroke:black;stroke-width:2px;"/>
+                    <g transform="matrix(36,0,0,36,72.3,842.82)">
+                    </g>
+                    <text x="50.7px" y="842.82px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:36px;">x</text>
+                </g>
+                <g>
+                    <circle cx="223.5" cy="831.5" r="29.5" style="fill:rgb(238,238,238);stroke:rgb(254,0,0);stroke-width:2px;"/>
+                    <g transform="matrix(54,0,0,54,239.7,849.48)">
+                    </g>
+                    <text x="207.3px" y="849.48px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:54px;">x</text>
+                </g>
+                <g>
+                    <circle cx="304.5" cy="831.5" r="29.5" style="fill:rgb(238,238,238);stroke:rgb(184,0,0);stroke-width:2px;"/>
+                    <g transform="matrix(48,0,0,48,318.9,847.26)">
+                    </g>
+                    <text x="290.1px" y="847.26px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:48px;">x</text>
+                </g>
+                <g>
+                    <circle cx="385.5" cy="831.5" r="29.5" style="fill:rgb(238,238,238);stroke:rgb(117,0,0);stroke-width:2px;"/>
+                    <g transform="matrix(43,0,0,43,398.4,845.41)">
+                    </g>
+                    <text x="372.6px" y="845.41px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:43px;">x</text>
+                </g>
+                <g>
+                    <circle cx="466.5" cy="831.5" r="29.5" style="fill:rgb(238,238,238);stroke:black;stroke-width:2px;"/>
+                    <g transform="matrix(36,0,0,36,477.3,842.82)">
+                    </g>
+                    <text x="455.7px" y="842.82px" style="font-family:'IBMPlexMono', 'IBM Plex Mono', monospace;font-size:36px;">x</text>
+                </g>
+                <path d="M507.46,885.73L517,890.5L507.46,895.27L507.46,885.73Z" style="fill:rgb(128,128,128);"/>
+                <path d="M32,890.5L509.368,890.5" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                <path d="M32,883L32,898" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                <path d="M194,883L194,898" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                <g transform="matrix(18,0,0,18,68,918.676)">
+                </g>
+                <text x="32px" y="918.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);">start</text>
+                <g transform="matrix(18,0,0,18,223.965,918.676)">
+                </g>
+                <text x="161.955px" y="918.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);">on click</text>
+                <g transform="matrix(18,0,0,18,467.128,918.676)">
+                </g>
+                <text x="406.792px" y="918.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);">after 2s</text>
+                <path d="M437,883L437,898" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+            </g>
+            <g transform="matrix(24,0,0,24,429.392,284.818)">
+            </g>
+            <text x="32px" y="284.818px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">Any SVG can be annoted with labels:</text>
+            <g transform="matrix(1,0,0,1,-5.68434e-14,269)">
+                <text x="32px" y="457.482px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">Each animation rules is applied in parallel.</text>
+                <g transform="matrix(24,0,0,24,544.064,482.154)">
+                </g>
+                <text x="32px" y="482.154px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">When the SVG is loaded, it animates as follows:</text>
+            </g>
+            <g transform="matrix(1,0,0,1,-2.84217e-14,36)">
+                <text x="32px" y="455.482px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">The labels can be r<tspan x="235.16px 248.048px " y="455.482px 455.482px ">ef</tspan>er<tspan x="275.6px 288.488px " y="455.482px 455.482px ">en</tspan>ced in boxes</text>
+                <text x="32px" y="480.154px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">that describe the</text>
+                <text x="219.608px" y="480.154px" style="font-family:'HelveticaNeue-Italic', 'Helvetica Neue';font-style:italic;font-size:24px;">animation rules</text>
+                <g transform="matrix(24,0,0,24,388.088,480.154)">
+                </g>
+                <text x="381.416px" y="480.154px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">:</text>
+            </g>
+        </g>
+        <g id="Meta-notation">
+            <g transform="matrix(24,0,0,24,777.192,56.068)">
+            </g>
+            <text x="615px" y="56.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">Meta-notation</text>
+        </g>
+        <g id="Labels">
+            <g id="Animation-rules" serif:id="Animation rules">
+                <g transform="matrix(1,0,0,1,585,-211.5)">
+                    <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">Each</text>
+                    <text x="92.456px" y="453.136px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">animation rule</text>
+                    <g transform="matrix(24,0,0,24,313.712,453.136)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,320.816,453.136)">
+                    </g>
+                    <text x="262.592px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">is deﬁned by</text>
+                    <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">connecting a series of text elements</text>
+                    <text x="32px" y="502.48px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">with a series of labeled arr<tspan x="312.872px 326.648px " y="502.48px 502.48px ">ow</tspan>s within a</text>
+                    <text x="32px" y="527.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">box, all of which must use the special</text>
+                    <text x="32px" y="551.824px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">animation rule colour</text>
+                    <g transform="matrix(24,0,0,24,261.392,551.824)">
+                    </g>
+                    <text x="254.72px" y="551.824px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">.</text>
+                </g>
+                <g>
+                    <path d="M785.38,388.73L794.92,393.5L785.38,398.27L785.38,388.73Z" style="fill:rgb(184,10,10);"/>
+                    <path d="M690,393.5L787.288,393.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                    <g transform="matrix(18,0,0,18,772.799,388.676)">
+                    </g>
+                    <text x="712.121px" y="388.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">click 5s</text>
+                    <g transform="matrix(24,0,0,24,677.724,400.068)">
+                    </g>
+                    <text x="633.276px" y="400.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">disc</text>
+                    <path d="M654,407.818L654,422.818" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                    <text x="643.96px" y="444.808px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:18px;fill:rgb(128,128,128);">➊</text>
+                    <path d="M654,407.818L654,422.818" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                    <path d="M741,399.818L741,422.818" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                    <text x="730.96px" y="444.808px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:18px;fill:rgb(128,128,128);">➌</text>
+                    <path d="M873,407.818L873,422.818" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;"/>
+                    <text x="862.96px" y="444.808px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:18px;fill:rgb(128,128,128);">➋</text>
+                    <g transform="matrix(24,0,0,24,940.972,400.068)">
+                    </g>
+                    <text x="807.868px" y="400.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">opacity +0.5</text>
+                    <rect x="621" y="369" width="332.92" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;"/>
+                </g>
+                <g transform="matrix(1,0,0,1,585,31.5)">
+                    <text x="32px" y="456.64px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:24px;">➊</text>
+                    <g transform="matrix(24,0,0,24,109.352,456.64)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,116.456,456.64)">
+                    </g>
+                    <text x="62.672px" y="456.64px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">The ﬁrst node of an animation rule</text>
+                    <g transform="matrix(24,0,0,24,169.304,481.312)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,176.408,481.312)">
+                    </g>
+                    <text x="32px" y="481.312px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">always speciﬁes which element(s) the</text>
+                    <text x="32px" y="505.984px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">rule applies to. It can be the name of</text>
+                    <g transform="matrix(24,0,0,24,441.896,530.656)">
+                    </g>
+                    <text x="32px" y="530.656px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">one or mor<tspan x="148.928px 161.816px " y="530.656px 530.656px ">e </tspan>comma-separated labels:</text>
+                </g>
+                <g>
+                    <g transform="matrix(24,0,0,24,661.448,608.568)">
+                    </g>
+                    <text x="617px" y="608.568px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">disc</text>
+                    <g transform="matrix(24,0,0,24,725.456,636.568)">
+                    </g>
+                    <text x="617px" y="636.568px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">disc, label</text>
+                    <g transform="matrix(24,0,0,24,1063.93,608.568)">
+                    </g>
+                    <text x="821px" y="608.568px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">tar<tspan x="848.768px 862.544px " y="608.568px 608.568px ">ge</tspan>t a single element</text>
+                    <g transform="matrix(24,0,0,24,1033.47,636.568)">
+                    </g>
+                    <text x="821px" y="636.568px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">tar<tspan x="848.768px 862.544px " y="636.568px 636.568px ">ge</tspan>t two<tspan x="929.432px " y="636.568px "> </tspan>elements</text>
+                </g>
+                <g transform="matrix(1,0,0,1,585,367)">
+                    <text x="32px" y="462.3px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">x [+–]</text>
+                    <text x="89.936px" y="462.3px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="104.385px" y="462.3px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">coor<tspan x="152.385px " y="462.3px ">d</tspan></text>
+                    <text x="166.617px" y="462.3px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="486.972px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">y [+–]</text>
+                    <text x="89.504px" y="486.972px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="103.953px" y="486.972px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">coor<tspan x="151.953px " y="486.972px ">d</tspan></text>
+                    <text x="166.185px" y="486.972px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <g transform="matrix(24,0,0,24,32,523.644)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,39.104,523.644)">
+                    </g>
+                    <text x="32px" y="523.644px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">ﬁll</text>
+                    <text x="61.76px" y="523.644px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="76.209px" y="523.644px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">colour</text>
+                    <text x="143.313px" y="523.644px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="548.316px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">str<tspan x="59.12px 72.896px " y="548.316px 548.316px ">ok</tspan>e</text>
+                    <text x="104.912px" y="548.316px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="119.361px" y="548.316px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">colour</text>
+                    <text x="186.465px" y="548.316px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="572.988px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">opacity [+–]</text>
+                    <text x="156.176px" y="572.988px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="170.625px" y="572.988px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">scalar</text>
+                    <text x="234.609px" y="572.988px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="609.66px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">scale [+–]</text>
+                    <text x="133.496px" y="609.66px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="147.945px" y="609.66px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">scalar</text>
+                    <text x="211.929px" y="609.66px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="634.332px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">r<tspan x="39.56px 53.336px " y="634.332px 634.332px ">ot</tspan>ation [+–]</text>
+                    <text x="159.296px" y="634.332px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="173.745px" y="634.332px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">degr<tspan x="222.201px 235.089px " y="634.332px 634.332px ">ee</tspan></text>
+                    <text x="247.977px" y="634.332px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    <text x="32px" y="671.004px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">text</text>
+                    <text x="79.112px" y="671.004px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                    <text x="93.561px" y="671.004px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">string</text>
+                    <text x="153.561px" y="671.004px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                </g>
+                <g transform="matrix(1,0,0,1,845,367)">
+                    <text x="32px" y="461.716px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set x coor<tspan x="138.224px 152.456px " y="461.716px 461.716px ">di</tspan>nate</text>
+                    <text x="32px" y="486.388px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set y coor<tspan x="137.792px 152.024px " y="486.388px 486.388px ">di</tspan>nate</text>
+                    <g transform="matrix(24,0,0,24,111.584,523.06)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,118.688,523.06)">
+                    </g>
+                    <text x="32px" y="523.06px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the ﬁll colour</text>
+                    <text x="32px" y="547.732px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the str<tspan x="138.704px 152.48px " y="547.732px 547.732px ">ok</tspan>e colour</text>
+                    <text x="32px" y="572.404px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the opacity</text>
+                    <text x="32px" y="609.076px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the scaling factor</text>
+                    <text x="32px" y="633.748px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the r<tspan x="119.144px 132.92px " y="633.748px 633.748px ">ot</tspan>ation</text>
+                    <g transform="matrix(24,0,0,24,251.84,670.42)">
+                    </g>
+                    <text x="32px" y="670.42px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">set the <tspan x="111.824px " y="670.42px ">t</tspan>ext of an elt.</text>
+                </g>
+                <g transform="matrix(1,0,0,1,585,228.5)">
+                    <text x="32px" y="456.64px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:24px;">➋</text>
+                    <text x="62.672px" y="456.64px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">The other nodes describe how to</text>
+                    <text x="32px" y="481.312px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">update the pr<tspan x="176.072px 189.848px " y="481.312px 481.312px ">op</tspan>erties of the tar<tspan x="365.192px 378.968px " y="481.312px 481.312px ">ga</tspan>ted</text>
+                    <text x="32px" y="505.984px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">elements at a certain animation step.</text>
+                    <text x="32px" y="530.656px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">Each pr<tspan x="114.248px 128.024px " y="530.656px 530.656px ">op</tspan>erty is set using a simple</text>
+                    <g transform="matrix(24,0,0,24,419.576,555.328)">
+                    </g>
+                    <text x="32px" y="555.328px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">syntax, with one rule per line of text:</text>
+                </g>
+                <g transform="matrix(1,0,0,1,1131,-359)">
+                    <text x="32px" y="456.64px" style="font-family:'PingFangSC-Regular', 'PingFang SC', sans-serif;font-size:24px;">➌</text>
+                    <text x="62.672px" y="456.64px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">The label of an<tspan x="220.712px " y="456.64px "> </tspan>arr<tspan x="255.824px 269.6px " y="456.64px 456.64px ">ow</tspan> that connect</text>
+                    <text x="32px" y="481.312px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">nodes specify (1) when to apply the</text>
+                    <text x="32px" y="505.984px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">next update and (2) how long should</text>
+                    <g transform="matrix(24,0,0,24,287.216,530.656)">
+                    </g>
+                    <text x="32px" y="530.656px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">that update animate for<tspan x="280.544px " y="530.656px ">.</tspan></text>
+                </g>
+                <g transform="matrix(1,0,0,1,1131,-160.75)">
+                    <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">It starts with the trigger condition.</text>
+                    <g transform="matrix(24,0,0,24,447.704,477.808)">
+                    </g>
+                    <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">If it is not set, the update is immediate:</text>
+                </g>
+                <g>
+                    <g transform="matrix(1,0,0,1,1131,-89.432)">
+                        <text x="32px" y="459.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">click [</text>
+                        <text x="93.776px" y="459.152px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                        <text x="108.225px" y="459.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">n</text>
+                        <text x="121.569px" y="459.152px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                        <g transform="matrix(24,0,0,24,142.234,459.152)">
+                        </g>
+                        <text x="136.018px" y="459.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">]</text>
+                    </g>
+                    <g transform="matrix(1,0,0,1,1131,-61.432)">
+                        <text x="32px" y="459.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">wait</text>
+                        <text x="82.64px" y="459.152px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟨</text>
+                        <text x="97.089px" y="459.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">d</text>
+                        <text x="111.321px" y="459.152px" style="font-family:'Menlo-Regular', 'Menlo', monospace;font-size:24px;fill:rgb(184,10,10);">⟩</text>
+                    </g>
+                    <g transform="matrix(24,0,0,24,1581.49,369.136)">
+                    </g>
+                    <text x="1326.85px" y="369.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">wait for one (or n) clicks</text>
+                    <g transform="matrix(24,0,0,24,1427.26,397.136)">
+                    </g>
+                    <text x="1326.85px" y="397.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">wait for d</text>
+                </g>
+                <g>
+                    <g transform="matrix(24,0,0,24,1311.08,522.136)">
+                    </g>
+                    <text x="1163px" y="522.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">click 4 100ms</text>
+                    <g transform="matrix(24,0,0,24,1271,550.136)">
+                    </g>
+                    <text x="1163px" y="550.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">wait 5s 1s</text>
+                    <g transform="matrix(24,0,0,24,1586.48,522.136)">
+                    </g>
+                    <text x="1326.85px" y="522.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">last 100ms after 4 clicks</text>
+                    <g transform="matrix(24,0,0,24,1602.39,550.136)">
+                    </g>
+                    <text x="1326.85px" y="550.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(128,128,128);">last 1s after waiting for 5s</text>
+                </g>
+                <g transform="matrix(1,0,0,1,1131,-5.5)">
+                    <g transform="matrix(24,0,0,24,175.592,453.136)">
+                    </g>
+                    <g transform="matrix(24,0,0,24,182.696,453.136)">
+                    </g>
+                    <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">Then, it speciﬁes the duration of the</text>
+                    <g transform="matrix(24,0,0,24,417.416,477.808)">
+                    </g>
+                    <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">transition. If it is not set, it is instant:</text>
+                </g>
+                <g transform="matrix(1,0,0,1,1131,148.5)">
+                    <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">In addition to “boxed” rules, positions</text>
+                    <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">can also be set by drawing arr<tspan x="355.136px 368.912px " y="477.808px 477.808px ">ow</tspan>s in</text>
+                    <text x="32px" y="502.48px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">the special animation rule colour</text>
+                    <text x="32px" y="527.152px" style="font-family:'HelveticaNeue-Italic', 'Helvetica Neue';font-style:italic;font-size:24px;">outside</text>
+                    <g transform="matrix(24,0,0,24,360.92,527.152)">
+                    </g>
+                    <text x="117.344px" y="527.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">of a box of that colour:</text>
+                </g>
+                <g transform="matrix(1,0,0,1,1131,415.5)">
+                    <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">In that example, once the user clicks,</text>
+                    <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">the disc is translated four times. In</text>
+                    <g transform="matrix(24,0,0,24,423.224,502.48)">
+                    </g>
+                    <text x="32px" y="502.48px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">total, this animation lasts 8 seconds.</text>
+                </g>
+                <g>
+                    <g>
+                        <circle cx="1247.09" cy="741.5" r="29.5" style="fill:rgb(238,238,238);stroke:black;stroke-width:2px;"/>
+                    </g>
+                    <path d="M1477,737L1486,741.5L1477,746L1477,737Z" style="fill:rgb(184,10,10);"/>
+                    <path d="M1247.09,741.5L1478.8,741.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                    <g transform="matrix(18,0,0,18,1396.88,736.676)">
+                    </g>
+                    <text x="1336.21px" y="736.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">click 3s</text>
+                    <g transform="matrix(18,0,0,18,1376.05,831.176)">
+                    </g>
+                    <text x="1357.04px" y="831.176px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">3s</text>
+                    <g transform="matrix(18,0,0,18,1509.46,783.926)">
+                    </g>
+                    <text x="1490.45px" y="783.926px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">1s</text>
+                    <g transform="matrix(18,0,0,18,1242.64,783.926)">
+                    </g>
+                    <text x="1223.63px" y="783.926px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">1s</text>
+                    <path d="M1490.5,804.5L1486,813.5L1481.5,804.5L1490.5,804.5Z" style="fill:rgb(184,10,10);"/>
+                    <path d="M1486,741.5L1486,806.3" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                    <path d="M1242.59,750.5L1247.09,741.5L1251.59,750.5L1242.59,750.5Z" style="fill:rgb(184,10,10);"/>
+                    <path d="M1247.09,813.5L1247.09,748.7" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                    <path d="M1256.09,818L1247.09,813.5L1256.09,809L1256.09,818Z" style="fill:rgb(184,10,10);"/>
+                    <path d="M1486,813.5L1254.29,813.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                </g>
+                <g transform="matrix(18,0,0,18,1390.8,212.676)">
+                </g>
+                <text x="1330.12px" y="212.676px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);">click 5s</text>
+                <path d="M1350,219.568L1350,234L1308,234" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                <path d="M1381,219.568L1381,234L1473,234" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                <g transform="matrix(18,0,0,18,1300.92,237.244)">
+                </g>
+                <text x="1169.25px" y="237.244px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);">trigger condition</text>
+                <g transform="matrix(18,0,0,18,1546.35,237.244)">
+                </g>
+                <text x="1480px" y="237.244px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);">duration</text>
+                <path d="M1331,219.568L1365,219.568" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+                <path d="M1374,219.568L1389,219.568" style="fill:none;stroke:rgb(128,128,128);stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;"/>
+            </g>
+            <g transform="matrix(1,0,0,1,585,-359)">
+                <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">The</text>
+                <text x="78.68px" y="453.136px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">labels</text>
+                <g transform="matrix(24,0,0,24,219.968,453.136)">
+                </g>
+                <g transform="matrix(24,0,0,24,227.072,453.136)">
+                </g>
+                <text x="152.84px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">ar<tspan x="173.288px 186.176px " y="453.136px 453.136px ">e </tspan>deﬁned by connecting a</text>
+                <text x="32px" y="477.808px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">text element T to any other element E</text>
+                <text x="32px" y="502.48px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">using an arr<tspan x="157.808px 171.584px " y="502.48px 502.48px ">ow</tspan> that points to E. The</text>
+                <text x="32px" y="527.152px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">label and the arr<tspan x="205.376px 219.152px " y="527.152px 527.152px ">ow</tspan> must use the</text>
+                <text x="32px" y="551.824px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">special</text>
+                <text x="114.224px" y="551.824px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);">element labelling colour</text>
+                <g transform="matrix(24,0,0,24,372.944,551.824)">
+                </g>
+                <text x="366.272px" y="551.824px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">.</text>
+            </g>
+        </g>
+    </g>
+</svg>

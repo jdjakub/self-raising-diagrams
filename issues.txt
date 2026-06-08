@@ -277,3 +277,40 @@ rect = perpTurn perpTurn perpTurn perpTurn
 
 parallelogram = a b c d &`b-a = c-d && c-b = d-a` => {v1: sub(b,a), v2: sub(c,b)}
 rect = &parallelogram:p &`p.v1 · p.v2 = 0` (.+):pts => {width: |p.v1|, height: |p.v2|, center: centroid(pts)}
+
+-----
+
+PREFERRED WAY TO DO BOXGRAPH?
+
+What's currently called "params" must be implicit overridable definitions with sensible defaults.
+
+BoxGraph <: GraphNotation {
+  node = rect
+  edge = directedConnector
+}
+
+E.g. so a BlueBoxGraph subclass overrides the `node` and `edge` rules to check for blue, else supersend (STILL DON'T SUPPORT DYNAMIC SUPERSENDS!!!)
+
+Or by overriding directedConnector to include "fat arrows", can have fat-arrow connections in the graph too
+
+Maybe the labels should just be folded in:
+
+LabelledBoxGraph <: GraphNotation {
+  node = rect:r  label(r):l?                        => ⟦^node name: l⟧
+  edge = directedConnector:dc  label(⟦dc originPt⟧):l => ⟦^edge name: l⟧
+  label(elt) = { singleLineText:s near elt } => ⟦s string⟧
+
+  fromRegion(r) = => let bg = ⟦^fromRegion: r⟧;  (?? somehow expose named nodes on top ??)
+}
+
+{ ... } denotes geometric sub-syntax ("near" relation). The idea is that "near" would be defined and overridable locally.
+
+Annoying bug currently: blue notation arrows ostensibly from blue box to text label: if too close to their own origin box, they will connect to it (at least in the red code box case). This gets worse the greater the tolerance is increased to snap the arrow endpoint to text labels. Wrong! Self-edges are prohibited by the restriction that arrows go FROM blue boxes TO text labels, but evidently this is unenforced.
+
+DefaultMetaNotation <: ??? {
+  node = originNode | targetNode
+  originNode = blueStroke rect:r label(r):l
+  blueStroke = &`self.cursor.elt.stroke == 'blue'`
+  targetNode = label
+  edge = blueStroke directedConnector startsAt(originNode) endsAt(targetNode)
+}
