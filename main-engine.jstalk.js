@@ -9,6 +9,8 @@ vtables = { byTag: {}, };
 // BTW: the VS Code extension.js auto-replaces [[ -> ⟦ and ]] -> ⟧ as you type
 // If the sugar isn't working for you, just work with the verbose .js output file
 
+// This could be a macro itself, but it's convenient to retain the interleaved syntax
+// in the browser debugger, for readability.
 send = function(recv, ...pairs) {
   if (pairs.length === 1) return sendNoKw(recv, ...pairs); // Unary message
   if (pairs.length % 2 !== 0) throw ['Odd args:', pairs]; // Binary / keyword message
@@ -22,23 +24,54 @@ send = function(recv, ...pairs) {
   return sendNoKw(recv, selector, ...args);
 }
 
-// TODO: supersends
+// Used to add super-send support while keeping calls to send() backwards-compatible.
+// Send to recv, starting the method search *from* a given vtable.
+// SMELL: pairing logic duped from send()
+// sendFrom just uses sendNoKwFrom instead of sendNoKw and passes vtable thru.
+sendFrom = function(vtable, recv, ...pairs) {
+  if (pairs.length === 1) return sendNoKwFrom(vtable, recv, ...pairs); // Unary message
+  if (pairs.length % 2 !== 0) throw ['Odd args:', pairs]; // Binary / keyword message
+  let selector = [];
+  const args = [];
+  for (let i=0; i<pairs.length; i += 2) {
+    selector.push(pairs[i]);
+    args.push(pairs[i+1]);
+  }
+  selector = selector.join('');
+  return sendNoKwFrom(vtable, recv, selector, ...args);
+}
+
 sendNoKw = function(recv, selector, ...args) {
   let vtable;
   if (recv.tagName) vtable = vtables.byTag[recv.tagName];
   else if (recv instanceof Array && recv.length === 2) vtable = vtables.point;
   else if (typeof recv.vtable === 'string') vtable = vtables[recv.vtable];
   else vtable = recv.vtable;
+  return sendNoKwFrom(vtable, recv, selector, ...args); 
+}
+
+IS_SUPER_AWARE = Symbol('isSuperAware');
+needsSuper = (fn) => { fn[IS_SUPER_AWARE] = true; return fn; };
+
+sendNoKwFrom = function(vtable, recv, selector, ...args) {
+  let resolverParent = vtable;
   let method;
   do {
-    method = vtable[selector];
-    vtable = vtable._parent; // i.e. superclass
-  } while (!method && vtable);
-  if (!method && !vtable) {
+    method = resolverParent[selector];
+    resolverParent = resolverParent._parent; // i.e. superclass
+  } while (!method && resolverParent);
+  if (!method && !resolverParent) {
     if (selector === 'doesNotUnderstand:')
       throw [recv," didn't understand: ", args[0], args];
     else
       return sendNoKw(recv, 'doesNotUnderstand:', [selector, ...args]);
+  }
+  if (method[IS_SUPER_AWARE]) {
+    const superSend = (...pairs) => {
+      if (!resolverParent) throw [resolverParent, 'has no parent vtable'];
+      return sendFrom(resolverParent, recv, ...pairs);
+    }
+    return method(superSend, recv, ...args);
   }
   return method(recv, ...args);
 }
@@ -196,19 +229,19 @@ vtables.byTag['path'] = {
     return vnormed(delta);
   },
   ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
-  ['containsPt:']: (self, pt) => {
+  ['containsPt:']: needsSuper((supr, self, pt) => {
     if (!⟦self isClosed⟧) {
       /*const {point, d2} = ⟦pt closestPointOn: self⟧;
       if (d2 < 4) return true;
       return false;*/
       return self.isPointInStroke({ x: pt[0], y: pt[1] });
     }
-    return vtables.domNode['containsPt:'](self, pt); // HACK supersend. Also too coarse
-  },
-  ['encloses:']: (self, other) => {
+    return ⟦super containsPt: pt⟧; // SMELL too coarse
+  }),
+  ['encloses:']: needsSuper((supr, self, other) => {
     if (!⟦self isClosed⟧) return false;
-    else return vtables.domNode['encloses:'](self, other); // HACK supersend
-  },
+    else return ⟦super encloses: other⟧;
+  }),
   ['specialize']: (self) => {
     let newTag = null;
     if (!⟦self isCurved⟧) { // => Polygon | Polyline
