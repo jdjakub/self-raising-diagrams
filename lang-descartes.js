@@ -76,48 +76,71 @@ parse_descartes = function(tokens) {
   const ATOM_STARTERS = ['NUM', 'IDENT', 'LPAREN', 'BAR', 'SUM', 'HOLE', 'LBRACK'];
   const canStartAtom = k => ATOM_STARTERS.includes(k);
 
+  // expr = additive
   const parseExpr = () => parseAdditive();
 
+  // additive = (mul '+')+:ls mul:r => nary('add', ls.push(r))
+  //          | (mul '-')+:ls mul:r => nary('sub', ls.push(r))
+  //          | mul
   const parseAdditive = () => {
-    let left = parseMul();
+    let acc = parseMul();
     while (peek() === 'PLUS' || peek() === 'MINUS') {
       const op = consume().kind === 'PLUS' ? 'add' : 'sub';
       const right = parseMul();
-      left = { kind: 'binop', op, left, right };
+      if (acc.kind === 'nary' && acc.op === op)
+        acc.operands.push(right);
+      else acc = { kind: 'nary', op, operands: [acc, right] };
     }
-    return left;
+    return acc;
   };
 
+  // mul = (juxt '*')+:ls juxt:r => nary('mul', ls.push(r))
+  //     | (juxt '/')+:ls juxt:r => nary('div', ls.push(r))
+  //     | (juxt '·')+:ls juxt:r => nary('dot', ls.push(r))
+  //     | juxt
   const parseMul = () => {
-    let left = parseJuxt();
+    let acc = parseJuxt();
     while (peek() === 'STAR' || peek() === 'SLASH') {
       const k = consume().kind;
       const op = k === 'STAR' ? 'mul' : k === 'SLASH' ? 'div' : 'dot';
       const right = parseJuxt();
-      left = { kind: 'binop', op, left, right };
+      if (acc.kind === 'nary' && acc.op === op)
+        acc.operands.push(right);
+      else acc = { kind: 'nary', op, operands: [acc, right] };
     }
-    return left;
+    return acc;
   };
 
+  // juxt = dotWedge+:facs => nary('mul', facs)
   const parseJuxt = () => {
-    let left = parseDotWedge();
+    let acc = parseDotWedge();
     while (canStartAtom(peek()) && !(peek() === 'BAR' && inBar > 0)) {
       const right = parseDotWedge();
-      left = { kind: 'binop', op: 'mul', left, right };
+      if (acc.kind === 'nary' && acc.op === 'mul')
+        acc.operands.push(right);
+      else acc = { kind: 'nary', op: 'mul', operands: [acc, right] };
     }
-    return left;
+    return acc;
   };
 
+  // dotWedge = (unary '·')+:ls unary:r => nary('dot', ls.push(r))
+  //          | (unary '∧')+:ls unary:r => nary('wedge', ls.push(r))
+  //          | unary
   const parseDotWedge = () => {
-    let left = parseUnary();
+    let acc = parseUnary();
     while (peek() === 'CDOT' || peek() === 'WEDGE') {
       const op = consume().kind === 'CDOT' ? 'dot' : 'wedge';
       const right = parseUnary();
-      left = { kind: 'binop', op, left, right };
+      if (acc.kind === 'nary' && acc.op === op)
+        acc.operands.push(right);
+      else acc = { kind: 'nary', op, operands: [acc, right] };
     }
-    return left;
+    return acc;
   };
 
+  // unary = '∑' unary:x => unary('sum', x)
+  //       | '-' unary:x => unary('neg', x)
+  //       | power
   const parseUnary = () => {
     if (peek() === 'SUM') {
       consume();
@@ -130,6 +153,7 @@ parse_descartes = function(tokens) {
     return parsePower();
   };
 
+  // power = postfix:base sup:e => pow(base, sup_to_num(e.text))
   const parsePower = () => {
     const base = parsePostfix();
     if (peek() === 'SUP') {
@@ -139,6 +163,9 @@ parse_descartes = function(tokens) {
     return base;
   };
 
+  // postfix = primary:x ( '.' ident:m    => member(x, m.text)
+  //                     | '(' args:a ')' => call(x, args)
+  //                     | '[' expr:i ']' => index(x, i)    )
   const parsePostfix = () => {
     let x = parsePrimary();
     while (true) {
@@ -163,6 +190,12 @@ parse_descartes = function(tokens) {
     return x;
   };
 
+  // primary = num:n          => num(n.text)
+  //         | ident:i        => ident(i.text)
+  //         | '(' expr:e ')' => e
+  //         | '|' =>{ inBar++ } expr:e '|'   =>{ inBar-- } => mag(e)
+  //         | '[' (expr ',')*:es expr?:e ']'               => array(es.push(e))
+  //         | hole:h         => hole(h.text)
   const parsePrimary = () => {
     const k = peek();
     if (k === 'NUM') return { kind: 'num', text: consume().text };
@@ -195,6 +228,8 @@ parse_descartes = function(tokens) {
     throw 'Expected primary, got ' + k + ' at token ' + pos;
   };
 
+  // args = expr:e (expr ',')*:es => [e].concat(es)
+  //      | => []
   const parseArgs = () => {
     if (peek() === 'RPAREN') return [];
     const args = [parseExpr()];
@@ -202,6 +237,7 @@ parse_descartes = function(tokens) {
     return args;
   };
 
+  // start = expr
   const ast = parseExpr();
   if (pos < tokens.length) throw 'Unexpected token ' + peek() + ' at position ' + pos;
   return ast;
@@ -213,8 +249,8 @@ codegen_descartes = function(node) {
     case 'num':    return node.text;
     case 'ident':  return node.text;
     case 'mag':    return 'mag(' + g(node.expr) + ')';
-    case 'binop':  return node.op + '(' + g(node.left) + ', ' + g(node.right) + ')';
     case 'unary':  return node.op + '(' + g(node.operand) + ')';
+    case 'nary':   return node.op + '(' + node.operands.map(g).join(', ') + ')';
     case 'pow':    return 'pow(' + g(node.base) + ', ' + node.exp + ')';
     case 'member': return g(node.obj) + '.' + node.name;
     case 'index':  return g(node.obj) + '[' + g(node.idx) + ']';

@@ -96,15 +96,19 @@ vinbasis = (e1,e2) => v => {
 
 isvec = (...xs) => xs.every(x => x instanceof Array);
 
-// Arith functions to which Descartes compiles
-add = (a, b) => isvec(a, b) ? vadd(a, b) : (a+b);
-sub = (a, b) => isvec(a, b) ? vsub(a, b) : (a-b);
+// Polymorphic arith functions to which Descartes compiles
+add2 = (a, b) => isvec(a, b) ? vadd(a, b) : (a+b);
+sum = (x, ...xs) => xs.reduce(add2, x);
+add = sum;
+sub2 = (a, b) => isvec(a, b) ? vsub(a, b) : (a-b);
+sub = (x, ...xs) => xs.reduce(sub2, x);
 dot = vdot;
-wedge = vwedge;
-mul = (a, b) => isvec(a) ? vmul(b,a) : isvec(b) ? vmul(a,b) : (a*b);
-div = (a, b) => mul(1/b, a);
-neg = x => mul(-1, x);
-sum = xs => xs.reduce(add, isvec(...xs) ? [0,0] : 0);
+wedge = (x, ...xs) => xs.reduce(vwedge, x);
+mul2 = (a, b) => isvec(a) ? vmul(b,a) : isvec(b) ? vmul(a,b) : (a*b);
+mul = (x, ...xs) => xs.reduce(mul2, x);
+div2 = (a, b) => mul2(1/b, a);
+div = (x, ...xs) => xs.reduce(div2, x);
+neg = x => mul2(-1, x);
 mag = x => isvec(x) ? vmag(x) : Math.abs(x);
 // TODO: the rest
 

@@ -1,0 +1,34 @@
+start = expr
+
+expr = (mul '+')+:ls mul:r => nary('add', ls.push(r))
+     | (mul '-')+:ls mul:r => nary('sub', ls.push(r))
+     | mul
+
+mul = (juxt '*')+:ls juxt:r => nary('mul', ls.push(r))
+    | (juxt '/')+:ls juxt:r => nary('div', ls.push(r))
+    | (juxt '·')+:ls juxt:r => nary('dot', ls.push(r))
+    | juxt
+
+juxt = dotWedge+:facs => nary('mul', facs)
+
+dotWedge = (unary '·')+:ls unary:r => nary('dot', ls.push(r))
+         | (unary '∧')+:ls unary:r => nary('wedge', ls.push(r))
+         | unary
+
+unary = '∑' unary:x => unary('sum', x)
+      | '-' unary:x => unary('neg', x)
+      | postfix:base sup:e => pow(base, sup_to_num(e.text))
+
+postfix = primary:x ( '.' ident:m    => member(x, m.text)
+                    | '(' args:a ')' => call(x, args)
+                    | '[' expr:i ']' => index(x, i)    )
+
+args = expr:e (expr ',')*:es => [e].concat(es)
+     | => []
+
+primary = num:n          => num(n.text)
+        | ident:i        => ident(i.text)
+        | '(' expr:e ')' => e
+        | '|' =>{ inBar++ } expr:e '|'   =>{ inBar-- } => mag(e)
+        | '[' (expr ',')*:es expr?:e ']'               => array(es.push(e))
+        | hole:h         => hole(h.text)
