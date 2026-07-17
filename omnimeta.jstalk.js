@@ -95,14 +95,19 @@ vtables.OmniMeta = {
   ['many:seed:']: (self, thunk, seed) => {
     const acc = seed !== undefined ? [seed] : [];
     while (true) {
-      const before = ⟦self cursorKey: self.cursor⟧;
+      const before    = self.cursor;
+      const beforeKey = ⟦self cursorKey: before⟧; 
       let v;
       try { v = thunk(); }
-      catch (f) { if (f !== fail) throw f; break; }   // normal end of repetition
+      catch (f) {
+        if (f !== fail) throw f;
+        self.cursor = before;
+        break;
+      }   // normal end of repetition
       // Consumption-implies-progress: a successful iteration that didn't advance
       // the cursor would loop forever. The cursor-key guard is the generic,
       // substrate-neutral termination net.
-      if (⟦self cursorKey: self.cursor⟧ === before)
+      if (⟦self cursorKey: self.cursor⟧ === beforeKey)
         throw ['many: made no progress — non-terminating rule (empty success)'];
       acc.push(v);
     }
@@ -293,6 +298,35 @@ vtables.NumberGrammar = {
     result = match(vtables.NumberGrammar, "12345", "number")   // => 12345
     bad    = match(vtables.NumberGrammar, "x99",  "number")    // => MATCH_FAILED
 */
+
+// ── PathDataGrammar: minimal SVG path-data matching on CharGrammar ───────────
+// Deliberately minimal: just enough for the literal patterns we match.
+vtables.PathDataGrammar = {
+  _parent: vtables.CharGrammar,
+
+  // number = spaces '-'? digit+ ('.' digit+)?   ⟹ float
+  ['number']: (self) => {
+    ⟦self apply: 'spaces'⟧;
+    const sign = ⟦self opt: () => ⟦self apply: 'char:' with: ['-']⟧⟧;
+    const int  = ⟦self many1: () => ⟦self apply: 'digit'⟧⟧;
+    const frac = ⟦self opt: () => {
+      ⟦self apply: 'char:' with: ['.']⟧;
+      return ⟦self many1: () => ⟦self apply: 'digit'⟧⟧;
+    }⟧;
+    return parseFloat((sign || '') + int.join('') + (frac ? '.' + frac.join('') : ''));
+  },
+
+  // point = number ','? number   ⟹ [x, y]
+  ['point']: (self) => {
+    const x = ⟦self apply: 'number'⟧;
+    ⟦self opt: () => ⟦self apply: 'token:' with: [',']⟧⟧;
+    const y = ⟦self apply: 'number'⟧;
+    return [x, y];
+  },
+
+  // a command letter, whitespace-skipped
+  ['cmd:']: (self, c) => ⟦self apply: 'token:' with: [c]⟧,
+};
 
 // ── VertexGrammar: cyclic vertex-list matching on SeqSubstrate ───────────────
 // Cursor inherited unchanged ({stream, idx}); stream is an array of [x, y]
@@ -686,13 +720,13 @@ vtables.ChildSetSubstrate = {
     // => one entry per circle child; rect/text children silently skipped
 */
 
-// ── AbstractArrow ────────────────────────────────────────────────────────────
-// Abstract grammar over a <g>'s children-as-multiset. Leaves `head` and `shaft`
-// abstract; concrete grammars override. The endpoints rule uses the
-// classify-then-project pattern we settled on: targetPt/originPt are
-// inspections (under `lookahead:`) that share one classification of the head,
-// so the original sketch's structure is preserved exactly.
-vtables.AbstractArrow = {
+// ── HeadShaftArrow ────────────────────────────────────────────────────────────
+// Grammar for arrows with separate head/shaft elements, operating over a <g>'s
+// children-as-multiset. Leaves `head` and `shaft` abstract; concrete grammars
+// override. The endpoints rule uses the classify-then-project pattern we settled
+// on: targetPt/originPt are inspections (under `lookahead:`) that share one
+// classification of the head, so the original sketch's structure is preserved exactly.
+vtables.HeadShaftArrow = {
   _parent: vtables.ChildSetSubstrate,
   // head, shaft: abstract — concrete grammars override.
  
@@ -764,7 +798,7 @@ vtables.AbstractArrow = {
 
 // ── MathchaArrow: the adapter ────────────────────────────────────────────────
 vtables.MathchaArrow = {
-  _parent: vtables.AbstractArrow,
+  _parent: vtables.HeadShaftArrow,
 
   ['head']:  (self) => ⟦self apply: 'childMatching:inGrammar:' with: ['head',  vtables.MathchaHeadShaftRules]⟧,
   ['shaft']: (self) => ⟦self apply: 'childMatching:inGrammar:' with: ['shaft', vtables.MathchaHeadShaftRules]⟧,
@@ -876,4 +910,51 @@ vtables.MathchaArrowhead = {
  
   // Everything else (id, parentElement, ...) flows through to the element.
   ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.elt, sel, ...args),
+};
+
+vtables.PowerpointArrow = {
+  _parent: vtables.DOMMeta,
+
+  // arrow = path d=(M b1 _* b2 Z M _ tip ...) ⟹ { from: (b1 ~ b2), to: tip }
+  ['endpoints']: (self) => {
+    const elt = self.cursor.dict;
+    ⟦self pred: elt.tagName === 'path'⟧;
+    const d = ⟦self apply: 'key:' with: ['d']⟧;
+    return ⟦self lend: vtables.PowerpointArrowPath input: d rule: 'arrow'⟧;
+  },
+
+  ['originPt']: (self) => { const [from, to] = ⟦self endpoints⟧; return from; },
+  ['targetPt']: (self) => { const [from, to] = ⟦self endpoints⟧; return to; },
+  ['isDirected']: () => true, // FOR NOW...
+};
+
+// ── PowerpointArrowPath: the literal PP arrow path-data pattern ──────────────
+vtables.PowerpointArrowPath = {
+  _parent: vtables.PathDataGrammar,
+
+  // arrow = M b1 _* b2 Z M _ tip ... ⟹ { from: (b1 ~ b2), to: tip }
+  ['arrow']: (self) => {
+    ⟦self apply: 'cmd:' with: ['M']⟧;
+    const b1 = ⟦self apply: 'point'⟧;
+
+    // `_*` — skip points, stopping at the LAST one before Z.
+    // A plain `point*` here would be WRONG: PEG repetition is possessive, so it
+    // would swallow b2 as well and the following `point:b2` could never match
+    // (no backtracking into a `*`). The `~(point Z)` lookahead is exactly what
+    // makes "stop just before the closing point" expressible — your instinct
+    // that lookahead was necessary is right, and this is why.
+    ⟦self many: () => {
+      ⟦self not: () => { ⟦self apply: 'point'⟧; ⟦self apply: 'cmd:' with: ['Z']⟧; }⟧;
+      return ⟦self apply: 'point'⟧;
+    }⟧;
+
+    const b2 = ⟦self apply: 'point'⟧;
+    ⟦self apply: 'cmd:' with: ['Z']⟧;
+    ⟦self apply: 'cmd:' with: ['M']⟧;
+    ⟦self apply: 'point'⟧;
+    const tip = ⟦self apply: 'point'⟧;
+    // `...` — remainder deliberately unmatched; we just stop here.
+
+    return [vmul(0.5, vadd(b1, b2)), tip];
+  },
 };
