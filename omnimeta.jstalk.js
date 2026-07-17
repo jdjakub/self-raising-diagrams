@@ -195,7 +195,11 @@ vtables.SeqSubstrate = {
 };
 
 // ── CharGrammar: character-specific matchers on SeqSubstrate ─────────────────
-// (letter, spaces, token, fromTo, ... also belong here — same cursor.)
+// Scannerless: tokenisation is just rules. `token:` skips leading whitespace
+// then matches a literal; the OMeta-sugar "..." compiles to ⟦self token: "..."⟧.
+// There is deliberately NO monolithic `scanner` rule listing every token kind
+// (that's Warth's Fig 2.5 capability demo, not the practical pattern) —
+// whitespace-skipping is folded into each token-match at its point of use.
 vtables.CharGrammar = {
   _parent: vtables.SeqSubstrate,
 
@@ -203,6 +207,57 @@ vtables.CharGrammar = {
     const r = ⟦self apply: 'anything'⟧;
     ⟦self pred: typeof r === 'string' && r >= '0' && r <= '9'⟧;
     return r;
+  },
+
+  ['letter']: (self) => {
+    const r = ⟦self apply: 'anything'⟧;
+    ⟦self pred: typeof r === 'string'
+              && ((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'))⟧;
+    return r;
+  },
+
+  // letter or digit — the default "identifier continuation" class.
+  ['alnum']: (self) => ⟦self or: [
+    () => ⟦self apply: 'letter'⟧,
+    () => ⟦self apply: 'digit'⟧,
+  ]⟧,
+
+  // exactly the given character (alias of SeqSubstrate's exactly: for chars).
+  ['char:']: (self, c) => ⟦self apply: 'exactly:' with: [c]⟧,
+
+  // match any one char in the given string of options.
+  ['oneOf:']: (self, chars) => {
+    const r = ⟦self apply: 'anything'⟧;
+    ⟦self pred: typeof r === 'string' && chars.indexOf(r) >= 0⟧;
+    return r;
+  },
+
+  // zero or more whitespace chars; returns nothing useful (consumed only).
+  ['spaces']: (self) => ⟦self many: () => ⟦self apply: 'oneOf:' with: [' \t\r\n']⟧⟧,
+
+  // match the literal multi-char string `s` exactly, char by char.
+  // Returns s on success. (No whitespace handling — that's token:.)
+  ['seq:']: (self, s) => {
+    for (let i = 0; i < s.length; i++) ⟦self apply: 'char:' with: [s[i]]⟧;
+    return s;
+  },
+
+  // token: skip leading whitespace, then match literal `s`. The "..." sugar.
+  // Good for punctuation/operators. For ALPHABETIC keywords that could be a
+  // prefix of a longer identifier (e.g. "if" in "ifx"), use wordToken: which
+  // adds a trailing-boundary check.
+  ['token:']: (self, s) => {
+    ⟦self apply: 'spaces'⟧;
+    return ⟦self apply: 'seq:' with: [s]⟧;
+  },
+
+  // wordToken: like token: but asserts the match isn't followed by an
+  // identifier-continuation char, so "if" won't match inside "ifx".
+  ['wordToken:']: (self, s) => {
+    ⟦self apply: 'spaces'⟧;
+    ⟦self apply: 'seq:' with: [s]⟧;
+    ⟦self not: () => ⟦self apply: 'alnum'⟧⟧;
+    return s;
   },
 };
 
@@ -711,10 +766,8 @@ vtables.AbstractArrow = {
 vtables.MathchaArrow = {
   _parent: vtables.AbstractArrow,
 
-  ['head']:  (self) => ⟦self apply: 'childMatching:inGrammar:'
-                             with: ['head',  vtables.MathchaHeadShaftRules]⟧,
-  ['shaft']: (self) => ⟦self apply: 'childMatching:inGrammar:'
-                             with: ['shaft', vtables.MathchaHeadShaftRules]⟧,
+  ['head']:  (self) => ⟦self apply: 'childMatching:inGrammar:' with: ['head',  vtables.MathchaHeadShaftRules]⟧,
+  ['shaft']: (self) => ⟦self apply: 'childMatching:inGrammar:' with: ['shaft', vtables.MathchaHeadShaftRules]⟧,
 };
 
 // ── MathchaHeadShaftRules: per-element classifiers ───────────────────────────

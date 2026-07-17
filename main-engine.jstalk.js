@@ -594,179 +594,6 @@ vupd = (name, value, origin, prototypeId) => {
   perform(vtables.MathchaArrow, arrow, 'targetPt:', [vadd(origin,value)]);
 };
 
-/*
-In order for a generic shape (1D/2D) to claim a label, we want to use
-a context-specific shape as proxy. E.g. for boxGraph, a 1D arrow claims
-the closest label to its *origin point* (0D). Meanwhile, a 2D box claims
-the closest label to its entire shape. Afterwards, max distances or further
-restrictions are applied.
-
-Don't prematurely commit to the specific DOM.
-*/
-
-// === BoxGraph SEMANTIC LAYER ===
-// TODO: reify package BoxGraph
-// WARNING: likely to be obsoleted or reworked by Opus 4.7 collaboration
-
-/*
-vtables['BoxGraph-Common'] = {
-  // Wrap underlying DOM element and inherit its methods
-  ['doesNotUnderstand:']: (self, [selector, ...args]) => sendNoKw(self.dom, selector, ...args),
-  ['label:']: (self, labelPara) => {
-    self.dom.dataset.label = ⟦labelPara id⟧;
-    labelPara.dataset.labelFor = ⟦self id⟧;
-  },
-}
-
-vtables['Box'] = {
-  _parent: vtables['BoxGraph-Common'],
-
-  ['initFromDOM:']: (self, rect) => {
-    self.dom = rect;
-    rect.box = self; // backlink
-    self.domContainer = rect.parentElement; // Target of all CSS queries
-  },
-  // Box >> claimLabel
-  //    labels := all('.is-paragraph:not(.is-multiline):not([data-label-for])').
-  //    label := (labels outside: self) minimizing: [ :l | self distanceTo: l ].
-  //    self label: label.
-  ['claimLabel']: (self) => {
-    const labels = all('.is-paragraph:not(.is-multiline):not([data-label-for])');
-    const outerLabels = labels.filter(l => !⟦self encloses: l⟧);
-    const labelDists = outerLabels.map(l => [l, ⟦self distanceTo: l⟧]).filter(([l,d]) => d < 20);
-    if (labelDists.length > 0) {
-      const [label] = labelDists.thatWhichMinimizes(([l,d]) => d);
-      if (label) ⟦self label: label⟧;
-    }
-  },
-  ['name']: (self) => {
-    if (self.dom.dataset.label) return byId(self.dom.dataset.label).dataset.string;
-    return null;
-  },
-  ['at:']: (self, name) => {
-    const g = self.domContainer.querySelector('[data-string="'+name+'"]');
-    if (g && g.dataset.labelFor) {
-      const arrow = byId(g.dataset.labelFor);
-      if (arrow && arrow.dataset.target) {
-        const target = byId(arrow.dataset.target); // Follow the arrow
-        if (target) return target.box;
-      }
-    }
-    return null;
-  }
-}
-
-vtables['Arrow'] = {
-  _parent: vtables['BoxGraph-Common'],
-
-  ['initFromDOM:']: (self, path) => {
-    self.dom = path; // Now I will inherit all messages
-    path.arrow = self; // backlink
-  },
-  // Arrow >> claimLabel
-  //   labels := all('.is-paragraph:not(.is-multiline)').
-  //   label := labels minimizing: [ :l | self originPt distanceTo: l ].
-  //   self label: label.
-  ['claimLabel']: (self) => {
-    const labels = all('.is-paragraph:not(.is-multiline)');
-    const label = labels.thatWhichMinimizes(l => ⟦⟦self originPt⟧ distanceTo: l⟧);
-    ⟦self label: label⟧;
-  },
-}
-
-vtables.byTag['rect']['parseAsBox'] = (self) => {
-  const box = { vtable: 'Box' }; // HACK constructors
-  ⟦box initFromDOM: self⟧;
-  return box;
-}
-
-vtables.byTag['path']['parseAsConnector'] = (self) => {
-  const arrow = { vtable: 'Arrow' }; // HACK constructors
-  ⟦arrow initFromDOM: self⟧;
-  return arrow;
-}
-
-vtables['BoxGraph-Legacy'] = {
-  _parent: null,
-
-  ['parse']: (self) => {
-    self.connectors = all('polyline, path.real, line').map(l => ⟦l parseAsConnector⟧);
-    self.realArrows = self.connectors.filter(a => ⟦a isDirected⟧);
-    self.realArrows.forEach(arr => ⟦arr claimLabel⟧);
-
-    self.boxes = all('rect').map(r => ⟦r parseAsBox⟧);
-    self.boxes.forEach(b => ⟦b claimLabel⟧);
-  },
-  ['boxNamed:']: (self, name) => {
-    const label = some('g[data-string="'+name+'"');
-    if (label) return byId(label.dataset.labelFor).box;
-  }
-}
-
-// Run on boxGraph-example.svg after init()
-parseBoxGraph = function() {
-  boxGraph = { vtable: 'BoxGraph-Legacy' }; // HACK constructors
-  return ⟦boxGraph parse⟧;
-}
-
-generateJSOG = function() {
-  log('Generating JS object graph.');
-  all('rect').forEach(r => {
-    const obj = {};
-    const labelId = r.dataset.label;
-    if (labelId) {
-      const label = byId(labelId);
-      obj.name = label.dataset.string;
-    }
-    r.obj = obj;
-    const codePara = r.parentElement.querySelector('.is-multiline');
-    if (codePara) {
-      obj.code = codePara.dataset.string;
-    }
-  });
-  all('.connection[data-label]').forEach(arr => {
-    const label = byId(arr.dataset.label).dataset.string;
-    const origin = byId(arr.dataset.origin).obj;
-    const target = byId(arr.dataset.target).obj;
-    origin[label] = target;  
-  });
-  
-  objs = {};
-  nextObj = 1;
-  ensureName = str => str ? str : 'anon'+(nextObj++);
-  all('rect').forEach(r => { objs[ensureName(r.obj.name)] = r.obj; });
-  return objs;
-}
-
-// === IdObjModel SEMANTIC LAYER ===
-// For id-vanilla.svg
-
-vtables['Arrow']['checkIfSeparator'] = (self) => {
-  if (⟦self isDirected⟧) return false;
-  self.dom.classList.add('methods-are-below');
-  return true;
-}
-
-vtables['Box']['methodAt:'] = (self, name) => {
-  const method = ⟦self at: name⟧;
-  // HACK duped from Box >> at:
-  const para = self.domContainer.querySelector('[data-string="'+name+'"]');
-  if (!para) return null;
-  const separator = self.domContainer.querySelector('.methods-are-below');
-  if (!separator) throw [self, 'doesn\'t have methods'];
-  const pt_y = para.getBBox().y;
-  const y = ⟦separator.arrow endpoints⟧[0][1];
-  if (pt_y > y) return method; // methods live below separator
-  return null;
-}
-
-vtables['Box']['asJSFunc'] = (self) => {
-  const para = self.domContainer.querySelector('g.is-paragraph');
-  const source = para.dataset.string;
-  return eval(source); // >:D
-}
-*/
-
 // === CLAUDE OPUS 4.7 GENERATED ===
 
 // === GraphNotation ===
@@ -1542,11 +1369,27 @@ vtables['JS{[SweetTalk]}'] = {
   }
 }
 
+editor = null;
+function learnEditor() {
+  editor = svg_parent.dataset.exportedFrom;
+  if (typeof editor === 'string') editor = editor.toLowerCase();
+  else { // Heuristically guess
+    if (document.querySelector('svg.role-diagram-draw-area')) editor = 'mathcha';
+    else if (svg_parent.lookupNamespaceURI('serif') === 'http://www.serif.com/') editor = 'affinity designer';
+    else if (svg_parent.querySelector('defs')) editor = 'powerpoint';
+    else editor = 'unknown';
+    log('Guessed editor = ' + editor);
+  }
+}
+
 everything = {};
 // Universal entry point; mandatory for all diagrams
 function init() {
   // First, ensure "nil" exists
   nilElem = svgel('g', {id: 'nil'});
+
+  // Second, establish which editor's XML conventions we're working from.
+  learnEditor();
 
   // Next, we must normalise the document. That means:
   // 1. Specialise individual shapes as far as possible (eg path -> polygon -> rect)

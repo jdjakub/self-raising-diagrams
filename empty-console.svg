@@ -10,4 +10,5 @@
 	<script href="./lang-descartes.js"></script>
 	<script href="./main-engine.js"></script>
         <script href="./omnimeta.js"></script>
+        <script href="./probe.js"></script>
         </svg>

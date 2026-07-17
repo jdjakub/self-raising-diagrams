@@ -5,7 +5,6 @@
 # code in modern browsers WITHOUT relying on a local server
 # because of same-origin nonsense.
 
-SCRIPT=${2%.js}
 # Thanks Copilot
 sed -z -E -i \
   "s|(<svg[^>]*>)|\\1\n\
@@ -13,5 +12,6 @@ sed -z -E -i \
 \t<script href=\"./bracket-hole-carving.js\"></script>\n\
 \t<script href=\"./lang-sweettalk.js\"></script>\n\
 \t<script href=\"./lang-descartes.js\"></script>\n\
-\t<script href=\"./${SCRIPT}.js\"></script>|" \
+\t<script href=\"./main-engine.js\"></script>\n\
+\t<script href=\"./omnimeta.js\"></script>|" \
  $1
