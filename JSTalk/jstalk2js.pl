@@ -50,6 +50,25 @@ sub find_matching {
     return $depth == 0 ? $pos : -1;
 }
 
+# Array-based matching-⟦⟧ finder for the outer scan. Indexes a shared character
+# array in O(1) (no substr on a multibyte string), scanning within [$start,$hi).
+# Returns the index of the matching CLOSE, or -1 if unbalanced.
+sub find_matching_bracket_arr {
+    my ($chars, $start, $hi) = @_;
+    my $depth = 1;
+    my $pos = $start;
+    while ($pos < $hi && $depth > 0) {
+        my $ch = $chars->[$pos];
+        if ($ch eq $OPEN) {
+            $depth++;
+        } elsif ($ch eq $CLOSE) {
+            $depth--;
+        }
+        $pos++ if $depth > 0;
+    }
+    return $depth == 0 ? $pos : -1;
+}
+
 sub skip_balanced {
     my ($str, $pos) = @_;
     my $len = length($str);
@@ -227,23 +246,26 @@ sub format_send {
     return $out;
 }
 
-sub transpile {
-    my ($input) = @_;
+# Outer transpile pass. Operates on a shared character array over the half-open
+# index range [$lo, $hi), so all character access is O(1) — this is what removes
+# the previous O(n^2) behaviour on large inputs. Returns the transpiled string.
+sub transpile_range {
+    my ($chars, $lo, $hi) = @_;
     my $output = '';
-    my $pos = 0;
-    my $len = length($input);
+    my $pos = $lo;
     
-    while ($pos < $len) {
-        my $ch = substr($input, $pos, 1);
+    while ($pos < $hi) {
+        my $ch = $chars->[$pos];
         
         if ($ch eq $OPEN) {
-            my $end = find_matching_bracket($input, $pos + 1);
+            my $end = find_matching_bracket_arr($chars, $pos + 1, $hi);
             if ($end == -1) {
                 $output .= $ch;
                 $pos++;
             } else {
-                my $content = substr($input, $pos + 1, $end - $pos - 1);
-                my $transpiled = transpile($content);
+                # Content occupies indices [$pos+1, $end); recurse to convert any
+                # nested ⟦⟧, then parse the resulting (short) string as a send.
+                my $transpiled = transpile_range($chars, $pos + 1, $end);
                 my $parts = parse_message_send($transpiled);
                 if (defined $parts) {
                     $output .= format_send($parts);
@@ -262,4 +284,5 @@ sub transpile {
 }
 
 my $input = do { local $/; <STDIN> };
-print transpile($input);
+my @chars = split //, $input;
+print transpile_range(\@chars, 0, scalar @chars);
