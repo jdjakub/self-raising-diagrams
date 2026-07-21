@@ -117,6 +117,19 @@ vtables.OmniMeta = {
   // ---- semantic predicate ( &`expr` ) --------------------------------------
   ['pred:']: (self, b) => { if (!b) throw fail; return true; },
 
+  // ---- rule designators ----------------------------------------------------
+  // A "rule designator" is either a NAME (string) — late-bound & overridable
+  // through self's vtable chain — or a THUNK (self => result) for composed
+  // applications like Named(Box) passed as an argument. `applyRule:` accepts
+  // both. Prefer names wherever possible: they keep binding contexts live.
+  // (A thunk still resolves its inner names late, since its body goes through
+  //  apply: on self — the thunk freezes the SHAPE of the application, not the
+  //  bindings.)
+  ['applyRule:']: (self, designator) =>
+    (typeof designator === 'function')
+      ? designator(self)
+      : ⟦self apply: designator⟧,
+
   // ---- lending: foreign cursor TYPE (spawns a child match) ─────────────────
   // For same-cursor foreign rules (e.g. abstract arrow → concrete head/shaft)
   // you don't need lending — that's _parent inheritance + plain send.
@@ -697,7 +710,6 @@ vtables.ChildSetSubstrate = {
   pattern that AbstractArrow / MathchaArrow will be a specialisation of:
 
     parentElt = document.querySelector('g')   // a <g> containing mixed children
-
     // A tiny DOMMeta-side rules grammar: tests a single element.
     vtables.SimpleShapeRules = {
       _parent: vtables.DOMMeta,
@@ -719,6 +731,155 @@ vtables.ChildSetSubstrate = {
     match(vtables.CountCircles, parentElt, 'circles')
     // => one entry per circle child; rect/text children silently skipped
 */
+
+// ── RegionSubstrate ──────────────────────────────────────────────────────────
+// Claim-pruning descent over a DOM region. Like ChildSetSubstrate but searches
+// the whole subtree of `scope`, not just direct children — and PRUNES: when an
+// element is claimed (or already consumed), its entire subtree is skipped, so a
+// claimed node is opaque (the outer notation never sees inside it). This is the
+// substrate that `X*` claim-stars run on for region notations (Graph, etc.).
+//
+// Ported from main-engine's GraphNotation>>findIn:matching:excluding:, with two
+// faithful details preserved:
+//   • node-opacity: a matched shape's contained subtree is not searched.
+//   • the DOM Shape Protocol wrapper-hop: shapes sit inside a wrapper <g>, so a
+//     claim on a shape propagates to its wrapper and we skip the wrapper's other
+//     children (they belong to the same conceptual node).
+//
+// Cursor: { scope, consumed:Set<Element> }.  cursorKey = consumed.size
+// (monotonic ⇒ good enough for the progress guard; unordered ⇒ LR dormant).
+vtables.RegionSubstrate = {
+  _parent: vtables.OmniMeta,
+
+  ['initialCursor:']: (self, scope) => ({ scope, consumed: new Set() }),
+  ['cursorKey:']:     (self, c)     => c.consumed.size,
+
+  // claimMatching: — descend from scope in document order, skipping consumed-or-
+  // claimed subtrees; return-and-consume the FIRST element on which the given
+  // rule designator succeeds. `fail` when the region is exhausted.
+  //
+  // The designated vocabulary rule (Box, Arrow, ...) runs THROUGH self — same
+  // grammar, same vtable chain — on a TRANSIENT candidate focus. This is the
+  // "candidate-focus" compromise: the region cursor temporarily grows a `dict`
+  // field pointing at the candidate, so vocabulary rules read self.cursor.dict
+  // (DOMMeta-style) while region-scan state (scope, consumed) rides along. The
+  // focus is strictly scoped — set, rule applied, restored — and never leaks.
+  // Vocabulary rules are thus SIBLINGS in the notation library, overridable via
+  // _parent, with no separate grammar and no lending (a rule that genuinely
+  // needs full DOMMeta machinery can still lend explicitly).
+  ['claimMatching:']: (self, designator) => {
+    const { scope, consumed } = self.cursor;
+    const savedCursor = self.cursor;
+
+    // Apply the designator to a candidate via a transient focus. Returns the
+    // rule's match VALUE on success, or null (restoring the cursor) on fail.
+    const tryClassify = (elem) => {
+      self.cursor = { scope, consumed, dict: elem };   // transient focus
+      try {
+        const v = ⟦self applyRule: designator⟧;
+        self.cursor = savedCursor;                      // restore region cursor
+        return { value: v };
+      } catch (f) {
+        if (f !== fail) throw f;
+        self.cursor = savedCursor;
+        return null;
+      }
+    };
+
+    // Depth-first, document order. Prunes consumed subtrees; a match stops
+    // descent there (node-opacity). Returns {elem, value} or null.
+    const search = (elem) => {
+      if (consumed.has(elem)) return null;             // pruned: already claimed
+      const hit = tryClassify(elem);
+      if (hit) return { elem, value: hit.value };      // claim here; don't descend
+      for (const child of elem.children) {
+        const found = search(child);
+        if (found) return found;
+      }
+      return null;
+    };
+
+    const found = search(scope);
+    if (!found) throw fail;
+
+    // Wrapper-hop: consume the found element AND its wrapper root, so the DOM
+    // Shape Protocol wrapper <g> (and thus its sibling content) is treated as
+    // claimed too — keeping the node opaque to further outer-notation matching.
+    const root = ⟦found.elem localRoot⟧;
+    const nextConsumed = new Set(consumed).add(found.elem);
+    if (root && root !== found.elem) nextConsumed.add(root);
+    self.cursor = { scope, consumed: nextConsumed };
+
+    return found.value;   // the wrapped node/edge object (from the single classify)
+  },
+};
+
+// ── GraphNotationGrammar: the Graph combinator, on RegionSubstrate ───────────
+// verticesMatching:edgesMatching: — a higher-order rule. The two arguments are
+// rule designators (names of sibling vocabulary rules, or thunks for composed
+// applications). Claim priority: all vertices first, then all edges — so an
+// element that could be either becomes a vertex (matching the current
+// `edges`-excludes-node-doms behaviour). EAGER structure claiming; the returned
+// GraphObject answers nodeAt:/connectionsOf: LAZILY.
+//
+// self.epsilon (optional) : endpoint hit-test tolerance; default 3.
+vtables.GraphNotationGrammar = {
+  _parent: vtables.RegionSubstrate,
+
+  ['verticesMatching:edgesMatching:']: (self, vertexRule, edgeRule) => {
+    const vs = ⟦self many: () => ⟦self claimMatching: vertexRule⟧⟧;
+    const es = ⟦self many: () => ⟦self claimMatching: edgeRule⟧⟧;
+    return { vtable: 'GraphObject',
+             nodes: vs, edges: es,
+             epsilon: self.epsilon !== undefined ? self.epsilon : 3 };
+  },
+};
+
+// The runtime object the Graph combinator produces. Eager sets (nodes, edges)
+// already bound; connection resolution is lazy per edge and cached. This is the
+// "semantic face" of the notation — distinct from the grammar face above.
+vtables['GraphObject'] = {
+  ['nodeAt:']: (self, pt) => self.nodes.find(n =>
+    ⟦n signedDistanceToPt: pt⟧ <= self.epsilon) || null,
+
+  ['connectionsOf:']: (self, edge) => {
+    if (edge._connections) return edge._connections;
+    edge._connections = ⟦edge endpoints⟧.map(pt => ⟦self nodeAt: pt⟧);
+    return edge._connections;
+  },
+};
+
+// Node / edge wrappers: forward unknown messages (vertices, endpoints,
+// signedDistanceToPt:, ...) to the wrapped DOM element.
+vtables['GraphNode'] = {
+  ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.dom, sel, ...args),
+};
+vtables['GraphEdge'] = {
+  ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.dom, sel, ...args),
+};
+
+// BoxGraph (OmniMeta version)
+//   bg = match(vtables.BoxGraph, regionElt, 'Root')
+vtables.BoxGraphOM = {
+  _parent: vtables.GraphNotationGrammar,
+
+  // notations
+  ['Root']: (self) => ⟦self verticesMatching: 'Box' edgesMatching: 'Arrow'⟧,
+
+  // Mathcha vocabulary leaves (run on a transient candidate focus: self.cursor.dict).
+  ['Box']: (self) => {
+    const elt = self.cursor.dict;
+    ⟦self pred: elt.tagName === 'rect'⟧;
+    return { vtable: 'GraphNode', dom: elt };
+  },
+
+  ['Arrow']: (self) => {
+    const elt = self.cursor.dict;
+    ⟦self pred: ['polyline','line'].includes(elt.tagName)
+              || (elt.tagName === 'path' && !⟦elt isClosed⟧ && !⟦elt isArrowhead⟧)⟧;
+    return { vtable: 'GraphEdge', dom: elt };
+  },
+};
 
 // ── HeadShaftArrow ────────────────────────────────────────────────────────────
 // Grammar for arrows with separate head/shaft elements, operating over a <g>'s

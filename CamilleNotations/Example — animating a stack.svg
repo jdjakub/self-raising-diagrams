@@ -1,6 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!DOCTYPE html>
+<html><body><!-- HTML wrapper added to guarantee Element Inspector highlights -->
 <svg width="100%" height="100%" viewBox="0 0 1064 795" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-miterlimit:1.5;">
+    <script href="../utils.js"></script>
+	<script href="../bracket-hole-carving.js"></script>
+	<script href="../lang-sweettalk.js"></script>
+	<script href="../lang-descartes.js"></script>
+	<script href="../main-engine.js"></script>
+	<script href="../omnimeta.js"></script>
     <rect id="Example---animating-a-stack" serif:id="Example — animating a stack" x="0" y="0" width="1064" height="795" style="fill:none;"/>
     <g transform="matrix(24,0,0,24,346.976,58.068)">
     </g>
@@ -193,3 +199,4 @@
     </g>
     <text x="244.96px" y="481.464px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">push 4</text>
 </svg>
+</body></html>

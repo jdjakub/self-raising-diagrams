@@ -46,7 +46,7 @@ nums = (arr) => arr.map(x => +x);
 attrs = (el, ...keys) => keys.map(k => attr(el, k));
 props = (o,  ...keys) => keys.map(k => o[k]);
 
-svg_parent = document.documentElement; // Default parent for new SVG elements
+svg_parent = document.querySelector('svg'); // Default parent for new SVG elements
 svg = svg_parent;
 
 create_element = (tag, attrs, parent, namespace) => {
