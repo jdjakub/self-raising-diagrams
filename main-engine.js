@@ -151,13 +151,17 @@ vtables.domNode = {
   },
   ['isClosed']: (self) => true,
   ['lineSegments']: (self) => explode_poly_segs(send(self, 'vertices'), send(self, 'isClosed')),
-  /*['distanceTo:']: (self, other) => {
+  ['distanceTo:']: (self, other) => {
     if (other instanceof Array) return send(other, 'distanceTo:', self);
     return Math.sqrt(distance2_line_segs_to_segs(send(self, 'lineSegments'), send(other, 'lineSegments')));
-  },*/
+  },
   ['signedDistanceToPt:']: (self, pt) => {
     const dist = send(self, 'distanceTo:', pt);
     return send(self, 'containsPt:', pt) ? -dist : dist;
+  },
+  ['signedDistanceTo:']: (self, other) => {
+    const dist = send(self, 'distanceTo:', other);
+    return send(self, 'encloses:', other) ? -dist : dist;
   },
   ['findTightestContainerIn:']: (self, elems) => { // -> containedIn
     // MUCH nicer code than annotateAllContainments plus treeifyContainments

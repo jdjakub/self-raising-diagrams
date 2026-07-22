@@ -766,31 +766,50 @@ vtables.RegionSubstrate = {
   // Vocabulary rules are thus SIBLINGS in the notation library, overridable via
   // _parent, with no separate grammar and no lending (a rule that genuinely
   // needs full DOMMeta machinery can still lend explicitly).
-  ['claimMatching:']: (self, designator) => {
+  ['claimMatching:']: (self, designator) =>
+    send(self, 'claimFirst:', (elem) => {
+             // predicate: does the designator match at this element?
+             // Runs the rule via transient focus; returns {value} or null.
+             const { scope, consumed } = self.cursor;
+             const savedCursor = self.cursor;
+             self.cursor = { scope, consumed, dict: elem };
+             try {
+               const v = send(self, 'applyRule:', designator);
+               self.cursor = savedCursor;
+               return { value: v };
+             } catch (f) {
+               if (f !== fail) throw f;
+               self.cursor = savedCursor;
+               return null;
+             }
+           },
+           'onExhausted:', () => { throw fail; },
+           'piercing:', false),
+
+  // claimFirst:onExhausted:piercing: — the shared claim core. Descends the
+  // region in document order. `test(elem)` returns a truthy { value } to
+  // claim-here-and-stop-descent, or null to keep searching. On a claim:
+  // wrapper-hops (consumes the element AND its DOM Shape Protocol wrapper root)
+  // and returns test's value. On exhaustion: calls onExhausted (throw fail for
+  // a required claim; return null for an optional one).
+  //
+  // `piercing` splits the two jobs opacity was doing with one mechanism:
+  //   • false (STRUCTURAL, default use): a consumed element is skipped AND its
+  //     whole subtree pruned — node-opacity, so an arrow inside a claimed box is
+  //     never seen as an outer-graph edge.
+  //   • true (ATTACHMENT): a consumed element is skipped as a CANDIDATE (can't
+  //     re-claim it) but we still DESCEND into it — so a name-text inside a
+  //     claimed box is reachable. The curtain lifts for looking, not for taking.
+  ['claimFirst:onExhausted:piercing:']: (self, test, onExhausted, piercing) => {
     const { scope, consumed } = self.cursor;
-    const savedCursor = self.cursor;
 
-    // Apply the designator to a candidate via a transient focus. Returns the
-    // rule's match VALUE on success, or null (restoring the cursor) on fail.
-    const tryClassify = (elem) => {
-      self.cursor = { scope, consumed, dict: elem };   // transient focus
-      try {
-        const v = send(self, 'applyRule:', designator);
-        self.cursor = savedCursor;                      // restore region cursor
-        return { value: v };
-      } catch (f) {
-        if (f !== fail) throw f;
-        self.cursor = savedCursor;
-        return null;
-      }
-    };
-
-    // Depth-first, document order. Prunes consumed subtrees; a match stops
-    // descent there (node-opacity). Returns {elem, value} or null.
     const search = (elem) => {
-      if (consumed.has(elem)) return null;             // pruned: already claimed
-      const hit = tryClassify(elem);
-      if (hit) return { elem, value: hit.value };      // claim here; don't descend
+      const claimed = consumed.has(elem);
+      if (claimed && !piercing) return null; // structural: skip AND prune
+      if (!claimed) {                        // consumed ⇒ never a candidate
+        const hit = test(elem);
+        if (hit) return { elem, value: hit.value };
+      }
       for (const child of elem.children) {
         const found = search(child);
         if (found) return found;
@@ -799,17 +818,15 @@ vtables.RegionSubstrate = {
     };
 
     const found = search(scope);
-    if (!found) throw fail;
+    if (!found) return onExhausted();
 
-    // Wrapper-hop: consume the found element AND its wrapper root, so the DOM
-    // Shape Protocol wrapper <g> (and thus its sibling content) is treated as
-    // claimed too — keeping the node opaque to further outer-notation matching.
+    // Wrapper-hop: consume the found element AND its wrapper root.
     const root = send(found.elem, 'localRoot');
     const nextConsumed = new Set(consumed).add(found.elem);
     if (root && root !== found.elem) nextConsumed.add(root);
     self.cursor = { scope, consumed: nextConsumed };
 
-    return found.value;   // the wrapped node/edge object (from the single classify)
+    return found.value;
   },
 };
 
@@ -826,11 +843,61 @@ vtables.GraphNotationGrammar = {
   _parent: vtables.RegionSubstrate,
 
   ['verticesMatching:edgesMatching:']: (self, vertexRule, edgeRule) => {
-    const vs = send(self, 'many:', () => send(self, 'claimMatching:', vertexRule));
-    const es = send(self, 'many:', () => send(self, 'claimMatching:', edgeRule));
+    const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
+    const es = send(self, 'many:', () => send(self, 'applyClaiming:', edgeRule)); 
     return { vtable: 'GraphObject',
              nodes: vs, edges: es,
              epsilon: self.epsilon !== undefined ? self.epsilon : 3 };
+  },
+
+  // plain name ⇒ claim it (leaf classifier); thunk ⇒ trust it to claim itself
+  ['applyClaiming:']: (self, designator) =>
+    (typeof designator === 'function')
+      ? designator(self)                       // Named(Box) — self-claiming
+      : send(self, 'claimMatching:', designator),      // 'Box' — wrap as leaf classifier
+
+  // ---- Named: decorator combinator ----------------------------------------
+  // Named(inner): claim the inner thing, then claim a name-text near it.
+  // TOTAL and OPTIONAL: no nearby text ⇒ name: null (still wrapped). Consumers
+  // enforce non-null if they need it. Passed as a designator via the thunk
+  //   (self) => send(self, 'Named:', 'Box')
+  // The name-text, if found, is CLAIMED (consumed) — proximity-labelling is
+  // exclusive; a label can name at most one thing.
+  ['Named:']: (self, inner) => {
+    const thing = send(self, 'claimMatching:', inner);         // inner claims at region level
+    const label = send(self, 'nameTextNear:', thing);          // null if none
+    return { vtable: 'NamedThing', name: label?.dataset.string, inner: thing };
+  },
+
+  // nameTextNear: — claim an unconsumed Text element Near `thing`. Returns the
+  // text's string on success, or null when none is near (optional ⇒ no fail).
+  // Reuses the shared claim core, so the found text + its wrapper are consumed
+  // and participate in pruning identically to vertex/edge claims.
+  ['nameTextNear:']: (self, thing) =>
+    send(self, 'claimFirst:', (elem) => {
+             const { scope, consumed } = self.cursor;
+             const savedCursor = self.cursor;
+             self.cursor = { scope, consumed, dict: elem };
+             let text = null;
+             try { text = send(self, 'applyRule:', 'Label'); }   // is elem a text element?
+             catch (f) { if (f !== fail) throw f; }
+             self.cursor = savedCursor;
+             if (text === null) return null;
+             return send(self, 'isNear:', text, 'to:', thing) ? { value: text } : null;
+           },
+           'onExhausted:', () => null,   // optional: null, not fail
+           'piercing:', true), // Search for labels may pierce the opacity of claimed vertices
+
+  // ---- Near / epsilon: overridable proximity, locally quantifiable ---------
+  // A context can override `epsilon` (or `Near:of:` wholesale) to tune snapping.
+  ['epsilon']: (self) => 20, // TODO: distinct epsilons for different cases
+
+  // candidate is Near thing iff thing's boundary is within epsilon of the
+  // candidate's closest point to thing. signedDistanceToPt: is <0 inside,
+  // so `<= epsilon` also accepts a candidate point sitting inside thing.
+  ['isNear:to:']: (self, candidate, thing) => {
+    const sd = send(thing, 'signedDistanceTo:', candidate); // order matters...!
+    return 0 <= sd && sd <= send(self, 'epsilon');
   },
 };
 
@@ -857,18 +924,29 @@ vtables['GraphEdge'] = {
   ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.dom, sel, ...args),
 };
 
+// NamedThing: a decorated node/edge carrying an optional name. Answers `name`;
+// forwards everything else to the inner thing (which itself forwards to its DOM).
+vtables['NamedThing'] = {
+  ['name']: (self) => self.name,
+  ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.inner, sel, ...args),
+};
+
 // BoxGraph (OmniMeta version)
-//   bg = match(vtables.BoxGraph, regionElt, 'Root')
+//   bg = match(vtables.BoxGraphOM, regionElt, 'Root')
 vtables.BoxGraphOM = {
   _parent: vtables.GraphNotationGrammar,
 
-  // notations
-  ['Root']: (self) => send(self, 'verticesMatching:', 'Box', 'edgesMatching:', 'Arrow'),
+  // notation: boxes (optionally named) as vertices, arrows (optionally named)
+  // as edges. Named(_) is passed as a thunk designator so it decorates at the
+  // region level (its name-search needs the region cursor, not a candidate focus).
+  // BoxGraph = Graph(Named(Box), Named(Arrow))
+  ['Root']: (self) => send(self, 'verticesMatching:', (self) => send(self, 'Named:', 'Box'),
+                            'edgesMatching:', (self) => send(self, 'Named:', 'Arrow')),
 
   // Mathcha vocabulary leaves (run on a transient candidate focus: self.cursor.dict).
   ['Box']: (self) => {
     const elt = self.cursor.dict;
-    send(self, 'pred:', elt.tagName === 'rect');
+    send(self, 'pred:', elt.tagName === 'rect' && elt.style.stroke === 'rgb(0, 0, 0)'); // TEMP black only
     return { vtable: 'GraphNode', dom: elt };
   },
 
@@ -876,6 +954,12 @@ vtables.BoxGraphOM = {
     const elt = self.cursor.dict;
     send(self, 'pred:', ['polyline','line'].includes(elt.tagName) || (elt.tagName === 'path' && !send(elt, 'isClosed') && !send(elt, 'isArrowhead')));
     return { vtable: 'GraphEdge', dom: elt };
+  },
+
+  ['Label']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(ALL_LABELS)); // TODO inline constant from main-engine
+    return elt;
   },
 };
 
