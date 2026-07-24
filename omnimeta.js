@@ -843,8 +843,8 @@ vtables.GraphNotationGrammar = {
   _parent: vtables.RegionSubstrate,
 
   ['verticesMatching:edgesMatching:']: (self, vertexRule, edgeRule) => {
-    const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
     const es = send(self, 'many:', () => send(self, 'applyClaiming:', edgeRule)); 
+    const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
     return { vtable: 'GraphObject',
              nodes: vs, edges: es,
              epsilon: self.epsilon !== undefined ? self.epsilon : 3 };
@@ -944,12 +944,15 @@ vtables.BoxGraphOM = {
                             'edgesMatching:', (self) => send(self, 'Named:', 'Arrow')),
 
   // Mathcha vocabulary leaves (run on a transient candidate focus: self.cursor.dict).
+
+  // Box = <rect>
   ['Box']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.tagName === 'rect' && elt.style.stroke === 'rgb(0, 0, 0)'); // TEMP black only
     return { vtable: 'GraphNode', dom: elt };
   },
 
+  // Arrow = <polyline|line> | <path> which isClosed, !isArrowhead
   ['Arrow']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', ['polyline','line'].includes(elt.tagName) || (elt.tagName === 'path' && !send(elt, 'isClosed') && !send(elt, 'isArrowhead')));
@@ -1199,5 +1202,100 @@ vtables.PowerpointArrowPath = {
     // `...` — remainder deliberately unmatched; we just stop here.
 
     return [vmul(0.5, vadd(b1, b2)), tip];
+  },
+};
+
+vtables.MathchaVocab = {
+
+  // 1. SEED SET — which elements enter the specialize/treeify pipeline at all.
+  //    Mathcha marks author-drawn content with .real; other editors have no such
+  //    marker and will need their own filter (e.g. exclude <defs>, clip paths).
+  ['seedElements']: (self) => all('path.real, polygon')
+                              .concat(all('g').filter(g => send(g, 'parseAsParagraph'))),
+
+  // 2. TEXT RECOGNITION — must SET dataset.string and add .is-paragraph
+  //    (+ .is-multiline). Everything downstream reads those, so each editor's
+  //    version only has to produce them from its own nesting shape.
+  ['parseTextElt:']: (self, g) => send(g, 'parseAsParagraph'),   // Mathcha: g/g/g/text
+
+  // 3. ARROWHEAD TEST — "is this path part of an arrow's head, not a shaft?"
+  ['isArrowhead:']: (self, elt) => elt.parentElement.tagName === 'g'
+                    && elt.parentElement.parentElement.classList.contains('arrow-line'),
+
+  // 4. CONNECTOR TEST — "is this an edge-ish element?"
+  ['isConnector:']: (self, elt) => elt.classList.contains('connection')
+                                && elt.classList.contains('real'),
+
+  // 5. ARROW GRAMMAR — which OmniMeta arrow notation reads this editor's arrows.
+  //    (Already built for all three editors — this is just the selector.)
+  ['arrowGrammar']: (self) => vtables.MathchaArrow,
+};
+
+vtables.AffinityVocab = {
+  _parent: vtables.DOMMeta,
+
+  ['seedElements']: (self) => all('path, rect, g.is-paragraph'),
+
+  // Paragraph = MultiLine | Line
+  ['Paragraph']: (self) => send(self, 'or:', [
+    () => send(self, 'apply:', 'MultiLine'),
+    () => send(self, 'apply:', 'Line'),
+  ]),
+
+  // MultiLine = g [ LineOrBlank+:lines ] &`lines.length > 0` ⟹ lines.join('\n')
+  //
+  // The `[ ]` full-consumption semantics comes free from lend:, which throws
+  // fail if any child doesn't match — so a <g> containing a rect is rejected.
+  ['MultiLine']: (self) => {
+    const e = self.cursor.dict;
+    send(self, 'pred:', e.tagName === 'g');
+    send(self, 'pred:', e.children.length > 0);
+    const all = [...e.children].map(c =>
+      send(self, 'lend:', self.vtable, 'input:', c, 'rule:', 'LineOrBlank'));
+    const lines = all.filter(l => l !== null);      // Blanks drop out
+    send(self, 'pred:', lines.length > 0);
+    return lines.join('\n');
+  },
+
+  // LineOrBlank = Line | Blank
+  ['LineOrBlank']: (self) => send(self, 'or:', [
+    () => send(self, 'apply:', 'Line'),
+    () => send(self, 'apply:', 'Blank'),
+  ]),
+
+  // Line = text ⟹ `textContent`
+  // (textContent flattens AD's kerning/ligature <tspan>s for free)
+  ['Line']: (self) => {
+    const e = self.cursor.dict;
+    send(self, 'pred:', e.tagName === 'text');
+    return e.textContent.trim();
+  },
+
+  // Blank = g &`textContent empty` ⟹ null
+  // (AD's empty positioning <g>s — contribute nothing; filtered by MultiLine)
+  ['Blank']: (self) => {
+    const e = self.cursor.dict;
+    send(self, 'pred:', e.tagName === 'g');
+    send(self, 'pred:', e.textContent.trim() === '');
+    return null;
+  },
+
+  // ---- side-effecting wrapper: run Paragraph, then mark the DOM -------------
+  // Downstream consumers (.is-paragraph selectors, dataset.string) are
+  // editor-independent, so every vocab's job is just to produce these markers.
+  ['parseTextElt:']: (self, el) => {
+    const str = match(self.vtable, el, 'Paragraph');
+    if (str === null) return false;
+    el.dataset.string = str;
+    if (str.includes('\n')) el.classList.add('is-multiline');
+    el.classList.add('is-paragraph');
+    return true;
+  },
+
+  // ---- graph-notation vocabulary leaf ---------------------------------------
+  ['Text']: (self) => {
+    const e = self.cursor.dict;
+    send(self, 'pred:', e.classList.contains('is-paragraph'));
+    return e.dataset.string;
   },
 };

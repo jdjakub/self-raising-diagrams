@@ -1369,9 +1369,14 @@ vtables['JS{[SweetTalk]}'] = {
   }
 }
 
-editor = null;
+// ── Editor vocabulary ────────────────────────────────────────────────────────
+// EditorVocab is a placeholder in every notation's _parent chain; init() wires
+// its _parent to the concrete vocab once the editor is known. One mutation,
+// no notation duplication, no ambient global reads.
+vtables.EditorVocab = { _parent: null };   // set by init(): MathchaVocab | AffinityVocab | ...
+
 function learnEditor() {
-  editor = svg_parent.dataset.exportedFrom;
+  let editor = svg_parent.dataset.exportedFrom;
   if (typeof editor === 'string') editor = editor.toLowerCase();
   else { // Heuristically guess
     if (document.querySelector('svg.role-diagram-draw-area')) editor = 'mathcha';
@@ -1380,6 +1385,11 @@ function learnEditor() {
     else editor = 'unknown';
     log('Guessed editor = ' + editor);
   }
+  vtables.EditorVocab._parent = {
+    ['mathcha']: vtables.MathchaVocab,
+    ['affinity designer']: vtables.AffinityVocab,
+    ['powerpoint']: vtables.PowerpointVocab,
+  }[editor] || vtables.MathchaVocab;
 }
 
 everything = {};
@@ -1390,6 +1400,7 @@ function init() {
 
   // Second, establish which editor's XML conventions we're working from.
   learnEditor();
+  const vocab = { vtable: vtables.EditorVocab };
 
   // Next, we must normalise the document. That means:
   // 1. Specialise individual shapes as far as possible (eg path -> polygon -> rect)
@@ -1412,9 +1423,49 @@ function init() {
   //      </g>
   // [/FUTURE]
   //
-  // First, gather all (MATHCHA-EXPORTED) shapes and text. 
-  let elems = all('path.real, polygon');
-  elems = elems.concat(all('g').filter(g => send(g, 'parseAsParagraph')));
+  
+  if (vocab.vtable._parent === vtables.AffinityVocab) { // TEMP HACK
+    // Pre-process AD SVG into a sane structure
+    // Remove empty group <rect>s
+    let rects = all('rect');
+    rects.filter(r =>
+      ['', 'none'].includes(r.style.stroke) && ['','none'].includes(r.style.fill)
+    ).forEach(r => r.remove());
+    // Remove useless empty <g>s
+    let gs = all('g');
+    gs.filter(g => g.children.length === 0).forEach(g => g.remove());
+    // Now wrap each naked single-line <text> in a <g>
+    let texts = all('svg > text');
+    texts.forEach(t => {
+      const g = svgel('g');
+      t.replaceWith(g);
+      g.appendChild(t);
+    });
+    // Now tag paragraphs appropriately (heuristically distinguish from other <g>s...)
+    gs = all('g');
+    gs.filter(g => g.querySelector('text') && !g.querySelector('path, rect'))
+      .forEach(g => g.classList.add('is-paragraph'));
+    // Now wrap each <rect>s in a <g>
+    rects = all('rect');
+    rects.forEach(r => {
+      const g = svgel('g');
+      r.replaceWith(g);
+      g.appendChild(r);
+    });
+    // Now pair up all the arrowhead/shaft path pairs
+    let paths = all('path');
+    let pairs = [];
+    for (let i=0; i<paths.length; i+=2) pairs.push([paths[i], paths[i+1]]);
+    pairs.forEach(([p1,p2]) => {
+      const g = svgel('g');
+      p1.replaceWith(g);
+      g.appendChild(p1);
+      g.appendChild(p2);
+    })
+  }
+
+  // First, gather all exported shapes and text.
+  let elems = send(vocab, 'seedElements');
   elems.forEach((el) => {
     let newEl = el;
     let max_iter = 10; // SMELL arbitrary maximum
