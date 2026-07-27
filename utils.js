@@ -70,6 +70,10 @@ whereis = (pt_or_x,maybe_y) => {
 
 showpts = pts => pts.map(pt => pt.map(x=>x.toPrecision(3)).join(',')).join(' ');
 
+// Used to ensure no "3.68564e-14" stuff cluttering up the inspector
+// Revisit in future if tiny numbers ever become relevant
+legible = (...nums) => nums.map(n => Math.abs(n) < 0.001 ? 0 : n);
+
 inTopToBottomOrder = (a, b) => {
   if (a === b) return 0;
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1;

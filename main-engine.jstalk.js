@@ -198,6 +198,52 @@ vtables.domNode = {
   },
   ['isArrowhead']: (self) => false,
   ['onClick:']: (self, handler) => { self.onclick = handler; },
+  // Combine M (a DOMMatrix, from an ancestor) into this element's own transform,
+  // parent on the left: point maps as M · ownM · p. Writes the result back as a
+  // single consolidated matrix transform.
+  ['premultiplyTransform:']: (self, M) => {
+    const list = self.transform.baseVal;
+    const own  = list.consolidate(); // single SVGTransform, or null
+    const combined = own ? M.multiply(own.matrix) : M;
+    list.initialize(svg_parent.createSVGTransformFromMatrix(combined));
+  },
+  // matrix(1,0,0,1,tx,ty) → translate(tx,ty); identity → remove entirely.
+  // Leaves genuine scale/rotation matrices untouched (baking those would need
+  // stroke-width scaling / rect→polygon, deferred).
+  ['simplifyTransform']: (self) => {
+    const list = self.transform.baseVal;
+    const t = list.consolidate();
+    if (!t) { self.removeAttribute('transform'); return; }
+    const m = t.matrix;
+    if (m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)
+      t.setTranslate(...legible(m.e, m.f)); // flips type → serialises as translate()
+  },
+  // Default: this element type doesn't bake translations into geometry —
+  // keep the transform on the element. Tag vtables override where they can.
+  ['bakeTranslation']: (self) => false,
+  // Assumes self's transform is already simplified. After this method:
+  //   • self has its transform baked into geometry (no-op on <g>)
+  //   • each child has self's transform premultiplied AND simplified
+  //   • self's transform attribute is cleared
+  // Pushes to children even when self bakes (e.g. <text> bakes its x/y lists
+  // AND pushes to its <tspan>s, which carry their own coords).
+  ['pushTransformToChildren']: (self) => {
+    const t = self.transform.baseVal.consolidate();
+    ⟦self bakeTranslation⟧;
+    if (t) {
+      const M = t.matrix;
+      for (const c of self.children) {
+        ⟦c premultiplyTransform: M⟧;
+        ⟦c simplifyTransform⟧;
+      }
+    }
+    self.transform.baseVal.clear();
+    self.removeAttribute('transform');
+  },
+  ['pushTransformToDescendants']: (self) => {
+    ⟦self pushTransformToChildren⟧;
+    [...self.children].forEach(c => ⟦c pushTransformToDescendants⟧);
+  },
 };
 
 vtables.byTag['path'] = {
@@ -438,6 +484,16 @@ vtables.byTag['rect'] = {
     attr(self, {x, y});
   },
   ['translateBy:']: (self, vec) => ⟦self topLeft: vadd(⟦self topLeft⟧ ,vec)⟧,
+  ['bakeTranslation']: (self) => {
+    const t = self.transform.baseVal.consolidate();
+    if (!t) return false;
+    const m = t.matrix;
+    if (!(m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)) return false;  // only pure translate
+    self.x.baseVal.value += m.e;
+    self.y.baseVal.value += m.f;
+    self.removeAttribute('transform');
+    return true;
+  },
 }
 
 vtables.byTag['circle'] = {
@@ -469,6 +525,21 @@ vtables.byTag['circle'] = {
 
 vtables.byTag['text'] = {
   _parent: vtables.domNode,
+  ['bakeTranslation']: (self) => {
+    const t = self.transform.baseVal.consolidate();
+    if (!t) return false;
+    const m = t.matrix;
+    if (!(m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)) return false;
+    const xs = self.x.baseVal, ys = self.y.baseVal;
+    for (let i = 0; i < xs.numberOfItems; i++) xs.getItem(i).value += m.e;
+    for (let i = 0; i < ys.numberOfItems; i++) ys.getItem(i).value += m.f;
+    self.removeAttribute('transform');
+    return true;
+  },
+}
+
+vtables.byTag['tspan'] = {
+  _parent: vtables.byTag['text'],
 }
 
 vtables.byTag['g'] = {
@@ -1438,6 +1509,15 @@ function init() {
     // Remove useless empty <g>s
     let gs = all('g');
     gs.filter(g => g.children.length === 0).forEach(g => g.remove());
+    // Put everything in absolute coords
+    let transformeds = all('[transform]')
+    transformeds.forEach(t => {
+      ⟦t simplifyTransform⟧;
+      ⟦t pushTransformToDescendants⟧;
+    });
+    // Unwrap all groups containing <rects> (later: closed shapes)
+    gs = all('g > rect').map(e => e.parentElement);
+    gs.forEach(g => g.replaceWith(...g.childNodes));
     // Now wrap each naked single-line <text> in a <g>
     let texts = all('svg > text');
     texts.forEach(t => {
@@ -1446,9 +1526,17 @@ function init() {
       g.appendChild(t);
     });
     // Now tag paragraphs appropriately (heuristically distinguish from other <g>s...)
+    // and extract their strings
     gs = all('g');
     gs.filter(g => g.querySelector('text') && !g.querySelector('path, rect'))
-      .forEach(g => g.classList.add('is-paragraph'));
+      .forEach(g => {
+        g.classList.add('is-paragraph');
+        const texts = [...g.children].filter(c => c.tagName === 'text');
+        if (texts.length > 1) {
+          g.classList.add('is-multiline');
+          g.dataset.string = texts.map(t => t.textContent).join('\n');
+        } else g.dataset.string = texts[0].textContent;
+    });
     // Now wrap each <rect>s in a <g>
     rects = all('rect');
     rects.forEach(r => {
