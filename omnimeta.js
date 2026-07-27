@@ -1299,3 +1299,9 @@ vtables.AffinityVocab = {
     return e.dataset.string;
   },
 };
+
+vtables.PowerpointVocab = {
+  _parent: vtables.DOMMeta,
+
+  ['seedElements']: (self) => all('path, rect, g.is-paragraph'),
+};

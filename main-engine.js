@@ -215,8 +215,7 @@ vtables.domNode = {
     const t = list.consolidate();
     if (!t) { self.removeAttribute('transform'); return; }
     const m = t.matrix;
-    if (m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)
-      t.setTranslate(...legible(m.e, m.f)); // flips type → serialises as translate()
+    if (isNearIdentity(m)) t.setTranslate(...legible(m.e, m.f));
   },
   // Default: this element type doesn't bake translations into geometry —
   // keep the transform on the element. Tag vtables override where they can.
@@ -529,10 +528,12 @@ vtables.byTag['text'] = {
     const t = self.transform.baseVal.consolidate();
     if (!t) return false;
     const m = t.matrix;
-    if (!(m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)) return false;
+    if (!isNearIdentity(m)) return false;
     const xs = self.x.baseVal, ys = self.y.baseVal;
     for (let i = 0; i < xs.numberOfItems; i++) xs.getItem(i).value += m.e;
     for (let i = 0; i < ys.numberOfItems; i++) ys.getItem(i).value += m.f;
+    if (xs.numberOfItems === 0 && ys.numberOfItems === 0)
+      attr(self, {x: m.e, y: m.f});
     self.removeAttribute('transform');
     return true;
   },
@@ -1550,6 +1551,65 @@ function init() {
       g.appendChild(p1);
       g.appendChild(p2);
     })
+  } else if (vocab.vtable._parent === vtables.PowerpointVocab) { // TEMP HACK
+    // Pre-process PPT into a sane structure
+    // First, kill the clip <g> and <defs> with clipPath
+    const clipG = some('g[clip-path');
+    clipG.replaceWith(...clipG.childNodes);
+    some('defs').remove();
+    // For some reason, <text>s use transform attr instead of x/y. Must bake
+    let texts = all('text');
+    texts.forEach(t => {
+      send(t, 'simplifyTransform');
+      send(t, 'bakeTranslation');
+    });
+    // Next: incredibly, I see a hyphenated line (A - B) rendered as
+    // <text>A</text> <text>-</text> <text>B</text>
+    // So: recognise consecutive runs of <texts>, group them into a paragraph
+    restitchTextBackTogether = function(initialText) {
+      let textElt = initialText;
+      let lineBbox = textElt.getBBox();
+      // Begin the paragraph <g>
+      let paraG = svgel('g', {class: 'is-paragraph'});
+      textElt.replaceWith(paraG);
+      paraG.appendChild(textElt);
+      let paraBbox = paraG.getBBox();
+      const strings = [textElt.textContent];
+      textElt = paraG.nextSibling;
+      while (textElt?.tagName === 'text') {
+        let nextBbox = textElt.getBBox();
+        const { height } = lineBbox;
+        const isSameLine = Math.abs(lineBbox.y - nextBbox.y) < height/2
+          && (lineBbox.x+lineBbox.width) + height > nextBbox.x;
+        const isNewLine = (lineBbox.y + lineBbox.height) < nextBbox.y
+          && (lineBbox.y+lineBbox.height) + height > nextBbox.y
+          && paraBbox.x <= nextBbox.x && nextBbox.x <= (paraBbox.x+paraBbox.width);
+        if (isSameLine) {
+          paraG.appendChild(textElt);
+          strings.push(' ' + textElt.textContent);
+          lineBbox.width = nextBbox.x - lineBbox.x + nextBbox.width;
+          lineBbox.height = Math.max(lineBbox.height, nextBbox.height);
+          paraBbox = paraG.getBBox();
+        } else if (isNewLine) {
+          paraG.appendChild(textElt);
+          strings.push('\n' + textElt.textContent);
+          paraG.classList.add('is-multiline');
+          lineBbox = nextBbox;
+          paraBbox = paraG.getBBox();
+        } else break;
+        textElt = paraG.nextSibling;
+      }
+      paraG.dataset.string = strings.join('');
+    }
+    let text = some(':not(g) > text');
+    while (text) {
+      // Rewind to the first in the run, if necessary
+      while (text.previousSibling?.tagName === 'text') text = text.previousSibling;
+      restitchTextBackTogether(text);
+      text = some(':not(g) > text');
+    }
+    // TODO: similar rationalisations to AD
+    throw 'Not Ready Yet!!';
   }
 
   // First, gather all exported shapes and text.

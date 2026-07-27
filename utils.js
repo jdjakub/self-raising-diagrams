@@ -72,7 +72,15 @@ showpts = pts => pts.map(pt => pt.map(x=>x.toPrecision(3)).join(',')).join(' ');
 
 // Used to ensure no "3.68564e-14" stuff cluttering up the inspector
 // Revisit in future if tiny numbers ever become relevant
-legible = (...nums) => nums.map(n => Math.abs(n) < 0.001 ? 0 : n);
+legible = (...nums) => nums.map(n => Math.abs(n) < 0.001 ? 0 : +n.toFixed(3));
+
+function isNearIdentity(matrix, eps = 1e-3) {
+  const {a, b, c, d} = matrix;
+  return Math.abs(a - 1) < eps &&
+         Math.abs(b) < eps &&
+         Math.abs(c) < eps &&
+         Math.abs(d - 1) < eps;
+}
 
 inTopToBottomOrder = (a, b) => {
   if (a === b) return 0;
