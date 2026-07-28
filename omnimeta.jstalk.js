@@ -1305,5 +1305,5 @@ vtables.AffinityVocab = {
 vtables.PowerpointVocab = {
   _parent: vtables.DOMMeta,
 
-  ['seedElements']: (self) => all('path, rect, g.is-paragraph'),
+  ['seedElements']: (self) => all('path, rect, ellipse, polygon, g.is-paragraph'),
 };

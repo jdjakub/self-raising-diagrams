@@ -219,7 +219,7 @@ vtables.domNode = {
   },
   // Default: this element type doesn't bake translations into geometry —
   // keep the transform on the element. Tag vtables override where they can.
-  ['bakeTranslation']: (self) => false,
+  ['bakeTransform']: (self) => false,
   // Assumes self's transform is already simplified. After this method:
   //   • self has its transform baked into geometry (no-op on <g>)
   //   • each child has self's transform premultiplied AND simplified
@@ -228,7 +228,7 @@ vtables.domNode = {
   // AND pushes to its <tspan>s, which carry their own coords).
   ['pushTransformToChildren']: (self) => {
     const t = self.transform.baseVal.consolidate();
-    send(self, 'bakeTranslation');
+    send(self, 'bakeTransform');
     if (t) {
       const M = t.matrix;
       for (const c of self.children) {
@@ -354,6 +354,26 @@ vtables.byTag['path'] = {
   },
   ['isArrowhead']: (self) => self.parentElement.tagName === 'g'
     && self.parentElement.parentElement.classList.contains('arrow-line'), // Mathcha-specific
+  // path bakeTransform: shift absolute-command points by the element's own
+  // (already-simplified) pure translation. Relative-command points are deltas
+  // from the pen position, so they must NOT be shifted — translating the
+  // leading (absolute) moveto carries them along automatically. Other transforms applied
+  ['bakeTransform']: (self) => {
+    const t = self.transform.baseVal.consolidate();
+    if (!t) return false;
+    const m = t.matrix;
+    const d = send(self, 'commands').map(([cmd, ...pts]) => {
+      if (cmd === 'Z' || cmd === 'z') return 'Z';
+      const abs = cmd === cmd.toUpperCase();
+      return cmd + pts.map(([x, y]) => legible(
+        m.a * x + m.c * y + (abs ? m.e : 0), // deltas get linear part only
+        m.b * x + m.d * y + (abs ? m.f : 0)
+      ).join(',')).join(' ');
+    }).join(' ');
+    attr(self, 'd', d);
+    self.removeAttribute('transform');
+    return true;
+  },
 };
 
 vtables.byTag['polyline'] = {
@@ -494,13 +514,17 @@ vtables.byTag['rect'] = {
     attr(self, {x, y});
   },
   ['translateBy:']: (self, vec) => send(self, 'topLeft:', vadd(send(self, 'topLeft') ,vec)),
-  ['bakeTranslation']: (self) => {
+  ['bakeTransform']: (self) => {
     const t = self.transform.baseVal.consolidate();
     if (!t) return false;
     const m = t.matrix;
-    if (!(m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1)) return false;  // only pure translate
-    self.x.baseVal.value += m.e;
-    self.y.baseVal.value += m.f;
+    if (m.b !== 0 || m.c !== 0) return false; // rotation/skew ⇒ no longer a rect. SMELL exact
+    const x0 = m.a * self.x.baseVal.value + m.e;
+    const y0 = m.d * self.y.baseVal.value + m.f;
+    const w  = m.a * self.width.baseVal.value;
+    const h  = m.d * self.height.baseVal.value;
+    [self.x.baseVal.value, self.width.baseVal.value ] = legible(Math.min(x0, x0 + w), Math.abs(w));
+    [self.y.baseVal.value, self.height.baseVal.value] = legible(Math.min(y0, y0 + h), Math.abs(h));
     self.removeAttribute('transform');
     return true;
   },
@@ -559,14 +583,18 @@ vtables.byTag['circle'] = {
 
 vtables.byTag['text'] = {
   _parent: vtables.domNode,
-  ['bakeTranslation']: (self) => {
+  ['bakeTransform']: (self) => {
     const t = self.transform.baseVal.consolidate();
     if (!t) return false;
     const m = t.matrix;
-    if (!isNearIdentity(m)) return false;
+    if (m.b !== 0 || m.c !== 0) return false; // rotated text: keep the transform
     const xs = self.x.baseVal, ys = self.y.baseVal;
-    for (let i = 0; i < xs.numberOfItems; i++) xs.getItem(i).value += m.e;
-    for (let i = 0; i < ys.numberOfItems; i++) ys.getItem(i).value += m.f;
+    for (let i = 0; i < xs.numberOfItems; i++) {
+      const it = xs.getItem(i); [it.value] = legible(m.a * it.value + m.e);
+    }
+    for (let i = 0; i < ys.numberOfItems; i++) {
+      const it = ys.getItem(i); [it.value] = legible(m.d * it.value + m.f);
+    }
     if (xs.numberOfItems === 0 && ys.numberOfItems === 0)
       attr(self, {x: m.e, y: m.f});
     self.removeAttribute('transform');
@@ -1602,7 +1630,7 @@ function init() {
     let texts = all('text');
     texts.forEach(t => {
       send(t, 'simplifyTransform');
-      send(t, 'bakeTranslation');
+      send(t, 'bakeTransform');
     });
     // Next: incredibly, I see a hyphenated line (A - B) rendered as
     // <text>A</text> <text>-</text> <text>B</text>
@@ -1656,18 +1684,34 @@ function init() {
       r.replaceWith(g);
       g.appendChild(r);
     });
-    // Now do the same for paths, tagging arrows as cued by magic colours
+    // Paths+rects, like texts, may have transforms to bake
+    let elts = all(':not(g)[transform]');
+    elts.forEach(e => {
+      send(e, 'simplifyTransform');
+      send(e, 'bakeTransform');
+    });
+    // Now wrap paths, tagging arrows as cued by magic colours
     let paths = all('path');
+    paths.filter(p => ['#C00000','#385723'].includes(attr(p, 'fill')))
+      .forEach(p => {
+        let specialized = send(p, 'specialize');
+        let g = specialized?.tagName === 'g' ? specialized : svgel('g');
+        // If specialising broke it into a group of shapes, tag the group
+        const isArrow = specialized?.tagName !== 'ellipse';
+        if (specialized === null) specialized = p;
+        if (specialized !== g && specialized.parentElement !== g) {
+          specialized.replaceWith(g);
+          g.appendChild(specialized);
+        }
+        if (isArrow) g.classList.add('arrow-line');
+    });
+    // Now wrap remaining paths in a <g>
+    paths = all(':not(g) > path');
     paths.forEach(p => {
       const g = svgel('g');
       p.replaceWith(g);
       g.appendChild(p);
-      if (['#C00000','#385723'].includes(attr(p, 'fill'))) {
-        const specialized = send(p, 'specialize');
-        if (specialized?.tagName !== 'ellipse') g.classList.add('arrow-line');
-      }
     });
-    throw 'Not Ready Yet!!';
   }
 
   // First, gather all exported shapes and text.
@@ -1686,6 +1730,7 @@ function init() {
   elems = Object.values(everything);
   // Next, compute spatial containment tree; store in
   // contained-in / contains dataset attributes
+
   elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
   
   // Now, reroot each node inside its tightest container
