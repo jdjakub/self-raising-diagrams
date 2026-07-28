@@ -68,6 +68,10 @@ whereis = (pt_or_x,maybe_y) => {
   return svgel('circle', {cx, cy, r: 5, style: 'fill: magenta', class: 'debug-pt'});
 }
 
+whereare = (pts) => pts.forEach(pt=>whereis(pt));
+
+cleardbgpts = () => all('.debug-pt').forEach(pt=>pt.remove());
+
 showpts = pts => pts.map(pt => pt.map(x=>x.toPrecision(3)).join(',')).join(' ');
 
 // Used to ensure no "3.68564e-14" stuff cluttering up the inspector
@@ -142,12 +146,17 @@ some = selector => {
 byId = id => document.getElementById(id.trim());
 
 // Thanks https://stackoverflow.com/a/65090521
-replaceTag = function(node, tag) {
+cloneNode = function(node, tag) {
   const clone = svgel(tag, {});
   for (const attr of node.attributes)
     clone.setAttributeNode(attr.cloneNode());
   while (node.firstChild)
     clone.appendChild(node.firstChild);
+  return clone;
+}
+
+replaceTag = function(node, tag) {
+  const clone = cloneNode(node, tag);
   node.replaceWith(clone);
   return clone;
 }
@@ -172,17 +181,27 @@ setAttrToArray = function(setAttr) {
 
 // Mathcha SVG outputs simple shapes as paths and multiline text as separate text elements...
 // Gotta recognise basic shapes. Computer Vector Vision
-parsePath = d => // TY Copilot. NB: Doesn't support H,V,A
-    [...d.matchAll(/([MLCQSTZmlcqstz])([^MLCQSTZmlcqstz]*)/g)]
-    .map(([_, cmd, args]) => {
-      if (cmd === 'Z') return [cmd];
-      const nums = args.trim().split(/[\s,]+/).map(Number);
+const CMD_ARITY = { M:2, m:2, L:2, l:2, C:6, c:6, Q:4, q:4, S:4, s:4, T:2, t:2 };
+const NUM_RE = /[+-]?(?:\d+\.\d+|\.\d+|\d+)(?:[eE][+-]?\d+)?/g;
+// Handles implicit cmds (M p1 p2 p3 ... => M p1 L p2 L p3 ...)
+// and annoying delimiters (e.g. M12-5-4 6 => M 12 -5 -4 6)
+parsePath = d =>
+  [...d.matchAll(/([MLCQSTZmlcqstz])([^MLCQSTZmlcqstz]*)/g)]
+  .flatMap(([_, cmd, args]) => {
+    if (cmd === 'Z' || cmd === 'z') return [[cmd]];
+    const nums = (args.match(NUM_RE) || []).map(Number);
+    const arity = CMD_ARITY[cmd];
+    const groups = [];
+    for (let i = 0; i < nums.length; i += arity) {
+      groups.push(nums.slice(i, i + arity));
+    }
+    const implicitCmd = cmd === 'M' ? 'L' : cmd === 'm' ? 'l' : cmd;
+    return groups.map((g, i) => {
       const pts = [];
-      for (let i = 0; i < nums.length; i += 2) {
-        pts.push([nums[i], nums[i + 1]]);
-      }
-      return [cmd, ...pts];
+      for (let j = 0; j < g.length; j += 2) pts.push([g[j], g[j+1]]);
+      return [i === 0 ? cmd : implicitCmd, ...pts];
     });
+  });
 
 extractPathCmds = function(pathElt) {
   const d = pathElt.getAttribute('d').trim();
@@ -210,8 +229,9 @@ style="stroke-width: 1px;
            fill: none;
            fill-opacity: 1;"/>
 */
-extractCircle = function(circPathElt) {
-  const [opcodes,xs,ys] = extractPathCmds(circPathElt);
+// Tested via Mathcha and Powerpoint
+extractEllipse = function(pathElt) {
+  const [opcodes,xs,ys] = extractPathCmds(pathElt);
   if (opcodes !== 'MCCCCZ') return;
   const cy = ys[0];
   const cx = xs[1][2];
@@ -220,14 +240,15 @@ extractCircle = function(circPathElt) {
   // Now check that the other 3 "radii" are equal; don't circlify ellipses
   const lx = xs[0];
   const lr = cx-lx;
-  if (Math.abs(lr - r) > 0.0001) return; // SMELL espilon
   const rx = xs[2][2];
   const rr = rx-cx;
-  if (Math.abs(rr - r) > 0.0001) return; // SMELL espilon
+  let isEllipse = true;
+  if (Math.abs(rr - lr) > 0.01) isEllipse = false; // SMELL epsilon
   const by = ys[3][2];
   const br = by - cy;
-  if (Math.abs(br - r) > 0.0001) return; // SMELL espilon
-  return {cx, cy, r};
+  if (Math.abs(br - r) > 0.01) isEllipse = false; // SMELL espilon
+  if (isEllipse) return {cx, cy, rx: legible(lr), ry: legible(r)};
+  else return null;
 }
 
 // TY Claude
@@ -322,24 +343,27 @@ function normal_for_seg([p1,p2]) {
   return [-vy,vx];
 }
 
-polyFromPath = function(cmds) {
-  const vertices = [ [0,0] ];
-  const penPos = (newPos) => {
-    if (newPos) vertices[vertices.length-1] = newPos;
-    else return vertices[vertices.length-1];
-  }
-  const penPosRel = (delta) => {
-    vertices[vertices.length-1] = vadd(vertices[vertices.length-1], delta);
-  }
+polysFromPath = function(cmds) {
+  const polys = [];
+  let vertices = null;
+
   cmds.forEach(([c,v]) => {
     switch (c) {
-      case 'M': penPos(v); break;
-      case 'm': penPosRel(v); break;
+      case 'M':
+        vertices = [ v ];
+        polys.push(vertices);
+        break;
+      case 'm':
+        vertices = [ vertices ? vadd(last(vertices), v) : v ];
+        polys.push(vertices);
+        break;
       case 'L': vertices.push(v); break;
       case 'l': vertices.push(vadd(last(vertices),v)); break;
+      case 'Z': case 'z': break;
     }
   });
-  return vertices;
+
+  return polys;
 }
 
 Array.prototype.thatWhichMinimizes = function(funcToMinimize) {

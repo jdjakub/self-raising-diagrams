@@ -298,15 +298,26 @@ vtables.byTag['path'] = {
   ['specialize']: (self) => {
     let newTag = null;
     if (!send(self, 'isCurved')) { // => Polygon | Polyline
-      const polyPts = polyFromPath(send(self, 'commands')).map(v => v.join(',')).join(' ');
+      const polygons = polysFromPath(send(self, 'commands'));
+      if (polygons.length > 1) {
+        const g = svgel('g');
+        self.replaceWith(g);
+        polygons.forEach(pts => {
+          const elt = cloneNode(self, 'polygon');
+          elt.removeAttribute('d');
+          attr(elt, 'points', pts.map(v => v.join(',')).join(' '));
+          g.appendChild(elt);
+        });
+        return g;
+      }
+      const polyPts = polygons[0].map(v => v.join(',')).join(' ');
       attr(self, 'points', polyPts);
       newTag = send(self, 'isClosed')? 'polygon' : 'polyline';
     } else {
-      // SMELL: duped from normalizeCircles
-      const params = extractCircle(self);
-      if (params) { // Circle
+      const params = extractEllipse(self);
+      if (params) {
         attr(self, params);
-        newTag = 'circle';
+        newTag = 'ellipse';
       }
     }
     if (newTag) {
@@ -495,31 +506,55 @@ vtables.byTag['rect'] = {
   },
 }
 
-vtables.byTag['circle'] = {
+vtables.byTag['ellipse'] = {
   _parent: vtables.byTag['path'],
 
   ['isClosed']: () => true,
   ['isCurved']: () => true,
+  ['radii']: (self) => attrs(self, 'rx', 'ry').map(Number),
   ['vertices']: (self) => {
-    // Sigh ... approximate circle as octagon
-    const [cx,cy,r] = attrs(self, 'cx', 'cy', 'r').map(Number);
+    // Sigh ... approximate ellipse as octagon
+    const [cx,cy] = attrs(self, 'cx', 'cy').map(Number);
+    const [rx,ry] = send(self, 'radii');
     const n = 8;
     const theta = Math.PI*2/n;
+    const avg_r = (1+1/Math.cos(theta/2))/2; // 1/2 between inner and outer polygon (radius-independent factor)
     const vs = [];
     for (let i=0; i<n; i++) {
       const itheta = i*theta;
       const [x,y] = [Math.cos(itheta), Math.sin(itheta)];
-      const avg_r = r*(1+1/Math.cos(theta/2))/2; // 1/2 between inner and outer polygon
-      vs.push(vadd([cx,cy], vmul(avg_r, [x,y])));
+      vs.push(vadd([cx,cy], [rx*avg_r*x, ry*avg_r*y]));
     }
     return vs;
   },
-  ['specialize']: () => null,
-  ['containsPt:']: (self, pt) => {
-    const [cx,cy,r] = attrs(self, 'cx', 'cy', 'r').map(Number);
-    const pt_from_c = vsub(pt, [cx,cy]);
-    return vdot(pt_from_c,pt_from_c) < r*r;
+  ['specialize']: (self) => {
+    const [rx,ry] = send(self, 'radii');
+    if (Math.abs(rx - ry) < 0.001) { // SMELL epsilon
+      self = replaceTag(self, 'circle');
+      self.removeAttribute('rx');
+      self.removeAttribute('ry');
+      attr(self, 'r', rx);
+      return self;
+    }
+    return null;
   },
+  ['containsPt:']: (self, pt) => {
+    const [cx,cy] = attrs(self, 'cx', 'cy').map(Number);
+    const [rx,ry] = send(self, 'radii');
+    const pt_from_c = vsub(pt, [cx,cy]);
+    const [nx,ny] = [pt_from_c[0]/rx, pt_from_c[1]/ry];
+    return nx*nx + ny*ny < 1;
+  },
+}
+
+vtables.byTag['circle'] = {
+  _parent: vtables.byTag['ellipse'],
+
+  ['radii']: (self) => {
+    const r = +attr(self, 'r');
+    return [r,r];
+  },
+  ['specialize']: () => null,
 }
 
 vtables.byTag['text'] = {
@@ -570,6 +605,12 @@ vtables.byTag['g'] = {
   ['idPrefix']: (self) => {
     if (self.classList.contains('is-paragraph')) return 'par';
     else return 'g';
+  },
+  ['specialize']: (self) => {
+    let anySpecialized = false;
+    for (let c of [...self.children])
+      if (send(c, 'specialize')) anySpecialized = true;
+    return anySpecialized? self : null;
   },
 }
 
@@ -1608,7 +1649,24 @@ function init() {
       restitchTextBackTogether(text);
       text = some(':not(g) > text');
     }
-    // TODO: similar rationalisations to AD
+    // Now wrap each <rect>s in a <g>
+    let rects = all('rect');
+    rects.forEach(r => {
+      const g = svgel('g');
+      r.replaceWith(g);
+      g.appendChild(r);
+    });
+    // Now do the same for paths, tagging arrows as cued by magic colours
+    let paths = all('path');
+    paths.forEach(p => {
+      const g = svgel('g');
+      p.replaceWith(g);
+      g.appendChild(p);
+      if (['#C00000','#385723'].includes(attr(p, 'fill'))) {
+        const specialized = send(p, 'specialize');
+        if (specialized?.tagName !== 'ellipse') g.classList.add('arrow-line');
+      }
+    });
     throw 'Not Ready Yet!!';
   }
 
