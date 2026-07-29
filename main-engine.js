@@ -51,6 +51,10 @@ sendNoKw = function(recv, selector, ...args) {
 }
 
 IS_SUPER_AWARE = Symbol('isSuperAware');
+// Methods that call `super` must be wrapped in this and declare a first
+// param called `supr`. E.g. needsSuper((supr, self, arg1) => ...)
+// JSTalk sugar supr('doSomething:', blah1, 'with:', blah2)
+// will compile to supr('doSomething:', blah1, 'with:', blah2)
 needsSuper = (fn) => { fn[IS_SUPER_AWARE] = true; return fn; };
 
 sendNoKwFrom = function(vtable, recv, selector, ...args) {
@@ -136,7 +140,7 @@ vtables.domNode = {
     send(other, 'vertices').every(v => send(self, 'containsPt:', v)),  // SMELL convex polys only
   ['covers:']: (self, other) => {
     const self_minus_other = inTopToBottomOrder(self, other);
-    return self_minus_other < 0;
+    return self_minus_other < 0 && getComputedStyle(self).fill !== 'none';
   },
   ['vertices']: (self) => {
     const bb = self.getBBox(); // SMELL duped
@@ -634,6 +638,15 @@ vtables.byTag['g'] = {
     if (self.classList.contains('is-paragraph')) return 'par';
     else return 'g';
   },
+  ['containsPt:']: (self, pt) => {
+    for (let c of [...self.children])
+      if (send(c, 'containsPt:', pt)) return true;
+    return false;
+  },
+  ['encloses:']: needsSuper((supr, self, other) =>
+    self.classList.contains('is-paragraph') ? supr('encloses:', other)
+    : self.firstChild && send(self.firstChild, 'encloses:', other) // Assumes wrapped shape
+  ),
   ['specialize']: (self) => {
     let anySpecialized = false;
     for (let c of [...self.children])
@@ -1565,157 +1578,12 @@ function init() {
   // [/FUTURE]
   //
   
-  if (vocab.vtable._parent === vtables.AffinityVocab) { // TEMP HACK
-    // Pre-process AD SVG into a sane structure
-    // Remove empty group <rect>s
-    let rects = all('rect');
-    rects.filter(r =>
-      ['', 'none'].includes(r.style.stroke) && ['','none'].includes(r.style.fill)
-    ).forEach(r => r.remove());
-    // Remove useless empty <g>s
-    let gs = all('g');
-    gs.filter(g => g.children.length === 0).forEach(g => g.remove());
-    // Put everything in absolute coords
-    let transformeds = all('[transform]')
-    transformeds.forEach(t => {
-      send(t, 'simplifyTransform');
-      send(t, 'pushTransformToDescendants');
-    });
-    // Unwrap all groups containing <rects> (later: closed shapes)
-    gs = all('g > rect').map(e => e.parentElement);
-    gs.forEach(g => g.replaceWith(...g.childNodes));
-    // Now wrap each naked single-line <text> in a <g>
-    let texts = all('svg > text');
-    texts.forEach(t => {
-      const g = svgel('g');
-      t.replaceWith(g);
-      g.appendChild(t);
-    });
-    // Now tag paragraphs appropriately (heuristically distinguish from other <g>s...)
-    // and extract their strings
-    gs = all('g');
-    gs.filter(g => g.querySelector('text') && !g.querySelector('path, rect'))
-      .forEach(g => {
-        g.classList.add('is-paragraph');
-        const texts = [...g.children].filter(c => c.tagName === 'text');
-        if (texts.length > 1) {
-          g.classList.add('is-multiline');
-          g.dataset.string = texts.map(t => t.textContent).join('\n');
-        } else g.dataset.string = texts[0].textContent;
-    });
-    // Now wrap each <rect>s in a <g>
-    rects = all('rect');
-    rects.forEach(r => {
-      const g = svgel('g');
-      r.replaceWith(g);
-      g.appendChild(r);
-    });
-    // Now pair up all the arrowhead/shaft path pairs
-    let paths = all('path');
-    let pairs = [];
-    for (let i=0; i<paths.length; i+=2) pairs.push([paths[i], paths[i+1]]);
-    pairs.forEach(([p1,p2]) => {
-      const g = svgel('g');
-      p1.replaceWith(g);
-      g.appendChild(p1);
-      g.appendChild(p2);
-    })
-  } else if (vocab.vtable._parent === vtables.PowerpointVocab) { // TEMP HACK
-    // Pre-process PPT into a sane structure
-    // First, kill the clip <g> and <defs> with clipPath
-    const clipG = some('g[clip-path');
-    clipG.replaceWith(...clipG.childNodes);
-    some('defs').remove();
-    // For some reason, <text>s use transform attr instead of x/y. Must bake
-    let texts = all('text');
-    texts.forEach(t => {
-      send(t, 'simplifyTransform');
-      send(t, 'bakeTransform');
-    });
-    // Next: incredibly, I see a hyphenated line (A - B) rendered as
-    // <text>A</text> <text>-</text> <text>B</text>
-    // So: recognise consecutive runs of <texts>, group them into a paragraph
-    restitchTextBackTogether = function(initialText) {
-      let textElt = initialText;
-      let lineBbox = textElt.getBBox();
-      // Begin the paragraph <g>
-      let paraG = svgel('g', {class: 'is-paragraph'});
-      textElt.replaceWith(paraG);
-      paraG.appendChild(textElt);
-      let paraBbox = paraG.getBBox();
-      const strings = [textElt.textContent];
-      textElt = paraG.nextSibling;
-      while (textElt?.tagName === 'text') {
-        let nextBbox = textElt.getBBox();
-        const { height } = lineBbox;
-        const isSameLine = Math.abs(lineBbox.y - nextBbox.y) < height/2
-          && (lineBbox.x+lineBbox.width) + height > nextBbox.x;
-        const isNewLine = (lineBbox.y + lineBbox.height) < nextBbox.y
-          && (lineBbox.y+lineBbox.height) + height > nextBbox.y
-          && paraBbox.x <= nextBbox.x && nextBbox.x <= (paraBbox.x+paraBbox.width);
-        if (isSameLine) {
-          paraG.appendChild(textElt);
-          strings.push(' ' + textElt.textContent);
-          lineBbox.width = nextBbox.x - lineBbox.x + nextBbox.width;
-          lineBbox.height = Math.max(lineBbox.height, nextBbox.height);
-          paraBbox = paraG.getBBox();
-        } else if (isNewLine) {
-          paraG.appendChild(textElt);
-          strings.push('\n' + textElt.textContent);
-          paraG.classList.add('is-multiline');
-          lineBbox = nextBbox;
-          paraBbox = paraG.getBBox();
-        } else break;
-        textElt = paraG.nextSibling;
-      }
-      paraG.dataset.string = strings.join('');
-    }
-    let text = some(':not(g) > text');
-    while (text) {
-      // Rewind to the first in the run, if necessary
-      while (text.previousSibling?.tagName === 'text') text = text.previousSibling;
-      restitchTextBackTogether(text);
-      text = some(':not(g) > text');
-    }
-    // Now wrap each <rect>s in a <g>
-    let rects = all('rect');
-    rects.forEach(r => {
-      const g = svgel('g');
-      r.replaceWith(g);
-      g.appendChild(r);
-    });
-    // Paths+rects, like texts, may have transforms to bake
-    let elts = all(':not(g)[transform]');
-    elts.forEach(e => {
-      send(e, 'simplifyTransform');
-      send(e, 'bakeTransform');
-    });
-    // Now wrap paths, tagging arrows as cued by magic colours
-    let paths = all('path');
-    paths.filter(p => ['#C00000','#385723'].includes(attr(p, 'fill')))
-      .forEach(p => {
-        let specialized = send(p, 'specialize');
-        let g = specialized?.tagName === 'g' ? specialized : svgel('g');
-        // If specialising broke it into a group of shapes, tag the group
-        const isArrow = specialized?.tagName !== 'ellipse';
-        if (specialized === null) specialized = p;
-        if (specialized !== g && specialized.parentElement !== g) {
-          specialized.replaceWith(g);
-          g.appendChild(specialized);
-        }
-        if (isArrow) g.classList.add('arrow-line');
-    });
-    // Now wrap remaining paths in a <g>
-    paths = all(':not(g) > path');
-    paths.forEach(p => {
-      const g = svgel('g');
-      p.replaceWith(g);
-      g.appendChild(p);
-    });
-  }
+  send(vocab, 'init'); // Normalize shapes/connectors/text exported under different editors' encodings
 
   // First, gather all exported shapes and text.
   let elems = send(vocab, 'seedElements');
+
+  // Specialise and ID everything
   elems.forEach((el) => {
     let newEl = el;
     let max_iter = 10; // SMELL arbitrary maximum
@@ -1727,11 +1595,16 @@ function init() {
     everything[ send(el, 'id') ] = el;
   });
 
-  elems = Object.values(everything);
-  // Next, compute spatial containment tree; store in
-  // contained-in / contains dataset attributes
+  elems = Object.values(everything)
+    .filter(e => !e.parentElement.classList.contains('arrow-line'))
+    .concat(all('g.arrow-line'));
+  all('g.arrow-line').forEach(g => send(g, 'id')); // Force an ID so containments work
 
-  elems.forEach(el => send(el, 'findTightestContainerIn:', elems));
+  // Next, compute spatial containment tree; store in
+  // contained-in / contains dataset attributes.
+  // Closed shapes inside g.arrow-line (e.g. arrowheads) mustn't contain anything
+  elems.forEach(el => send(el, 'findTightestContainerIn:',
+    elems.filter(e => !e.parentElement.classList.contains('arrow-line'))));
   
   // Now, reroot each node inside its tightest container
   // and erase the evidence :)

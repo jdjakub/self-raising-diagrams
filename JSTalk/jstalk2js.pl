@@ -10,6 +10,8 @@ use open ':std', ':encoding(UTF-8)';
 # Transpile Smalltalk-style message syntax to JS send() calls
 # ⟦obj myMessage: arg1 with: arg2 and: arg3⟧
 # becomes: send(obj, 'myMessage:', arg1, 'with:', arg2, 'and:', arg3)
+# And ⟦super myMessage: arg1 with: arg2 and: arg3⟧
+# becomes: supr('myMessage:', arg1, 'with:', arg2, 'and:', arg3)
 
 my $OPEN = '⟦';
 my $CLOSE = '⟧';

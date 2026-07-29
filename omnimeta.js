@@ -1229,79 +1229,174 @@ vtables.MathchaVocab = {
   // 5. ARROW GRAMMAR — which OmniMeta arrow notation reads this editor's arrows.
   //    (Already built for all three editors — this is just the selector.)
   ['arrowGrammar']: (self) => vtables.MathchaArrow,
+
+  ['init']: () => {},
 };
 
 vtables.AffinityVocab = {
-  _parent: vtables.DOMMeta,
-
+  ['init']: () => {
+    // Pre-process AD SVG into a sane structure
+    // Remove empty group <rect>s
+    let rects = all('rect');
+    rects.filter(r =>
+      ['', 'none'].includes(r.style.stroke) && ['','none'].includes(r.style.fill)
+    ).forEach(r => r.remove());
+    // Remove useless empty <g>s
+    let gs = all('g');
+    gs.filter(g => g.children.length === 0).forEach(g => g.remove());
+    // Put everything in absolute coords
+    let transformeds = all('[transform]')
+    transformeds.forEach(t => {
+      send(t, 'simplifyTransform');
+      send(t, 'pushTransformToDescendants');
+    });
+    // Unwrap all groups containing <rects> (later: closed shapes)
+    gs = all('g > rect').map(e => e.parentElement);
+    gs.forEach(g => g.replaceWith(...g.childNodes));
+    // Now wrap each naked single-line <text> in a <g>
+    let texts = all('svg > text');
+    texts.forEach(t => {
+      const g = svgel('g');
+      t.replaceWith(g);
+      g.appendChild(t);
+    });
+    // Now tag paragraphs appropriately (heuristically distinguish from other <g>s...)
+    // and extract their strings
+    gs = all('g');
+    gs.filter(g => g.querySelector('text') && !g.querySelector('path, rect'))
+      .forEach(g => {
+        g.classList.add('is-paragraph');
+        const texts = [...g.children].filter(c => c.tagName === 'text');
+        if (texts.length > 1) {
+          g.classList.add('is-multiline');
+          g.dataset.string = texts.map(t => t.textContent).join('\n');
+        } else g.dataset.string = texts[0].textContent;
+    });
+    // Now wrap each <rect>s in a <g>
+    rects = all('rect');
+    rects.forEach(r => {
+      const g = svgel('g');
+      r.replaceWith(g);
+      g.appendChild(r);
+    });
+    // Now pair up all the arrowhead/shaft path pairs
+    let paths = all('path');
+    let pairs = [];
+    for (let i=0; i<paths.length; i+=2) pairs.push([paths[i], paths[i+1]]);
+    pairs.forEach(([p1,p2]) => {
+      const g = svgel('g');
+      p1.replaceWith(g);
+      g.appendChild(p1); p1.classList.add('is-head')
+      g.appendChild(p2); p2.classList.add('is-shaft');
+      g.classList.add('arrow-line');
+    });
+  },
   ['seedElements']: (self) => all('path, rect, g.is-paragraph'),
-
-  // Paragraph = MultiLine | Line
-  ['Paragraph']: (self) => send(self, 'or:', [
-    () => send(self, 'apply:', 'MultiLine'),
-    () => send(self, 'apply:', 'Line'),
-  ]),
-
-  // MultiLine = g [ LineOrBlank+:lines ] &`lines.length > 0` ⟹ lines.join('\n')
-  //
-  // The `[ ]` full-consumption semantics comes free from lend:, which throws
-  // fail if any child doesn't match — so a <g> containing a rect is rejected.
-  ['MultiLine']: (self) => {
-    const e = self.cursor.dict;
-    send(self, 'pred:', e.tagName === 'g');
-    send(self, 'pred:', e.children.length > 0);
-    const all = [...e.children].map(c =>
-      send(self, 'lend:', self.vtable, 'input:', c, 'rule:', 'LineOrBlank'));
-    const lines = all.filter(l => l !== null);      // Blanks drop out
-    send(self, 'pred:', lines.length > 0);
-    return lines.join('\n');
-  },
-
-  // LineOrBlank = Line | Blank
-  ['LineOrBlank']: (self) => send(self, 'or:', [
-    () => send(self, 'apply:', 'Line'),
-    () => send(self, 'apply:', 'Blank'),
-  ]),
-
-  // Line = text ⟹ `textContent`
-  // (textContent flattens AD's kerning/ligature <tspan>s for free)
-  ['Line']: (self) => {
-    const e = self.cursor.dict;
-    send(self, 'pred:', e.tagName === 'text');
-    return e.textContent.trim();
-  },
-
-  // Blank = g &`textContent empty` ⟹ null
-  // (AD's empty positioning <g>s — contribute nothing; filtered by MultiLine)
-  ['Blank']: (self) => {
-    const e = self.cursor.dict;
-    send(self, 'pred:', e.tagName === 'g');
-    send(self, 'pred:', e.textContent.trim() === '');
-    return null;
-  },
-
-  // ---- side-effecting wrapper: run Paragraph, then mark the DOM -------------
-  // Downstream consumers (.is-paragraph selectors, dataset.string) are
-  // editor-independent, so every vocab's job is just to produce these markers.
-  ['parseTextElt:']: (self, el) => {
-    const str = match(self.vtable, el, 'Paragraph');
-    if (str === null) return false;
-    el.dataset.string = str;
-    if (str.includes('\n')) el.classList.add('is-multiline');
-    el.classList.add('is-paragraph');
-    return true;
-  },
-
-  // ---- graph-notation vocabulary leaf ---------------------------------------
-  ['Text']: (self) => {
-    const e = self.cursor.dict;
-    send(self, 'pred:', e.classList.contains('is-paragraph'));
-    return e.dataset.string;
-  },
 };
 
 vtables.PowerpointVocab = {
-  _parent: vtables.DOMMeta,
-
+  ['init']: () => {
+    // Pre-process PPT into a sane structure
+    // First, kill the clip <g> and <defs> with clipPath
+    const clipG = some('g[clip-path');
+    clipG.replaceWith(...clipG.childNodes);
+    some('defs').remove();
+    // For some reason, <text>s use transform attr instead of x/y. Must bake
+    let texts = all('text');
+    texts.forEach(t => {
+      send(t, 'simplifyTransform');
+      send(t, 'bakeTransform');
+    });
+    // Next: incredibly, I see a hyphenated line (A - B) rendered as
+    // <text>A</text> <text>-</text> <text>B</text>
+    // So: recognise consecutive runs of <texts>, group them into a paragraph
+    // Also, recognise close-enough lines and add them to the para group
+    restitchTextBackTogether = function(initialText) {
+      let textElt = initialText;
+      let lineBbox = textElt.getBBox();
+      // Begin the paragraph <g>
+      let paraG = svgel('g', {class: 'is-paragraph'});
+      textElt.replaceWith(paraG);
+      paraG.appendChild(textElt);
+      let paraBbox = paraG.getBBox();
+      const strings = [textElt.textContent];
+      textElt = paraG.nextSibling;
+      while (textElt?.tagName === 'text') {
+        let nextBbox = textElt.getBBox();
+        const { height } = lineBbox;
+        const isSameLine = Math.abs(lineBbox.y - nextBbox.y) < height/2
+          && (lineBbox.x+lineBbox.width) + height > nextBbox.x;
+        const isNewLine = (lineBbox.y + lineBbox.height) < nextBbox.y
+          && (lineBbox.y+lineBbox.height) + height > nextBbox.y
+          && paraBbox.x <= nextBbox.x && nextBbox.x <= (paraBbox.x+paraBbox.width);
+        if (isSameLine) {
+          paraG.appendChild(textElt);
+          strings.push(' ' + textElt.textContent);
+          lineBbox.width = nextBbox.x - lineBbox.x + nextBbox.width;
+          lineBbox.height = Math.max(lineBbox.height, nextBbox.height);
+          paraBbox = paraG.getBBox();
+        } else if (isNewLine) {
+          paraG.appendChild(textElt);
+          strings.push('\n' + textElt.textContent);
+          paraG.classList.add('is-multiline');
+          lineBbox = nextBbox;
+          paraBbox = paraG.getBBox();
+        } else break;
+        textElt = paraG.nextSibling;
+      }
+      paraG.dataset.string = strings.join('');
+    }
+    let text = some(':not(g) > text');
+    while (text) {
+      // Rewind to the first in the run, if necessary
+      while (text.previousSibling?.tagName === 'text') text = text.previousSibling;
+      restitchTextBackTogether(text);
+      text = some(':not(g) > text');
+    }
+    // Now wrap each <rect>s in a <g>
+    let rects = all('rect');
+    rects.forEach(r => {
+      const g = svgel('g');
+      r.replaceWith(g);
+      g.appendChild(r);
+    });
+    // Paths+rects, like texts, may have transforms to bake
+    let elts = all(':not(g)[transform]');
+    elts.forEach(e => {
+      send(e, 'simplifyTransform');
+      send(e, 'bakeTransform');
+    });
+    // Now wrap paths, tagging arrows as cued by magic colours
+    let paths = all('path');
+    paths.filter(p => ['#C00000','#385723'].includes(attr(p, 'fill')))
+      .forEach(p => {
+        let specialized = send(p, 'specialize');
+        let g = specialized?.tagName === 'g' ? specialized : svgel('g');
+        // If specialising broke it into a group of shapes, tag the group
+        const isArrow = specialized?.tagName !== 'ellipse';
+        if (specialized === null) specialized = p;
+        if (specialized !== g && specialized.parentElement !== g) {
+          specialized.replaceWith(g);
+          g.appendChild(specialized);
+        }
+        if (isArrow) {
+          g.classList.add('arrow-line');
+          // Heuristically tag head/shaft - works so far
+          for (let c of [...g.children]) {
+            if (c.tagName === 'polygon') {
+              if (send(c, 'vertices').length === 3) c.classList.add('is-head');
+              else c.classList.add('is-shaft');
+            }
+          }
+        }
+    });
+    // Now wrap remaining paths in a <g>
+    paths = all(':not(g) > path');
+    paths.forEach(p => {
+      const g = svgel('g');
+      p.replaceWith(g);
+      g.appendChild(p);
+    });
+  },
   ['seedElements']: (self) => all('path, rect, ellipse, polygon, g.is-paragraph'),
 };
