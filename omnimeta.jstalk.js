@@ -1208,13 +1208,7 @@ vtables.PowerpointArrowPath = {
 };
 
 vtables.MathchaVocab = {
-
-  // 1. SEED SET — which elements enter the specialize/treeify pipeline at all.
-  //    Mathcha marks author-drawn content with .real; other editors have no such
-  //    marker and will need their own filter (e.g. exclude <defs>, clip paths).
-  ['seedElements']: (self) => all('path.real, polygon')
-                              .concat(all('g').filter(g => ⟦g parseAsParagraph⟧)),
-
+  /*
   // 2. TEXT RECOGNITION — must SET dataset.string and add .is-paragraph
   //    (+ .is-multiline). Everything downstream reads those, so each editor's
   //    version only has to produce them from its own nesting shape.
@@ -1231,8 +1225,57 @@ vtables.MathchaVocab = {
   // 5. ARROW GRAMMAR — which OmniMeta arrow notation reads this editor's arrows.
   //    (Already built for all three editors — this is just the selector.)
   ['arrowGrammar']: (self) => vtables.MathchaArrow,
+  */
 
-  ['init']: () => {},
+  ['init']: () => {
+    // Pre-process Mathcha SVG into a sane structure
+    all('g.composite-shape').forEach(g => {
+      g.classList.remove('composite-shape');
+      g.classList.add('boundary-wrapper');
+      g.appendChild(svgel('g', {class: 'shape-interior'}));
+      const shape = g.querySelector('.real');
+      if (shape) {
+        shape.classList.remove('real');
+        shape.classList.add('boundary-shape');
+      }
+    });
+    all('.connection.real').forEach(e => {
+      e.classList.remove('connection');
+      e.classList.remove('real');
+      e.classList.add('connector-shaft');
+    })
+    all('g.arrow-line').forEach(g => {
+      g.classList.remove('arrow-line');
+      g.classList.add('connector-wrapper');
+      const head = g.querySelector('g');
+      if (head) {
+        //⟦head bakeStyles⟧;
+        // TODO: connector-head
+      }
+    });
+    all('g').forEach((self) => {
+      if (self.children.length === 0) return false;
+      for (let child of self.children) {
+        if (child.tagName !== 'g') return false;
+        for (let gchild of child.children) {
+          if (gchild.tagName !== 'g') return false;
+          if (gchild.firstChild.tagName !== 'text') return false;
+        }
+      }
+      // TODO: maybe sanity check they're in y-order
+      const lines = Array.from(self.children).map(line_g => {
+        const runs = Array.from(line_g.children).map(run_g =>
+          run_g.firstChild.textContent
+        );
+        return runs.join('');
+      });
+      self.dataset.string = lines.join('\n');
+      if (self.children.length > 1) self.classList.add('is-multiline');
+      self.classList.add('text-wrapper');
+      return true;
+    });
+  },
+  ['seedElements']: (self) => all('.boundary-shape, .connector-shaft, .text-wrapper'),
 };
 
 vtables.AffinityVocab = {
@@ -1267,19 +1310,21 @@ vtables.AffinityVocab = {
     gs = all('g');
     gs.filter(g => g.querySelector('text') && !g.querySelector('path, rect'))
       .forEach(g => {
-        g.classList.add('is-paragraph');
+        g.classList.add('text-wrapper');
         const texts = [...g.children].filter(c => c.tagName === 'text');
         if (texts.length > 1) {
           g.classList.add('is-multiline');
           g.dataset.string = texts.map(t => t.textContent).join('\n');
         } else g.dataset.string = texts[0].textContent;
     });
-    // Now wrap each <rect>s in a <g>
+    // Now wrap each <rect> in a <g>
     rects = all('rect');
     rects.forEach(r => {
-      const g = svgel('g');
+      const g = svgel('g', {class: 'boundary-wrapper'});
       r.replaceWith(g);
       g.appendChild(r);
+      g.appendChild(svgel('g', {class: 'shape-interior'}));
+      r.classList.add('boundary-shape');
     });
     // Now pair up all the arrowhead/shaft path pairs
     let paths = all('path');
@@ -1288,12 +1333,12 @@ vtables.AffinityVocab = {
     pairs.forEach(([p1,p2]) => {
       const g = svgel('g');
       p1.replaceWith(g);
-      g.appendChild(p1); p1.classList.add('is-head')
-      g.appendChild(p2); p2.classList.add('is-shaft');
-      g.classList.add('arrow-line');
+      g.appendChild(p1); p1.classList.add('connector-head')
+      g.appendChild(p2); p2.classList.add('connector-shaft');
+      g.classList.add('connector-wrapper');
     });
   },
-  ['seedElements']: (self) => all('path, rect, g.is-paragraph'),
+  ['seedElements']: (self) => all('path, .boundary-shape, .text-wrapper'),
 };
 
 vtables.PowerpointVocab = {
@@ -1317,7 +1362,7 @@ vtables.PowerpointVocab = {
       let textElt = initialText;
       let lineBbox = textElt.getBBox();
       // Begin the paragraph <g>
-      let paraG = svgel('g', {class: 'is-paragraph'});
+      let paraG = svgel('g', {class: 'text-wrapper'});
       textElt.replaceWith(paraG);
       paraG.appendChild(textElt);
       let paraBbox = paraG.getBBox();
@@ -1355,12 +1400,14 @@ vtables.PowerpointVocab = {
       restitchTextBackTogether(text);
       text = some(':not(g) > text');
     }
-    // Now wrap each <rect>s in a <g>
+    // Now wrap each <rect> in a <g>
     let rects = all('rect');
     rects.forEach(r => {
-      const g = svgel('g');
+      const g = svgel('g', {class: 'boundary-wrapper'});
       r.replaceWith(g);
       g.appendChild(r);
+      g.appendChild(svgel('g', {class: 'shape-interior'}));
+      r.classList.add('boundary-shape');
     });
     // Paths+rects, like texts, may have transforms to bake
     let elts = all(':not(g)[transform]');
@@ -1382,7 +1429,7 @@ vtables.PowerpointVocab = {
           g.appendChild(specialized);
         }
         if (isArrow) {
-          g.classList.add('arrow-line');
+          g.classList.add('connector-wrapper');
           // Heuristically tag head/shaft - works so far
           for (let c of [...g.children]) {
             if (c.tagName === 'polygon') {
@@ -1390,15 +1437,19 @@ vtables.PowerpointVocab = {
               else c.classList.add('is-shaft');
             }
           }
+        } else {
+          g.classList.add('boundary-wrapper');
+          specialized.classList.add('boundary-shape');
         }
     });
     // Now wrap remaining paths in a <g>
     paths = all(':not(g) > path');
     paths.forEach(p => {
-      const g = svgel('g');
+      const g = svgel('g', {class: 'boundary-wrapper'});
       p.replaceWith(g);
       g.appendChild(p);
+      g.appendChild(svgel('g', {class: 'shape-interior'}));
     });
   },
-  ['seedElements']: (self) => all('path, rect, ellipse, polygon, g.is-paragraph'),
+  ['seedElements']: (self) => all('path, polygon, .boundary-shape, .text-wrapper'),
 };

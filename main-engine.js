@@ -190,8 +190,9 @@ vtables.domNode = {
   ['specialize']: (self) => null,
   ['localRoot']: (self) => self,
   ['reroot']: (self) => { // Given: containedIn
-    let soonToBeParent = byId(self.dataset.containedIn);
-    const parentRoot = send(soonToBeParent, 'localRoot');
+    const soonToBeParent = byId(self.dataset.containedIn);
+    let parentRoot = send(soonToBeParent, 'localRoot');
+    parentRoot = parentRoot.querySelector('g.shape-interior') || parentRoot;
     const myRoot = send(self, 'localRoot');
     parentRoot.appendChild(myRoot);
   },
@@ -247,6 +248,7 @@ vtables.domNode = {
     send(self, 'pushTransformToChildren');
     [...self.children].forEach(c => send(c, 'pushTransformToDescendants'));
   },
+  ['interior']: (self) => send(send(self, 'localRoot'), 'interior'),
 };
 
 vtables.byTag['path'] = {
@@ -557,7 +559,7 @@ vtables.byTag['ellipse'] = {
   },
   ['specialize']: (self) => {
     const [rx,ry] = send(self, 'radii');
-    if (Math.abs(rx - ry) < 0.001) { // SMELL epsilon
+    if (Math.abs(rx - ry) < 0.01) { // SMELL epsilon
       self = replaceTag(self, 'circle');
       self.removeAttribute('rx');
       self.removeAttribute('ry');
@@ -600,7 +602,7 @@ vtables.byTag['text'] = {
       const it = ys.getItem(i); [it.value] = legible(m.d * it.value + m.f);
     }
     if (xs.numberOfItems === 0 && ys.numberOfItems === 0)
-      attr(self, {x: m.e, y: m.f});
+      attr(self, {x: legible(m.e), y: legible(m.f)});
     self.removeAttribute('transform');
     return true;
   },
@@ -613,29 +615,9 @@ vtables.byTag['tspan'] = {
 vtables.byTag['g'] = {
   _parent: vtables.domNode,
 
-  ['parseAsParagraph']: (self) => {
-    if (self.children.length === 0) return false;
-    for (let child of self.children) {
-      if (child.tagName !== 'g') return false;
-      for (let gchild of child.children) {
-        if (gchild.tagName !== 'g') return false;
-        if (gchild.firstChild.tagName !== 'text') return false;
-      }
-    }
-    // TODO: maybe sanity check they're in y-order
-    const lines = Array.from(self.children).map(line_g => {
-      const runs = Array.from(line_g.children).map(run_g =>
-        run_g.firstChild.textContent
-      );
-      return runs.join('');
-    });
-    self.dataset.string = lines.join('\n');
-    if (self.children.length > 1) self.classList.add('is-multiline');
-    self.classList.add('is-paragraph');
-    return true;
-  },
   ['idPrefix']: (self) => {
     if (self.classList.contains('is-paragraph')) return 'par';
+    if (self.classList.contains('text-wrapper')) return 't';
     else return 'g';
   },
   ['containsPt:']: (self, pt) => {
@@ -644,7 +626,7 @@ vtables.byTag['g'] = {
     return false;
   },
   ['encloses:']: needsSuper((supr, self, other) =>
-    self.classList.contains('is-paragraph') ? supr('encloses:', other)
+    self.classList.contains('text-wrapper') ? supr('encloses:', other)
     : self.firstChild && send(self.firstChild, 'encloses:', other) // Assumes wrapped shape
   ),
   ['specialize']: (self) => {
@@ -653,6 +635,8 @@ vtables.byTag['g'] = {
       if (send(c, 'specialize')) anySpecialized = true;
     return anySpecialized? self : null;
   },
+  ['boundaryShape']: (self) => self.querySelector('.boundary-shape'),
+  ['interior']: (self) => self.querySelector('.shape-interior'),
 }
 
 // Of a connector (open path) c, we must be able to ask:
@@ -1564,16 +1548,22 @@ function init() {
   // [FUTURE]
   //   3. Ensure all closed shape nodes are in Closed Canonical Form:
   //
-  //      <g> boundary-wrapper
-  //        <shape ... /> boundary-shape
-  //        <g> ... </g> shape-interior
+  //      <g .boundary-wrapper >
+  //        <closed-shape .boundary-shape ... /> 
+  //        <g .shape-interior > ... </g>
   //      </g>
   //
   //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
   //
-  //      <g> connector-wrapper
-  //        <path ... /> connector-shaft
-  //        <g> ... </g> connector-heads
+  //      <g .connector-wrapper > 
+  //        <long-shape .connector-shaft ... /> 
+  //        (<shape .connector-head ... />)+
+  //      </g>
+  //
+  //      And all text paragraphs are in Text Canonical Form:
+  //      
+  //      <g .text-wrapper .is-multiline? data-string=... >
+  //        ...
   //      </g>
   // [/FUTURE]
   //
@@ -1596,15 +1586,15 @@ function init() {
   });
 
   elems = Object.values(everything)
-    .filter(e => !e.parentElement.classList.contains('arrow-line'))
-    .concat(all('g.arrow-line'));
-  all('g.arrow-line').forEach(g => send(g, 'id')); // Force an ID so containments work
+    .filter(e => !e.parentElement.classList.contains('connector-wrapper'))
+    .concat(all('g.connector-wrapper'));
+  all('g.connector-wrapper').forEach(g => send(g, 'id')); // Force an ID so containments work
 
   // Next, compute spatial containment tree; store in
   // contained-in / contains dataset attributes.
-  // Closed shapes inside g.arrow-line (e.g. arrowheads) mustn't contain anything
+  // Closed shapes inside g.connector-wrapper (e.g. arrowheads) mustn't contain anything
   elems.forEach(el => send(el, 'findTightestContainerIn:',
-    elems.filter(e => !e.parentElement.classList.contains('arrow-line'))));
+    elems.filter(e => !e.parentElement.classList.contains('connector-wrapper'))));
   
   // Now, reroot each node inside its tightest container
   // and erase the evidence :)

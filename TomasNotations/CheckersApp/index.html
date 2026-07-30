@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SVG Board Game — minimal Elm-like demo</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px; background: #f4f4f5; }
+    #app { border: 1px solid #d4d4d8; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding:50px }
+    /* Embedded reference: the source SVG defining checkers rules/visuals.
+       Linked as a standalone file (works over http://); its inner SVG DOM is
+       reachable via document.getElementById('rules-source').contentDocument. */
+    #rules-source-wrap { width: 100%; max-width: 90vw; padding-top: 16px; }
+    #rules-source-wrap h2 { font-size: 14px; font-weight: 600; color: #52525b; margin: 0 0 8px; }
+    /* Scrolling lives on this wrapper div, not on the iframe: an iframe's own
+       'overflow' is ignored, and checkers.svg's root <svg overflow="hidden">
+       suppresses the inner document's scrollbars. So we size the iframe to the
+       SVG's intrinsic 2646x2268 and let this fixed-size box scroll around it. */
+    #rules-source-scroll { width: 100%; height:60vh; overflow: auto; border: 1px solid #e4e4e7; background: #fff; }
+    #rules-source { display: block; width: 2646px; height: 2268px; border: 0; }
+  </style>
+</head>
+<body onload="startGame()">
+  <div id="app"></div>
+  <section id="rules-source-wrap">
+    <h2>Reference source (checkers.svg) — linked standalone file</h2>
+    <div id="rules-source-scroll">
+      <iframe id="rules-source" src="checkers.svg" title="checkers.svg reference"></iframe>
+    </div>
+  </section>
+  <script src="app.js"></script>
+  <script>
+    // ---- Game-specific setup (uses the engine defined in app.js) ------------
+    // Called from <body onload>: reads the referenced SVG, builds the initial
+    // board/pieces/rules/promotions, and starts the Elm-like loop.
+    function startGame() {
+      const rulesDoc = document.getElementById('rules-source').contentDocument;
+
+      // Placeholder layout — eventually derived from the SVG itself.
+      const board = [...Array(64).keys()].map(n => {
+        const x = Math.floor(n / 8), y = n % 8;
+        return [x, y, (x + y) % 2 === 0 ? 'white-board-piece' : 'black-board-piece'];
+      });
+
+      const pieces = defaultPieces();
+
+      // Move rules. Offsets are normalized to be non-negative (each rule's cells
+      // start at 0) — matching what extraction from the SVG's MOVES boxes yields.
+      // The anchor (the cell whose content is the rule's own `piece`) is found at
+      // match time, so it need not sit at (0, 0).
+      // `label` is the move direction: horizontal (L/R) then vertical (U/D).
+      const rules = [
+        { piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
+        { piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
+        { piece: "regular-1", label: "REGULAR", before: [[0, 1, "regular-1"], [1, 0, null]], after: [[0, 1, null], [1, 0, "regular-1"]] },
+        { piece: "regular-1", label: "REGULAR", before: [[1, 1, "regular-1"], [0, 0, null]], after: [[1, 1, null], [0, 0, "regular-1"]] },
+        // Jumps: capture the opposing piece diagonally and land on the empty cell
+        // beyond it (the captured cell becomes null in `after`).
+        { piece: "regular-1", label: "JUMP", before: [[0, 2, "regular-1"], [1, 1, "any-2"], [2, 0, null]], after: [[0, 2, null], [1, 1, null], [2, 0, "regular-1"]] },
+        { piece: "regular-1", label: "JUMP", before: [[2, 2, "regular-1"], [1, 1, "any-2"], [0, 0, null]], after: [[2, 2, null], [1, 1, null], [0, 0, "regular-1"]] },
+        { piece: "regular-2", label: "JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] },
+        { piece: "regular-2", label: "JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
+        // King moves — one square in every diagonal direction (flying kings TODO).
+        { piece: "king-1", label: "KING[RD]", before: [[0, 0, "king-1"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-1"]] },
+        { piece: "king-1", label: "KING[LD]", before: [[1, 0, "king-1"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-1"]] },
+        { piece: "king-1", label: "KING[RU]", before: [[0, 1, "king-1"], [1, 0, null]], after: [[0, 1, null], [1, 0, "king-1"]] },
+        { piece: "king-1", label: "KING[LU]", before: [[1, 1, "king-1"], [0, 0, null]], after: [[1, 1, null], [0, 0, "king-1"]] },
+        { piece: "king-2", label: "KING[RD]", before: [[0, 0, "king-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-2"]] },
+        { piece: "king-2", label: "KING[LD]", before: [[1, 0, "king-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-2"]] },
+        { piece: "king-2", label: "KING[RU]", before: [[0, 1, "king-2"], [1, 0, null]], after: [[0, 1, null], [1, 0, "king-2"]] },
+        { piece: "king-2", label: "KING[LU]", before: [[1, 1, "king-2"], [0, 0, null]], after: [[1, 1, null], [0, 0, "king-2"]] },
+        // King jumps — capture an opposing piece (any-N) in every diagonal direction.
+        { piece: "king-1", label: "KING_JUMP[RD]", before: [[0, 0, "king-1"], [1, 1, "any-2"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-1"]] },
+        { piece: "king-1", label: "KING_JUMP[LD]", before: [[2, 0, "king-1"], [1, 1, "any-2"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-1"]] },
+        { piece: "king-1", label: "KING_JUMP[RU]", before: [[0, 2, "king-1"], [1, 1, "any-2"], [2, 0, null]], after: [[0, 2, null], [1, 1, null], [2, 0, "king-1"]] },
+        { piece: "king-1", label: "KING_JUMP[LU]", before: [[2, 2, "king-1"], [1, 1, "any-2"], [0, 0, null]], after: [[2, 2, null], [1, 1, null], [0, 0, "king-1"]] },
+        { piece: "king-2", label: "KING_JUMP[RD]", before: [[0, 0, "king-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-2"]] },
+        { piece: "king-2", label: "KING_JUMP[LD]", before: [[2, 0, "king-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-2"]] },
+        { piece: "king-2", label: "KING_JUMP[RU]", before: [[0, 2, "king-2"], [1, 1, "any-1"], [2, 0, null]], after: [[0, 2, null], [1, 1, null], [2, 0, "king-2"]] },
+        { piece: "king-2", label: "KING_JUMP[LU]", before: [[2, 2, "king-2"], [1, 1, "any-1"], [0, 0, null]], after: [[2, 2, null], [1, 1, null], [0, 0, "king-2"]] },
+      ];
+
+      const combinations = {
+        initial: "start",
+        terminal: ["end",
+          "king-before-jump-RU","king-after-jump-RU",
+          "king-before-jump-LU","king-after-jump-LU",
+          "king-before-jump-RD","king-after-jump-RD",
+          "king-before-jump-LD","king-after-jump-LD"
+        ],
+        transitions: [
+          [ "start", "REGULAR", "end" ],
+          [ "start", "JUMP", "end" ],
+          
+          [ "start", "KING[RU]", "king-before-jump-RU" ], 
+          [ "king-before-jump-RU", "KING[RU]", "king-before-jump-RU" ], 
+          [ "start", "KING_JUMP[RU]", "king-after-jump-RU" ], 
+          [ "king-before-jump-RU", "KING_JUMP[RU]", "king-after-jump-RU" ], 
+          [ "king-after-jump-RU", "KING[RU]", "king-after-jump-RU" ], 
+
+          [ "start", "KING[LU]", "king-before-jump-LU" ],
+          [ "king-before-jump-LU", "KING[LU]", "king-before-jump-LU" ],
+          [ "start", "KING_JUMP[LU]", "king-after-jump-LU" ],
+          [ "king-before-jump-LU", "KING_JUMP[LU]", "king-after-jump-LU" ],
+          [ "king-after-jump-LU", "KING[LU]", "king-after-jump-LU" ],
+
+          [ "start", "KING[LD]", "king-before-jump-LD" ],
+          [ "king-before-jump-LD", "KING[LD]", "king-before-jump-LD" ],
+          [ "start", "KING_JUMP[LD]", "king-after-jump-LD" ],
+          [ "king-before-jump-LD", "KING_JUMP[LD]", "king-after-jump-LD" ],
+          [ "king-after-jump-LD", "KING[LD]", "king-after-jump-LD" ],
+
+          [ "start", "KING[RD]", "king-before-jump-RD" ],
+          [ "king-before-jump-RD", "KING[RD]", "king-before-jump-RD" ],
+          [ "start", "KING_JUMP[RD]", "king-after-jump-RD" ],
+          [ "king-before-jump-RD", "KING_JUMP[RD]", "king-after-jump-RD" ],
+          [ "king-after-jump-RD", "KING[RD]", "king-after-jump-RD" ],
+        ]
+      }
+
+      // Promotion. regular-1 advances up to the top row, regular-2 down to the
+      // bottom row; reaching the far row turns it into a king.
+      const transforms = [
+        { piece: "regular-1", region: "black-king-area", transform: "king-1" },
+        { piece: "regular-2", region: "white-king-area", transform: "king-2" },
+      ];
+      const areas = {
+        "black-king-area": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]],
+        "white-king-area": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7]],
+      };
+
+      // Rule tokens starting with this prefix are wildcards: "any-2" matches any
+      // piece sharing the "-2" suffix (regular-2, king-2), so jumps can take kings.
+      const wildcard = "any-";
+
+      run(document.getElementById('app'), { init: () => init(board, pieces, rules, transforms, areas, wildcard, combinations), update, view }, rulesDoc);
+    }
+
+    // Default checker layout: each side fills the dark squares ((x+y) odd) of its
+    // three nearest rows. regular-2 on rows 0-2, regular-1 on the far side.
+    function defaultPieces() {
+      const pieces = [];
+      for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) {
+          if ((x + y) % 2 !== 1) continue;       // pieces sit on dark squares only
+          if (y <= 2) pieces.push([x, y, 'regular-2']);
+          else if (y >= 5) pieces.push([x, y, 'regular-1']);
+        }
+      }
+      return pieces;
+    }
+  </script>
+</body>
+</html>
