@@ -102,24 +102,6 @@ sub skip_balanced {
     return $pos;
 }
 
-sub has_top_level_comma {
-    my ($str) = @_;
-    my $pos = 0;
-    my $len = length($str);
-    
-    while ($pos < $len) {
-        my $ch = substr($str, $pos, 1);
-        if ($ch eq ',') {
-            return 1;
-        } elsif ($ch eq $OPEN || $ch eq '[' || $ch eq '(' || $ch eq '{' || $ch eq '"' || $ch eq "'" || $ch eq '`') {
-            $pos = skip_balanced($str, $pos) + 1;
-        } else {
-            $pos++;
-        }
-    }
-    return 0;
-}
-
 # Tokenize preserving whitespace info
 # Returns array of [token, preceding_whitespace] pairs
 sub tokenize_message {
@@ -174,9 +156,7 @@ sub tokenize_message {
 
 sub parse_message_send {
     my ($content) = @_;
-    
-    return undef if has_top_level_comma($content);
-    
+        
     my @tokens = tokenize_message($content);
     
     return undef if @tokens == 0;
@@ -205,6 +185,10 @@ sub parse_message_send {
             push @parts, ["'$tok'", $ws];
             if (@tokens) {
                 my ($arg, $arg_ws) = @{shift @tokens};
+                # Tolerate a stray trailing comma after an argument (an
+                # object-literal habit). JSTalk keyword args are not comma-
+                # separated; without this we would emit "false,," -> invalid JS.
+                $arg =~ s/,\s*$//;
                 push @parts, [$arg, $arg_ws];
             }
         } else {

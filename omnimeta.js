@@ -731,6 +731,12 @@ vtables.ChildSetSubstrate = {
     // => one entry per circle child; rect/text children silently skipped
 */
 
+// Does this receiver's vtable chain define `sel`? (No send — avoids DNU.)
+hasRule = (recv, sel) => {
+  for (let vt = recv.vtable; vt; vt = vt._parent) if (vt[sel] !== undefined) return true;
+  return false;
+};
+
 // ── RegionSubstrate ──────────────────────────────────────────────────────────
 // Claim-pruning descent over a DOM region. Like ChildSetSubstrate but searches
 // the whole subtree of `scope`, not just direct children — and PRUNES: when an
@@ -766,32 +772,37 @@ vtables.RegionSubstrate = {
   // Vocabulary rules are thus SIBLINGS in the notation library, overridable via
   // _parent, with no separate grammar and no lending (a rule that genuinely
   // needs full DOMMeta machinery can still lend explicitly).
-  ['claimMatching:']: (self, designator) =>
-    send(self, 'claimFirst:', (elem) => {
-             // predicate: does the designator match at this element?
-             // Runs the rule via transient focus; returns {value} or null.
-             const { scope, consumed } = self.cursor;
-             const savedCursor = self.cursor;
-             self.cursor = { scope, consumed, dict: elem };
-             try {
-               const v = send(self, 'applyRule:', designator);
-               self.cursor = savedCursor;
-               return { value: v };
-             } catch (f) {
-               if (f !== fail) throw f;
-               self.cursor = savedCursor;
-               return null;
-             }
-           },
-           'onExhausted:', () => { throw fail; },
-           'piercing:', false),
+  ['claimMatching:']: (self, designator) => {
+    const selRule = (typeof designator === 'string') ? designator + 'Sel' : null;
+    const sel = (selRule && hasRule(self, selRule)) ? send(self, 'apply:', selRule) : null;
+    return send(self,
+      'claimFirst:', (elem) => {
+        // predicate: does the designator match at this element?
+        // Runs the rule via transient focus; returns {value} or null.
+        const { scope, consumed } = self.cursor;
+        const savedCursor = self.cursor;
+        self.cursor = { scope, consumed, dict: elem };
+        try {
+          const v = send(self, 'applyRule:', designator);
+          self.cursor = savedCursor;
+          return { value: v };
+        } catch (f) {
+          if (f !== fail) throw f;
+          self.cursor = savedCursor;
+          return null;
+        }
+      },
+      'onExhausted:', () => { throw fail; },
+      'piercing:', false,
+      'quickTest:', sel ? (e => e.matches(sel)) : null);
+  },
 
-  // claimFirst:onExhausted:piercing: — the shared claim core. Descends the
+  // claimFirst:onExhausted:piercing:quickTest — the shared claim core. Descends the
   // region in document order. `test(elem)` returns a truthy { value } to
   // claim-here-and-stop-descent, or null to keep searching. On a claim:
   // wrapper-hops (consumes the element AND its DOM Shape Protocol wrapper root)
   // and returns test's value. On exhaustion: calls onExhausted (throw fail for
-  // a required claim; return null for an optional one).
+  // a required claim; return null for an optional one). quickTest is e.g. CSS selector
   //
   // `piercing` splits the two jobs opacity was doing with one mechanism:
   //   • false (STRUCTURAL, default use): a consumed element is skipped AND its
@@ -800,13 +811,13 @@ vtables.RegionSubstrate = {
   //   • true (ATTACHMENT): a consumed element is skipped as a CANDIDATE (can't
   //     re-claim it) but we still DESCEND into it — so a name-text inside a
   //     claimed box is reachable. The curtain lifts for looking, not for taking.
-  ['claimFirst:onExhausted:piercing:']: (self, test, onExhausted, piercing) => {
+  ['claimFirst:onExhausted:piercing:quickTest:']: (self, test, onExhausted, piercing, quickTest) => {
     const { scope, consumed } = self.cursor;
 
     const search = (elem) => {
       const claimed = consumed.has(elem);
       if (claimed && !piercing) return null; // structural: skip AND prune
-      if (!claimed) {                        // consumed ⇒ never a candidate
+      if (!claimed && (!quickTest || quickTest(elem))) {   // cheap reject, no throw
         const hit = test(elem);
         if (hit) return { elem, value: hit.value };
       }
@@ -875,18 +886,21 @@ vtables.GraphNotationGrammar = {
   // and participate in pruning identically to vertex/edge claims.
   ['nameTextNear:']: (self, thing) =>
     send(self, 'claimFirst:', (elem) => {
-             const { scope, consumed } = self.cursor;
-             const savedCursor = self.cursor;
-             self.cursor = { scope, consumed, dict: elem };
-             let text = null;
-             try { text = send(self, 'applyRule:', 'Label'); }   // is elem a text element?
-             catch (f) { if (f !== fail) throw f; }
-             self.cursor = savedCursor;
-             if (text === null) return null;
-             return send(self, 'isNear:', text, 'to:', thing) ? { value: text } : null;
-           },
-           'onExhausted:', () => null,   // optional: null, not fail
-           'piercing:', true), // Search for labels may pierce the opacity of claimed vertices
+            const { scope, consumed } = self.cursor;
+            const savedCursor = self.cursor;
+            self.cursor = { scope, consumed, dict: elem };
+            let text = null;
+            try { text = send(self, 'applyRule:', 'Label'); }   // is elem a text element?
+            catch (f) { if (f !== fail) throw f; }
+            self.cursor = savedCursor;
+            if (text === null) return null;
+            return send(self, 'isNear:', text, 'to:', thing) ? { value: text } : null;
+          },
+          'onExhausted:', () => null,   // optional: null, not fail
+          'piercing:', true, // Search for labels may pierce the opacity of claimed vertices
+          'quickTest:', hasRule(self, 'LabelSel')
+                          ? (e => e.matches(send(self, 'LabelSel')))
+                          : null), 
 
   // ---- Near / epsilon: overridable proximity, locally quantifiable ---------
   // A context can override `epsilon` (or `Near:of:` wholesale) to tune snapping.
@@ -898,6 +912,14 @@ vtables.GraphNotationGrammar = {
   ['isNear:to:']: (self, candidate, thing) => {
     const sd = send(thing, 'signedDistanceTo:', candidate); // order matters...!
     return 0 <= sd && sd <= send(self, 'epsilon');
+  },
+
+  // (Default) Label = a text paragraph in Text Canonical Form
+  ['LabelSel']: (self) => 'g.text-wrapper',
+  ['Label']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'LabelSel')));
+    return elt;
   },
 };
 
@@ -929,6 +951,43 @@ vtables['GraphEdge'] = {
 vtables['NamedThing'] = {
   ['name']: (self) => self.name,
   ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.inner, sel, ...args),
+};
+
+// ── RegionDispatchNotation ───────────────────────────────────────────────────
+// Top-level boxes only — the claim-descent prunes each claimed box's subtree.
+//   rd = match(vtables.RegionDispatchNotation, svg_root, 'Root')
+vtables.RegionDispatchNotation = {
+  _parent: vtables.GraphNotationGrammar,   // SMELL: for Named:/nameTextNear:/isNear:to:/epsilon
+
+  // Root = Named(Box)+
+  ['Root']: (self) => send(self, 'many1:', () => send(self, 'Named:', 'Box')),
+
+  // Box = a closed shape in Closed Canonical Form
+  ['BoxSel']: (self) => 'rect.boundary-shape',
+  ['Box']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'BoxSel')));
+    return { vtable: 'GraphNode', dom: elt };
+  },
+};
+
+// ── BoardLegendNotation ──────────────────────────────────────────────────────
+// Legend entries: each shape (tile, piece glyph) with its name above it.
+// Same name-string on several shapes is fine — they're exemplars of one
+// category; Named stays injective per element.
+//   bl = match(vtables.BoardLegendNotation, scopeElt, 'Root')
+vtables.BoardLegendNotation = {
+  _parent: vtables.GraphNotationGrammar, // SMELL: for Named:/nameTextNear:/isNear:to:/epsilon
+
+  // BoardLegend = Named(Shape)+
+  ['Root']: (self) => send(self, 'many1:', () => send(self, 'Named:', 'Shape')),
+
+  ['ShapeSel']: (self) => '.boundary-shape',
+  ['Shape']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'ShapeSel')));
+    return elt;
+  },
 };
 
 // BoxGraph (OmniMeta version)
@@ -1370,7 +1429,7 @@ vtables.PowerpointVocab = {
         let nextBbox = textElt.getBBox();
         const { height } = lineBbox;
         const isSameLine = Math.abs(lineBbox.y - nextBbox.y) < height/2
-          && (lineBbox.x+lineBbox.width) + height > nextBbox.x;
+          && (lineBbox.x+lineBbox.width) + height/2 > nextBbox.x;
         const isNewLine = (lineBbox.y + lineBbox.height) < nextBbox.y
           && (lineBbox.y+lineBbox.height) + height > nextBbox.y
           && paraBbox.x <= nextBbox.x && nextBbox.x <= (paraBbox.x+paraBbox.width);
@@ -1446,8 +1505,32 @@ vtables.PowerpointVocab = {
       const g = svgel('g', {class: 'boundary-wrapper'});
       p.replaceWith(g);
       g.appendChild(p);
+      p.classList.add('boundary-shape');
       g.appendChild(svgel('g', {class: 'shape-interior'}));
     });
   },
   ['seedElements']: (self) => all('path, polygon, .boundary-shape, .text-wrapper'),
+  ['parseCheckers']: (self) => { // TEMP DIAGRAM-SPECIFIC HACK
+    const diagram = send(svg_parent.querySelector('g'), 'interior');
+    const regions = match(vtables.RegionDispatchNotation, diagram, 'Root'); // [NamedThing]
+    window.regions = {};
+    for (const r of regions) {
+      const name = send(r, 'name');
+      if (name === undefined) {
+        console.warn('Undefined region: '+send(r, 'id'), r.inner); continue;
+      }
+      // name = "{instName} (:{notationName})"
+      let [, instName, notationName] = name.match(/^\s*(.*?)\s*\(:(\w+)\)$/);
+      notationName += 'Notation';
+      const notation = vtables[notationName];
+      log('Parse '+send(r, 'id')+' as '+notationName, r.inner);
+      if (!notation) {
+        console.warn('No such notation vtable: '+notationName); continue;
+      }
+      //Grammars don't support FromRegion! What to do...
+      //window.regions[instName] = send({ vtable: notation }, 'fromRegion:', send(r, 'interior'));
+      window.regions[instName] = match(notation, send(r, 'interior'), 'Root');
+    }
+    return regions;
+  },
 };

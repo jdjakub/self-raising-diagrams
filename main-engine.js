@@ -886,24 +886,24 @@ isMathchaConnector = e => ['polyline','line'].includes(e.tagName)
 /* === USAGE SKETCHES ===
 
 // "Default BoxGraph": rects as nodes, open paths as edges, anywhere in doc.
-const boxGN = ⟦ GraphNotation
-  fromRegion: document.documentElement
-    filterBy: e => true,
-    withDefs: {
+const boxGN = send(GraphNotation,
+  'fromRegion:', document.documentElement,
+    'filterBy:', e => true,,
+    'withDefs:', {
       isNode: e => e.tagName === 'rect',
       isEdge: isMathchaConnector,
       endpointTolerance: 3,
-    } ⟧;
+    });
 
 // LabelGraph: text paragraphs as nodes. No Labelling layer — nodes ARE labels.
-const labelGN = ⟦ GraphNotation
-  fromRegion: document.documentElement
-    filterBy: e => true,
-    withDefs: {
+const labelGN = send(GraphNotation,
+  'fromRegion:', document.documentElement,
+    'filterBy:', e => true,,
+    'withDefs:', {
       isNode: e => e.classList.contains('is-paragraph'),
       isEdge: isMathchaConnector,
       endpointTolerance: 20,
-    } ⟧;
+    });
 
 */
 
