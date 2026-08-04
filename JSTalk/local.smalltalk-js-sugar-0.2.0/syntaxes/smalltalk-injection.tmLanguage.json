@@ -15,7 +15,7 @@
     "unary-message-send": {
       "name": "meta.message-send.smalltalk",
       "comment": "Complete unary send on one line: ⟦receiver selector⟧. Fails on keyword sends because a ':' follows the selector instead of ⟧.",
-      "match": "(⟦)\\s*([a-zA-Z_$][a-zA-Z0-9_$.]*)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(⟧)",
+      "match": "(⟦)\\s*([a-zA-Z_$][a-zA-Z0-9_$]*(?:\\.[a-zA-Z_$][a-zA-Z0-9_$]*|\\((?:[^()⟦⟧]|\\([^()⟦⟧]*\\))*\\)|\\[[^\\[\\]⟦⟧]*\\])*)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(⟧)",
       "captures": {
         "1": { "name": "punctuation.definition.message-send.begin.smalltalk" },
         "2": { "patterns": [ { "include": "source.js" } ] },

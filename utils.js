@@ -128,8 +128,8 @@ neg = x => mul2(-1, x);
 mag = x => isvec(x) ? vmag(x) : Math.abs(x);
 // TODO: the rest
 
-vtoa = ([x,y]) => x + ' ' + y;
-atov = s => s ? s.split(' ').map(Number.parseFloat) : undefined;
+vtoa = ([x,y]) => x + ',' + y;
+atov = s => s ? s.split(',').map(Number.parseFloat) : undefined;
 
 currentScope = document;
 restrictScope = function(element) {

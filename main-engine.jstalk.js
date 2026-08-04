@@ -616,8 +616,9 @@ vtables.byTag['g'] = {
   _parent: vtables.domNode,
 
   ['idPrefix']: (self) => {
-    if (self.classList.contains('is-paragraph')) return 'par';
+    if (self.classList.contains('is-paragraph')) return 'par'; // TODO deprecate
     if (self.classList.contains('text-wrapper')) return 't';
+    if (self.classList.contains('connector-wrapper')) return 'a';
     else return 'g';
   },
   ['containsPt:']: (self, pt) => {
@@ -637,6 +638,12 @@ vtables.byTag['g'] = {
   },
   ['boundaryShape']: (self) => self.querySelector('.boundary-shape'),
   ['interior']: (self) => self.querySelector('.shape-interior'),
+  ['endpoints']: (self) => props(self.dataset, 'originPt', 'targetPt').map(atov),
+  ['lineSegments']: needsSuper((supr, self) => {
+    if (self.matches('.connector-wrapper'))
+      return ⟦self.querySelector('.is-shaft') lineSegments⟧;
+    return ⟦super lineSegments⟧;
+  }),
 }
 
 // Of a connector (open path) c, we must be able to ask:
@@ -1549,8 +1556,7 @@ function init() {
   //    (see principles/1-most-specialized-tag.svg)
   // 2. Reshape the DOM tree to reflect spatial containment relations
   //    (see principles/2-dom-tree-spatial-containment.svg)
-  // [FUTURE]
-  //   3. Ensure all closed shape nodes are in Closed Canonical Form:
+  // 3. Ensure all closed shape nodes are in Closed Canonical Form:
   //
   //      <g .boundary-wrapper >
   //        <closed-shape .boundary-shape ... /> 
@@ -1559,7 +1565,7 @@ function init() {
   //
   //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
   //
-  //      <g .connector-wrapper > 
+  //      <g .connector-wrapper data-origin-pt="x,y" data-target=pt="x,y"> 
   //        <long-shape .connector-shaft ... /> 
   //        (<shape .connector-head ... />)+
   //      </g>
@@ -1569,10 +1575,12 @@ function init() {
   //      <g .text-wrapper .is-multiline? data-string=... >
   //        ...
   //      </g>
-  // [/FUTURE]
   //
   
+  if (svg_parent.dataset.normalized) return null;
+
   ⟦vocab init⟧; // Normalize shapes/connectors/text exported under different editors' encodings
+  svg_parent.dataset.normalized = true;
 
   // First, gather all exported shapes and text.
   let elems = ⟦vocab seedElements⟧;

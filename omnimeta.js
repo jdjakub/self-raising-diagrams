@@ -210,6 +210,19 @@ vtables.SeqSubstrate = {
     send(self, 'pred:', self.cursor.idx >= self.cursor.stream.length);
     return true;
   },
+
+  ['show']: (self) => {
+    let consumed = new Array(self.cursor.idx);
+    let next = new Array(self.cursor.stream.length - self.cursor.idx);
+    let i = 0;
+    for (; i<consumed.length; i++) consumed[i] = self.cursor.stream[i];
+    for (; i<next.length; i++) next[i] = self.cursor.stream[i];
+    if (typeof self.cursor.stream === 'string') {
+      consumed = consumed.join('');
+      next = next.join('');
+    }
+    return [consumed, next];
+  },
 };
 
 // ── CharGrammar: character-specific matchers on SeqSubstrate ─────────────────
@@ -733,7 +746,9 @@ vtables.ChildSetSubstrate = {
 
 // Does this receiver's vtable chain define `sel`? (No send — avoids DNU.)
 hasRule = (recv, sel) => {
-  for (let vt = recv.vtable; vt; vt = vt._parent) if (vt[sel] !== undefined) return true;
+  let vt = recv.vtable;
+  vt = typeof vt === 'string' ? vtables[vt] : vt;
+  for (; vt; vt = vt._parent) if (vt[sel] !== undefined) return true;
   return false;
 };
 
@@ -841,31 +856,12 @@ vtables.RegionSubstrate = {
   },
 };
 
-// ── GraphNotationGrammar: the Graph combinator, on RegionSubstrate ───────────
-// verticesMatching:edgesMatching: — a higher-order rule. The two arguments are
-// rule designators (names of sibling vocabulary rules, or thunks for composed
-// applications). Claim priority: all vertices first, then all edges — so an
-// element that could be either becomes a vertex (matching the current
-// `edges`-excludes-node-doms behaviour). EAGER structure claiming; the returned
-// GraphObject answers nodeAt:/connectionsOf: LAZILY.
-//
-// self.epsilon (optional) : endpoint hit-test tolerance; default 3.
-vtables.GraphNotationGrammar = {
+// ── NotationGrammar ──────────────────────────────────────────────────────────
+// Shared machinery for any notation parsed from a region: proximity naming,
+// tolerances, and the contract's vocabulary defaults. Sits between the
+// substrate (cursor + claim primitives) and concrete notations.
+vtables.NotationGrammar = {
   _parent: vtables.RegionSubstrate,
-
-  ['verticesMatching:edgesMatching:']: (self, vertexRule, edgeRule) => {
-    const es = send(self, 'many:', () => send(self, 'applyClaiming:', edgeRule)); 
-    const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
-    return { vtable: 'GraphObject',
-             nodes: vs, edges: es,
-             epsilon: self.epsilon !== undefined ? self.epsilon : 3 };
-  },
-
-  // plain name ⇒ claim it (leaf classifier); thunk ⇒ trust it to claim itself
-  ['applyClaiming:']: (self, designator) =>
-    (typeof designator === 'function')
-      ? designator(self)                       // Named(Box) — self-claiming
-      : send(self, 'claimMatching:', designator),      // 'Box' — wrap as leaf classifier
 
   // ---- Named: decorator combinator ----------------------------------------
   // Named(inner): claim the inner thing, then claim a name-text near it.
@@ -879,7 +875,7 @@ vtables.GraphNotationGrammar = {
     const label = send(self, 'nameTextNear:', thing);          // null if none
     return { vtable: 'NamedThing', name: label?.dataset.string, inner: thing };
   },
-
+  
   // nameTextNear: — claim an unconsumed Text element Near `thing`. Returns the
   // text's string on success, or null when none is near (optional ⇒ no fail).
   // Reuses the shared claim core, so the found text + its wrapper are consumed
@@ -900,20 +896,23 @@ vtables.GraphNotationGrammar = {
           'piercing:', true, // Search for labels may pierce the opacity of claimed vertices
           'quickTest:', hasRule(self, 'LabelSel')
                           ? (e => e.matches(send(self, 'LabelSel')))
-                          : null), 
-
-  // ---- Near / epsilon: overridable proximity, locally quantifiable ---------
-  // A context can override `epsilon` (or `Near:of:` wholesale) to tune snapping.
-  ['epsilon']: (self) => 20, // TODO: distinct epsilons for different cases
+                          : null),
 
   // candidate is Near thing iff thing's boundary is within epsilon of the
   // candidate's closest point to thing. signedDistanceToPt: is <0 inside,
   // so `<= epsilon` also accepts a candidate point sitting inside thing.
+  // TODO: reuse this for connectors, not just names?
   ['isNear:to:']: (self, candidate, thing) => {
     const sd = send(thing, 'signedDistanceTo:', candidate); // order matters...!
-    return 0 <= sd && sd <= send(self, 'epsilon');
+    return 0 <= sd && sd <= send(self, 'nameEpsilon');
   },
 
+  // ---- Near / epsilon: overridable proximity, locally quantifiable ---------
+  // A context can override `epsilon` (or `Near:of:` wholesale) to tune snapping.
+  ['nameEpsilon']:      (self) => 20,
+  ['connectorEpsilon']: (self) => 3,
+
+  // Contract vocabulary — the normalised DOM's own primitives, overridable.
   // (Default) Label = a text paragraph in Text Canonical Form
   ['LabelSel']: (self) => 'g.text-wrapper',
   ['Label']: (self) => {
@@ -921,6 +920,51 @@ vtables.GraphNotationGrammar = {
     send(self, 'pred:', elt.matches(send(self, 'LabelSel')));
     return elt;
   },
+
+  ['ShapeSel']: (self) => '.boundary-shape',
+  ['Shape']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'ShapeSel')));
+    return elt;
+  },
+
+  ['ConnectorSel']: (self) => 'g.connector-wrapper',
+  ['Connector']:    (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'ConnectorSel')));
+    return elt;
+  },
+
+  // BoxShape = a rect in Closed Canonical Form (focus rule)
+  ['BoxShapeSel']: (self) => 'rect.boundary-shape',
+  ['BoxShape']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'BoxShapeSel')));
+    return elt;
+  },
+
+  // Box(inner) — claim a box shape, then parse its interior as a fresh region.
+  // The claim prunes the box's subtree from the outer parse, so outer rules
+  // can't see inside; the lend gives `inner` its own scope and consumed-set.
+  ['Box:']: (self, inner) => {
+    const box = send(self, 'claimMatching:', 'BoxShape');
+    return send(self, 'lend:', self.vtable, 'input:', send(box, 'interior'), 'rule:', inner);
+  },
+
+  // Graph(V,E) = E* V*
+  ['GraphWithVertices:andEdges:']: (self, vertexRule, edgeRule) => {
+    const es = send(self, 'many:', () => send(self, 'applyClaiming:', edgeRule)); 
+    const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
+    return { vtable: 'GraphObject',
+             nodes: vs, edges: es,
+             epsilon: send(self, 'connectorEpsilon') };
+  },
+
+  // plain name ⇒ claim it (leaf classifier); thunk ⇒ trust it to claim itself
+  ['applyClaiming:']: (self, designator) =>
+    (typeof designator === 'function')
+      ? designator(self)                       // Named(Box) — self-claiming
+      : send(self, 'claimMatching:', designator),      // 'Box' — wrap as leaf classifier
 };
 
 // The runtime object the Graph combinator produces. Eager sets (nodes, edges)
@@ -957,7 +1001,7 @@ vtables['NamedThing'] = {
 // Top-level boxes only — the claim-descent prunes each claimed box's subtree.
 //   rd = match(vtables.RegionDispatchNotation, svg_root, 'Root')
 vtables.RegionDispatchNotation = {
-  _parent: vtables.GraphNotationGrammar,   // SMELL: for Named:/nameTextNear:/isNear:to:/epsilon
+  _parent: vtables.NotationGrammar,
 
   // Root = Named(Box)+
   ['Root']: (self) => send(self, 'many1:', () => send(self, 'Named:', 'Box')),
@@ -967,25 +1011,98 @@ vtables.RegionDispatchNotation = {
   ['Box']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'BoxSel')));
-    return { vtable: 'GraphNode', dom: elt };
+    return elt;
   },
 };
 
-// ── BoardLegendNotation ──────────────────────────────────────────────────────
-// Legend entries: each shape (tile, piece glyph) with its name above it.
-// Same name-string on several shapes is fine — they're exemplars of one
-// category; Named stays injective per element.
-//   bl = match(vtables.BoardLegendNotation, scopeElt, 'Root')
-vtables.BoardLegendNotation = {
-  _parent: vtables.GraphNotationGrammar, // SMELL: for Named:/nameTextNear:/isNear:to:/epsilon
+vtables.CheckersNotation = {
+  _parent: vtables.NotationGrammar,
 
+  // Legend entries: each shape (tile, piece glyph) with its name above it.
+  // Same name-string on several shapes is fine — they're exemplars of one
+  // category; Named stays injective per element.
   // BoardLegend = Named(Shape)+
-  ['Root']: (self) => send(self, 'many1:', () => send(self, 'Named:', 'Shape')),
+  ['BoardLegend']: (self) => send(self, 'many1:', () => send(self, 'Named:', 'Shape')),
 
-  ['ShapeSel']: (self) => '.boundary-shape',
-  ['Shape']: (self) => {
+  // The connector's endpoints resolve, under constraint, to a box matching `b`
+  // (origin side) and a box matching `a` (target side); each box's interior is
+  // then parsed as a BoardPat. Result: { name, before, after }.
+  // MoveSpec = BeforeAfter(BoardPat, BoardPat)+
+  ['MoveSpec']: (self) => send(self, 'many1:', () => send(self, 'Before:', 'BoardPat', 'After:', 'BoardPat')),
+
+  // Claim the connector (+ its name); resolve its endpoints against claimed-or-
+  // unclaimed boxes (REFERENCING, not claiming — piercing lookup); lend each
+  // resolved box's interior to the corresponding pattern rule.
+  // BeforeAfter(b, a) = Named(Arrow)(Box(b), Box(a))
+  ['Before:After:']: (self, b, a) => {
+    const arrow = send(self, 'Named:', 'Arrow');
+    const [originPt, targetPt] = send(arrow.inner, 'endpoints');
+    const [originBox, targetBox] = [send(self, 'boxAt:', originPt), send(self, 'boxAt:', targetPt)];
+    send(self, 'pred:', originBox !== null && targetBox !== null);
+    const before = send(self, 'lend:', self.vtable, 'input:', send(originBox, 'interior'), 'rule:', b);
+    const after  = send(self, 'lend:', self.vtable, 'input:', send(targetBox, 'interior'), 'rule:', a);
+    return { vtable: 'NamedThing', name: arrow.name, inner: { before, after } };
+  },
+
+  // Arrow = a canonical connector-wrapper
+  // SMELL: dupe of Connector
+  ['ArrowSel']: (self) => 'g.connector-wrapper',
+  ['Arrow']: (self) => {
     const elt = self.cursor.dict;
-    send(self, 'pred:', elt.matches(send(self, 'ShapeSel')));
+    send(self, 'pred:', elt.matches(send(self, 'ArrowSel')));
+    return elt;
+  },
+
+  ['boxAt:']: (self, pt) => {
+    const boxes = [...self.cursor.scope.querySelectorAll('rect.boundary-shape')];
+    return boxes.find(bx => send(bx, 'signedDistanceToPt:', pt) <= send(self, 'connectorEpsilon'));
+  },
+
+  // BoardPat = BoardPiece*   (region-claims within the lent interior scope)
+  ['BoardPat']: (self) => send(self, 'many:', () => send(self, 'claimMatching:', 'BoardPiece')),
+
+  // Dummy until BoardLegendNotation supplies the real piece patterns
+  // SMELL dupe of Shape
+  ['BoardPieceSel']: (self) => '.boundary-shape',
+  ['BoardPiece']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'BoardPieceSel')));
+    return elt;
+  },
+
+  // TransformSpec = BeforeAfter(ZonePat, BoardPiece)
+  ['TransformSpec']: (self) => send(self, 'many1:', () => send(self, 'Before:', 'ZonePat', 'After:', 'SinglePiece')),
+  ['SinglePiece']: (self) => send(self, 'claimMatching:', 'BoardPiece'),
+
+  // ZonePat = Zone(BoardPiece)
+  ['ZonePat']: (self) => send(self, 'many:', () => send(self, 'claimMatching:', 'Zone')),
+
+  // Zone = a red/green rect (but just look for a rect)
+  ['ZoneSel']: (self) => 'rect.boundary-shape',
+  ['Zone']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'ZoneSel')));
+    return elt;
+  },
+
+  // Boxes first: claiming a box prunes its subtree, so the trailing
+  // Named(State)* sees only top-level states, not those inside the graphs.
+  // CombosSpec = Box(ComboGraph)+ Named(State)*
+  ['CombosSpec']: (self) => {
+    const graphs = send(self, 'many1:', () => send(self, 'Box:', 'ComboGraph'));
+    const states = send(self, 'many:', () => send(self, 'Named:', 'State'));
+    return { graphs, states };
+  },
+
+  // ComboGraph = Graph(State, Named(Arrow))
+  ['ComboGraph']: (self) => send(self, 'GraphWithVertices:', 'State',
+                                  'andEdges:', (self) => send(self, 'Named:', 'Arrow')),
+
+  // State — dummy until the actual glyph encoding is known
+  ['StateSel']: (self) => '.boundary-shape',
+  ['State']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'StateSel')));
     return elt;
   },
 };
@@ -993,14 +1110,14 @@ vtables.BoardLegendNotation = {
 // BoxGraph (OmniMeta version)
 //   bg = match(vtables.BoxGraphOM, regionElt, 'Root')
 vtables.BoxGraphOM = {
-  _parent: vtables.GraphNotationGrammar,
+  _parent: vtables.NotationGrammar,
 
   // notation: boxes (optionally named) as vertices, arrows (optionally named)
   // as edges. Named(_) is passed as a thunk designator so it decorates at the
   // region level (its name-search needs the region cursor, not a candidate focus).
   // BoxGraph = Graph(Named(Box), Named(Arrow))
-  ['Root']: (self) => send(self, 'verticesMatching:', (self) => send(self, 'Named:', 'Box'),
-                            'edgesMatching:', (self) => send(self, 'Named:', 'Arrow')),
+  ['BoxGraph']: (self) => send(self, 'GraphWithVertices:', (self) => send(self, 'Named:', 'Box'),
+                                'andEdges:', (self) => send(self, 'Named:', 'Arrow')),
 
   // Mathcha vocabulary leaves (run on a transient candidate focus: self.cursor.dict).
 
@@ -1237,7 +1354,10 @@ vtables.PowerpointArrow = {
 vtables.PowerpointArrowPath = {
   _parent: vtables.PathDataGrammar,
 
-  // arrow = M b1 _* b2 Z M _ tip ... ⟹ { from: (b1 ~ b2), to: tip }
+  // arrow = M b1 (L? _)* L? b2 Z M _ L? tip ... ⟹ { from: (b1 ~ b2), to: tip }
+  // Have to cope with both implicit and explicit L's:
+  // implicit is straight from PPT, paths without transform
+  // explicit comes from baking transform into the path
   ['arrow']: (self) => {
     send(self, 'apply:', 'cmd:', 'with:', ['M']);
     const b1 = send(self, 'apply:', 'point');
@@ -1249,14 +1369,21 @@ vtables.PowerpointArrowPath = {
     // makes "stop just before the closing point" expressible — your instinct
     // that lookahead was necessary is right, and this is why.
     send(self, 'many:', () => {
-      send(self, 'not:', () => { send(self, 'apply:', 'point'); send(self, 'apply:', 'cmd:', 'with:', ['Z']); });
-      return send(self, 'apply:', 'point');
+      send(self, 'not:', () => { 
+        send(self, 'opt:', () => send(self, 'apply:', 'cmd:', 'with:', ['L']));
+        send(self, 'apply:', 'point');
+        send(self, 'apply:', 'cmd:', 'with:', ['Z']);
+      });
+      send(self, 'opt:', () => send(self, 'apply:', 'cmd:', 'with:', ['L']));
+      send(self, 'apply:', 'point');
     });
 
+    send(self, 'opt:', () => send(self, 'apply:', 'cmd:', 'with:', ['L']));
     const b2 = send(self, 'apply:', 'point');
     send(self, 'apply:', 'cmd:', 'with:', ['Z']);
     send(self, 'apply:', 'cmd:', 'with:', ['M']);
     send(self, 'apply:', 'point');
+    send(self, 'opt:', () => send(self, 'apply:', 'cmd:', 'with:', ['L']));
     const tip = send(self, 'apply:', 'point');
     // `...` — remainder deliberately unmatched; we just stop here.
 
@@ -1492,8 +1619,12 @@ vtables.PowerpointVocab = {
             if (c.tagName === 'polygon') {
               if (send(c, 'vertices').length === 3) c.classList.add('is-head');
               else c.classList.add('is-shaft');
-            }
+            } else c.classList.add('is-shaft'); // SMELL: Embedded head in this case
           }
+          // Now parse the *original* <path> for the endpoints
+          const [originPt, targetPt] = match(vtables.PowerpointArrow, p, 'endpoints');
+          g.dataset.originPt = legible(...originPt);
+          g.dataset.targetPt = legible(...targetPt);
         } else {
           g.classList.add('boundary-wrapper');
           specialized.classList.add('boundary-shape');
@@ -1519,17 +1650,15 @@ vtables.PowerpointVocab = {
       if (name === undefined) {
         console.warn('Undefined region: '+send(r, 'id'), r.inner); continue;
       }
-      // name = "{instName} (:{notationName})"
-      let [, instName, notationName] = name.match(/^\s*(.*?)\s*\(:(\w+)\)$/);
-      notationName += 'Notation';
-      const notation = vtables[notationName];
-      log('Parse '+send(r, 'id')+' as '+notationName, r.inner);
-      if (!notation) {
-        console.warn('No such notation vtable: '+notationName); continue;
+      // name = "{instName} (:{ruleName})"
+      const [, instName, ruleName] = name.match(/^\s*(.*?)\s*\(:(\w+)\)$/);
+      log('Parse '+send(r, 'id')+' as '+ruleName, r.inner);
+      if (!hasRule({vtable: 'CheckersNotation'}, ruleName)) {
+        console.warn('No such rule: CheckersNotation>>'+ruleName); continue;
       }
       //Grammars don't support FromRegion! What to do...
       //window.regions[instName] = send({ vtable: notation }, 'fromRegion:', send(r, 'interior'));
-      window.regions[instName] = match(notation, send(r, 'interior'), 'Root');
+      window.regions[instName] = match(vtables.CheckersNotation, send(r, 'interior'), ruleName);
     }
     return regions;
   },
