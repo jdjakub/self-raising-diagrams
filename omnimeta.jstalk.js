@@ -1063,12 +1063,19 @@ vtables.CheckersNotation = {
   // BoardPat = BoardPiece*   (region-claims within the lent interior scope)
   ['BoardPat']: (self) => ⟦self many: () => ⟦self claimMatching: 'BoardPiece'⟧⟧,
 
-  // Dummy until BoardLegendNotation supplies the real piece patterns
+  ['identifyPiece:']: (self, shape) => {
+    const pieceExemplars = ⟦self boardPieces⟧;
+    const exemplar = pieceExemplars.find(e => similarShapes(e.inner,shape));
+    return exemplar && ⟦exemplar name⟧ || null;
+  },
+
   // SMELL dupe of Shape
   ['BoardPieceSel']: (self) => '.boundary-shape',
   ['BoardPiece']: (self) => {
     const elt = self.cursor.dict;
     ⟦self pred: elt.matches(⟦self BoardPieceSel⟧)⟧;
+    ⟦self not: () => ⟦self apply: 'Zone'⟧⟧;
+    ⟦self pred: ⟦self identifyPiece: elt⟧⟧;
     return elt;
   },
 
@@ -1080,7 +1087,7 @@ vtables.CheckersNotation = {
   ['ZonePat']: (self) => ⟦self many: () => ⟦self claimMatching: 'Zone'⟧⟧,
 
   // Zone = a red/green rect (but just look for a rect)
-  ['ZoneSel']: (self) => 'rect.boundary-shape',
+  ['ZoneSel']: (self) => 'rect.boundary-shape[stroke-width="3.00038"]', // HACK until BoardLegend supplies
   ['Zone']: (self) => {
     const elt = self.cursor.dict;
     ⟦self pred: elt.matches(⟦self ZoneSel⟧)⟧;
@@ -1106,6 +1113,16 @@ vtables.CheckersNotation = {
     const elt = self.cursor.dict;
     ⟦self pred: elt.matches(⟦self StateSel⟧)⟧;
     return elt;
+  },
+
+  // Pieces first: nothing claimed yet, so the search descends freely into the
+  // zones and collects the pieces inside them. The zone rects stay unclaimed,
+  // hence still reachable by the second pass.
+  // BoardState = BoardPiece* Named(Zone)*
+  ['BoardState']: (self) => {
+    const pieces = ⟦self many: () => ⟦self claimMatching: 'BoardPiece'⟧⟧;
+    const zones  = ⟦self many: () => ⟦self Named: 'Zone'⟧⟧;
+    return { pieces, zones };
   },
 };
 
@@ -1646,23 +1663,66 @@ vtables.PowerpointVocab = {
   ['seedElements']: (self) => all('path, polygon, .boundary-shape, .text-wrapper'),
   ['parseCheckers']: (self) => { // TEMP DIAGRAM-SPECIFIC HACK
     const diagram = send(svg_parent.querySelector('g'), 'interior');
-    const regions = match(vtables.RegionDispatchNotation, diagram, 'Root'); // [NamedThing]
+    let regions = match(vtables.RegionDispatchNotation, diagram, 'Root'); // [NamedThing]
     window.regions = {};
-    for (const r of regions) {
+    regions = regions.map(r => {
       const name = ⟦r name⟧;
       if (name === undefined) {
-        console.warn('Undefined region: '+⟦r id⟧, r.inner); continue;
+        console.warn('Undefined region: '+⟦r id⟧, r.inner);
+        return null;
       }
       // name = "{instName} (:{ruleName})"
       const [, instName, ruleName] = name.match(/^\s*(.*?)\s*\(:(\w+)\)$/);
-      log('Parse '+⟦r id⟧+' as '+ruleName, r.inner);
+      return [instName, ruleName, r.inner];
+    }).filter(r => r !== null);
+
+    // Ensure BoardLegend gets parsed first, to define the BoardPiece rule
+    const i = regions.findIndex(([,ruleName]) => ruleName === 'BoardLegend');
+    if (i >= regions.length) throw 'No BoardLegend region';
+    const [legend] = regions.splice(i,1);
+    regions.unshift(legend);
+
+    for (const [instName, ruleName, r] of regions) {
+      log('Parse '+⟦r id⟧+' as '+ruleName, r);
       if (!hasRule({vtable: 'CheckersNotation'}, ruleName)) {
         console.warn('No such rule: CheckersNotation>>'+ruleName); continue;
       }
-      //Grammars don't support FromRegion! What to do...
-      //window.regions[instName] = ⟦{ vtable: notation } fromRegion: ⟦r interior⟧⟧;
-      window.regions[instName] = match(vtables.CheckersNotation, ⟦r interior⟧, ruleName);
+      const result = match(vtables.CheckersNotation, ⟦r interior⟧, ruleName);
+      if (ruleName === 'BoardLegend') {
+        vtables.CheckersNotation['boardPieces'] = () => result;
+      }
+      window.regions[instName] = result;
     }
-    return regions;
+    return window.regions;
   },
 };
+
+// TODO: shift some functionality into tag dispatch
+similarShapes = function(sh1, sh2) {
+  const st1 = getComputedStyle(sh1);
+  const st2 = getComputedStyle(sh2);
+  for (const prop of ['strokeWidth', 'stroke', 'fill'])
+    if (st1[prop] !== st2[prop]) return false;
+  if (⟦sh1 isCurved⟧ !== ⟦sh2 isCurved⟧) return false;
+  if (⟦sh1 isCurved⟧) {
+    if (!['circle', 'ellipse'].includes(sh1.tagName) ||
+        !['circle', 'ellipse'].includes(sh2.tagName)) return false;
+    const r = sh => attr(sh, 'r') === null?
+      (+attr(sh, 'rx') + +attr(sh, 'ry'))/2 : attr(sh, 'r');
+    return Math.abs(r(sh1) - r(sh2)) <= 1; // SMELL avg radius epsilon
+  } else {
+    if (sh1.tagName !== sh2.tagName) return false;
+    const [vs1, vs2] = [⟦sh1 vertices⟧, ⟦sh2 vertices⟧];
+    if (vs1.length !== vs2.length) return false;
+    // WARN: will unjustly reject mutually rotated lists.
+    // WARN: only quotients by translations.
+    const [o1, o2] = [vs1[0], vs2[0]];
+    for (let i=1; i<vs1.length; i++) {
+      const [v1, v2] = [vsub(vs1[i], o1), vsub(vs2[i], o2)];
+      const dv = vsub(v1, v2);
+      // SMELL epsilon is 1px - empirically necessary
+      if (Math.abs(dv[0]) > 1 || Math.abs(dv[1]) > 1) return false;
+    }
+  }
+  return true;
+}
