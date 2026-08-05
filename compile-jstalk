@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 perl JSTalk/jstalk2js.pl < main-engine.jstalk.js > main-engine.js
 perl JSTalk/jstalk2js.pl < omnimeta.jstalk.js > omnimeta.js
+perl JSTalk/jstalk2js.pl < TomasNotations/board-game-notation.jstalk.js > TomasNotations/board-game-notation.js

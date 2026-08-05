@@ -646,6 +646,38 @@ vtables.byTag['g'] = {
   }),
 }
 
+// TODO: shift some functionality into tag dispatch
+similarShapes = function(sh1, sh2) {
+  const st1 = getComputedStyle(sh1);
+  const st2 = getComputedStyle(sh2);
+  for (const prop of ['strokeWidth', 'stroke', 'fill'])
+    if (st1[prop] !== st2[prop]) return false;
+  if (send(sh1, 'isCurved') !== send(sh2, 'isCurved')) return false;
+  if (send(sh1, 'isCurved')) {
+    if (!['circle', 'ellipse'].includes(sh1.tagName) ||
+        !['circle', 'ellipse'].includes(sh2.tagName)) return false;
+    const r = sh => attr(sh, 'r') === null?
+      (+attr(sh, 'rx') + +attr(sh, 'ry'))/2 : attr(sh, 'r');
+      // SMELL probably avg radius not what we want...
+      // seems to correspond to equality of area regardless of shape...
+    return Math.abs(r(sh1) - r(sh2)) <= 1; // SMELL avg radius epsilon
+  } else {
+    if (sh1.tagName !== sh2.tagName) return false;
+    const [vs1, vs2] = [send(sh1, 'vertices'), send(sh2, 'vertices')];
+    if (vs1.length !== vs2.length) return false;
+    // WARN: will unjustly reject mutually rotated lists.
+    // WARN: only quotients by translations.
+    const [o1, o2] = [vs1[0], vs2[0]];
+    for (let i=1; i<vs1.length; i++) {
+      const [v1, v2] = [vsub(vs1[i], o1), vsub(vs2[i], o2)];
+      const dv = vsub(v1, v2);
+      // SMELL epsilon is 1px - empirically necessary
+      if (Math.abs(dv[0]) > 1 || Math.abs(dv[1]) > 1) return false;
+    }
+  }
+  return true;
+}
+
 // Of a connector (open path) c, we must be able to ask:
 // c endpoints -> [p1, p2]
 // c connections -> [el1, el2]
