@@ -31,9 +31,19 @@ vtables.BoardGameNotation = {
       if (ruleName === 'BoardLegend') {
         vtables.BoardGameNotation['boardPieces'] = () => result;
       }
+      result.fromRule = ruleName;
       regionSemantics[instName] = result;
     }
     return regionSemantics;
+  },
+
+  ['abstractSemantics:']: (self, regionSemantics) => {
+    
+  },
+
+  ['checkersTest:']: (self, sem) => {
+    const assert = b => { if (!b) throw 'Assertion failure'; };
+
   },
 
   // Legend entries: each shape (tile, piece glyph) with its name above it.
@@ -76,8 +86,29 @@ vtables.BoardGameNotation = {
     return boxes.find(bx => send(bx, 'signedDistanceToPt:', pt) <= send(self, 'connectToShapeEpsilon'));
   },
 
-  // BoardPat = BoardPiece*   (region-claims within the lent interior scope)
-  ['BoardPat']: (self) => send(self, 'many:', () => send(self, 'claimMatching:', 'BoardPiece')),
+  // BoardPat = BoardPiece+   (region-claims within the lent interior scope)
+  ['BoardPat']: (self) => {
+    const pieces = send(self, 'many1:', () => send(self, 'claimMatching:', 'BoardPiece'));
+
+    pieces.sort((p1, p2) => send(p1, 'center')[0] - send(p2, 'center')[0]); // Low to high X
+    pieces.sort((p1, p2) => send(p1, 'center')[1] - send(p2, 'center')[1]); // Low to high Y
+    const origin = send(pieces[0], 'center');
+    const [width,height] = props(pieces[0].getBBox(), 'width', 'height'); // Taking the first to set the example
+    const pattern = pieces.map(piece => {
+      // Assuming pieceName === 'Board'...
+      const localCenter = vsub(send(piece, 'center'), origin);
+      const fracCoords = vcmul([1/width,1/height], localCenter);
+      const coords = fracCoords.map(Math.round);
+      const contained = send(piece, 'interior').children;
+      let innerName = 'empty';
+      if (contained.length > 0) {
+        const innerPiece = send(contained[0], 'boundaryShape');
+        innerName = send(self, 'identifyPiece:', innerPiece);
+      }
+      return [coords, innerName];
+    });
+    return pattern;
+  },
 
   ['identifyPiece:']: (self, shape) => {
     const pieceExemplars = send(self, 'boardPieces');
@@ -91,7 +122,8 @@ vtables.BoardGameNotation = {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'BoardPieceSel')));
     send(self, 'not:', () => send(self, 'apply:', 'Zone'));
-    send(self, 'pred:', send(self, 'identifyPiece:', elt));
+    elt.pieceName = send(self, 'identifyPiece:', elt);
+    send(self, 'pred:', elt.pieceName !== null);
     return elt;
   },
 
@@ -116,7 +148,29 @@ vtables.BoardGameNotation = {
   ['CombosSpec']: (self) => {
     const graphs = send(self, 'many1:', () => send(self, 'Box:', 'ComboGraph'));
     const states = send(self, 'many:', () => send(self, 'Named:', 'State'));
-    return { graphs, states };
+
+    const similarityClass = (dom) => {
+      // First, match to diagram-defined states, naturally by visual similarity
+      let st = states.find(s => similarShapes(s.inner, dom));
+      if (!st) {
+        // OK, register this shape as a new similarity class
+        st = { vtable: 'NamedThing', name: send(dom, 'id'), inner: dom };
+        states.push(st);
+      }
+      return st.name;
+    };
+    const edgeTriples = [];
+    const stateClasses = {}; // Visual similarity classes
+    for (const g of graphs) {
+      for (const e of g.edges) {
+        const [fromState, toState] = send(g, 'connectionsOf:', e);
+        const [fromId, toId] = [send(fromState, 'id'), send(toState, 'id')];
+        edgeTriples.push([fromId, e.name, toId]);
+        stateClasses[fromId] = similarityClass(fromState);
+        stateClasses[toId]   = similarityClass(toState);
+      }
+    }
+    return { edges: edgeTriples, stateClasses };
   },
 
   // ComboGraph = Graph(State, Named(Arrow))

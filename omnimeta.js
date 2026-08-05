@@ -912,15 +912,17 @@ vtables.NotationGrammar = {
     return 0 <= sd && sd <= send(self, 'nameEpsilon');
   },
 
+  // Could a text in this notation also be a graph vertex? When false, a text
+  // near a connector is unambiguously its name and no incidence test is needed.
+  ['textsCanBeVertices']: () => false,
+
   // A name-text must be Near `thing` — and for CONNECTORS, must not be one of
   // the vertices at its endpoints (those positions host what it connects to).
   ['isName:for:']: (self, text, thing) => {
     if (!send(self, 'isNear:', text, 'to:', thing)) return false;
-    if (thing.matches('.connector-wrapper')) {
-      if (send(thing, 'isIncidentOn:', text)) return false; // SMELL inappropriate for eg BoxGraph
-      //for (const pt of send(thing, 'endpoints'))
-      //  if (send(self, 'elementAt:', pt, 'matching:', 'Label') === text) return false;
-    }
+    if (thing.matches('.connector-wrapper')
+        && send(self, 'textsCanBeVertices')
+        && send(thing, 'isIncidentOn:', text)) return false;
     return true;
   },
 
@@ -1617,17 +1619,33 @@ vtables.PowerpointVocab = {
         }
         if (isArrow) {
           g.classList.add('connector-wrapper');
-          // Heuristically tag head/shaft - works so far
-          for (let c of [...g.children]) {
-            if (c.tagName === 'polygon') {
-              if (send(c, 'vertices').length === 3) c.classList.add('is-head');
-              else c.classList.add('connector-shaft');
-            } else c.classList.add('connector-shaft'); // SMELL: Embedded head in this case
-          }
-          // Now parse the *original* <path> for the endpoints
+          // Parse the *original* <path> for the endpoints
           const [originPt, targetPt] = match(vtables.PowerpointArrow, p, 'endpoints');
           g.dataset.originPt = legible(...originPt);
           g.dataset.targetPt = legible(...targetPt);
+          // Heuristically tag head/shaft - works so far
+          for (let c of [...g.children]) {
+            if (c.tagName === 'polygon') {
+              const vs = send(c, 'vertices');
+              if (vs.length === 3) {
+                c.classList.add('connector-head');
+                const [b1, tip, b2] = vs;
+                const targetTangent = vnormed(vsub(tip, vmid(b1, b2)));
+                g.dataset.targetOut = legible(...targetTangent);
+              } else {
+                c.classList.add('connector-shaft');
+                const [v1, v2] = vs;
+                const originTangent = vnormed(vsub(v1, v2));
+                g.dataset.originOut = legible(...originTangent);
+              }
+            } else {
+              c.classList.add('connector-shaft'); // SMELL: Embedded head in this case
+              const targetTangent = vnormed(vsub(targetPt, originPt));
+              const originTangent = neg(targetTangent);
+              g.dataset.originOut = legible(...originTangent);
+              g.dataset.targetOut = legible(...targetTangent);
+            }
+          }
         } else {
           g.classList.add('boundary-wrapper');
           specialized.classList.add('boundary-shape');

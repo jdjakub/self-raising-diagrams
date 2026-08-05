@@ -31,9 +31,95 @@ vtables.BoardGameNotation = {
       if (ruleName === 'BoardLegend') {
         vtables.BoardGameNotation['boardPieces'] = () => result;
       }
+      result.fromRule = ruleName;
       regionSemantics[instName] = result;
     }
     return regionSemantics;
+  },
+
+  ['abstractSemantics:']: (self, regionSemantics) => {
+    
+  },
+
+  ['checkersTest:']: (self, sem) => {
+    const assert = b => { if (!b) throw 'Assertion failure'; };
+    // === MoveSpec ===
+    const moveSpec = key =>
+      sem[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
+      .join('\n');
+    // Beware of reorderings - jump that bridge when we get there
+    assert(moveSpec('MOVES - REGULAR') ===
+`0,0,empty,1,1,Regular 1 -> 0,0,Regular 1,1,1,empty
+0,0,empty,-1,1,Regular 1 -> 0,0,Regular 1,-1,1,empty
+0,0,Regular 2,1,1,empty -> 0,0,empty,1,1,Regular 2
+0,0,Regular 2,-1,1,empty -> 0,0,empty,-1,1,Regular 2`
+    );
+    assert(moveSpec('MOVES - REGULAR_JUMP') ===
+`0,0,empty,-1,1,Any 2,-2,2,Regular 1 -> 0,0,Regular 1,-1,1,empty,-2,2,empty
+0,0,empty,1,1,Any 2,2,2,Regular 1 -> 0,0,Regular 1,1,1,empty,2,2,empty
+0,0,Regular 2,-1,1,Any 1,-2,2,empty -> 0,0,empty,-1,1,empty,-2,2,Regular 2
+0,0,Regular 2,1,1,Any 1,2,2,empty -> 0,0,empty,1,1,empty,2,2,Regular 2`
+    );
+    const namedMoveSpec = key =>
+      sem[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
+      .join('\n');
+    assert(namedMoveSpec('MOVES - KING') ===
+`0,0,empty,1,1,King 1 --LU--> 0,0,King 1,1,1,empty
+0,0,empty,-1,1,King 1 --RU--> 0,0,King 1,-1,1,empty
+0,0,King 1,1,1,empty --RD--> 0,0,empty,1,1,King 1
+0,0,King 1,-1,1,empty --LD--> 0,0,empty,-1,1,King 1
+0,0,empty,1,1,King 2 --LU--> 0,0,King 2,1,1,empty
+0,0,empty,-1,1,King 2 --RU--> 0,0,King 2,-1,1,empty
+0,0,King 2,1,1,empty --RD--> 0,0,empty,1,1,King 2
+0,0,King 2,-1,1,empty --LD--> 0,0,empty,-1,1,King 2`
+    );
+    assert(namedMoveSpec('MOVES - KING_JUMP') ===
+`0,0,empty,-1,1,Any 2,-2,2,King 1 --RU--> 0,0,King 1,-1,1,empty,-2,2,empty
+0,0,King 1,1,1,Any 2,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 1
+0,0,empty,-1,1,Any 1,-2,2,King 2 --RU--> 0,0,King 2,-1,1,empty,-2,2,empty
+0,0,King 2,1,1,Any 1,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 2
+0,0,King 1,-1,1,Any 2,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 1
+0,0,empty,1,1,Any 2,2,2,King 1 --LU--> 0,0,King 1,1,1,empty,2,2,empty
+0,0,King 2,-1,1,Any 1,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 2
+0,0,empty,1,1,Any 1,2,2,King 2 --LU--> 0,0,King 2,1,1,empty,2,2,empty`
+    );
+    // === CombosSpec ===
+    const combosSpec = key =>
+      sem[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
+      .join('\n')
+    // I ain't implementing graph isomorphism. Beware reorderings, different IDs etc
+    // Should be stable...
+    assert(combosSpec('COMBINATIONS') ===
+`e409 --KING[RU]*--> e411
+e411 --KING_JUMP[RU]--> e412
+e412 --KING[RU]*--> e409
+e409 --KING[RD]*--> c422
+c422 --KING_JUMP[RD]--> c423
+e409 --KING[LU]*--> c431
+c431 --KING_JUMP[LU]--> c432
+e409 --KING[LD]*--> c440
+c440 --KING_JUMP[LD]--> c441
+c423 --KING[RD]*--> e409
+c432 --KING[LU]*--> e409
+c441 --KING[LD]*--> e409
+e457 --REGULAR--> e458
+e463 --REGULAR_JUMP--> e463`
+    );
+    assert(Object.entries(sem['COMBINATIONS'].stateClasses)
+           .map(kv => kv.join(' is a ')).join('\n')) ===
+`e409 is a Initial / final state
+e411 is a e411
+e412 is a e411
+c422 is a e411
+c423 is a e411
+c431 is a e411
+c432 is a e411
+c440 is a e411
+c441 is a e411
+e457 is a Initial / final state
+e458 is a e411
+e463 is a Initial / final state`
+    );
   },
 
   // Legend entries: each shape (tile, piece glyph) with its name above it.
@@ -76,8 +162,29 @@ vtables.BoardGameNotation = {
     return boxes.find(bx => ⟦bx signedDistanceToPt: pt⟧ <= ⟦self connectToShapeEpsilon⟧);
   },
 
-  // BoardPat = BoardPiece*   (region-claims within the lent interior scope)
-  ['BoardPat']: (self) => ⟦self many: () => ⟦self claimMatching: 'BoardPiece'⟧⟧,
+  // BoardPat = BoardPiece+   (region-claims within the lent interior scope)
+  ['BoardPat']: (self) => {
+    const pieces = ⟦self many1: () => ⟦self claimMatching: 'BoardPiece'⟧⟧;
+
+    pieces.sort((p1, p2) => ⟦p1 center⟧[0] - ⟦p2 center⟧[0]); // Low to high X
+    pieces.sort((p1, p2) => ⟦p1 center⟧[1] - ⟦p2 center⟧[1]); // Low to high Y
+    const origin = ⟦pieces[0] center⟧;
+    const [width,height] = props(pieces[0].getBBox(), 'width', 'height'); // Taking the first to set the example
+    const pattern = pieces.map(piece => {
+      // Assuming pieceName === 'Board'...
+      const localCenter = vsub(⟦piece center⟧, origin);
+      const fracCoords = vcmul([1/width,1/height], localCenter);
+      const coords = fracCoords.map(Math.round);
+      const contained = ⟦piece interior⟧.children;
+      let innerName = 'empty';
+      if (contained.length > 0) {
+        const innerPiece = ⟦contained[0] boundaryShape⟧;
+        innerName = ⟦self identifyPiece: innerPiece⟧;
+      }
+      return [coords, innerName];
+    });
+    return pattern;
+  },
 
   ['identifyPiece:']: (self, shape) => {
     const pieceExemplars = ⟦self boardPieces⟧;
@@ -91,7 +198,8 @@ vtables.BoardGameNotation = {
     const elt = self.cursor.dict;
     ⟦self pred: elt.matches(⟦self BoardPieceSel⟧)⟧;
     ⟦self not: () => ⟦self apply: 'Zone'⟧⟧;
-    ⟦self pred: ⟦self identifyPiece: elt⟧⟧;
+    elt.pieceName = ⟦self identifyPiece: elt⟧;
+    ⟦self pred: elt.pieceName !== null⟧;
     return elt;
   },
 
@@ -116,7 +224,29 @@ vtables.BoardGameNotation = {
   ['CombosSpec']: (self) => {
     const graphs = ⟦self many1: () => ⟦self Box: 'ComboGraph'⟧⟧;
     const states = ⟦self  many: () => ⟦self Named: 'State'⟧⟧;
-    return { graphs, states };
+
+    const similarityClass = (dom) => {
+      // First, match to diagram-defined states, naturally by visual similarity
+      let st = states.find(s => similarShapes(s.inner, dom));
+      if (!st) {
+        // OK, register this shape as a new similarity class
+        st = { vtable: 'NamedThing', name: ⟦dom id⟧, inner: dom };
+        states.push(st);
+      }
+      return st.name;
+    };
+    const edgeTriples = [];
+    const stateClasses = {}; // Visual similarity classes
+    for (const g of graphs) {
+      for (const e of g.edges) {
+        const [fromState, toState] = ⟦g connectionsOf: e⟧;
+        const [fromId, toId] = [⟦fromState id⟧, ⟦toState id⟧];
+        edgeTriples.push([fromId, e.name, toId]);
+        stateClasses[fromId] = similarityClass(fromState);
+        stateClasses[toId]   = similarityClass(toState);
+      }
+    }
+    return { edges: edgeTriples, stateClasses };
   },
 
   // ComboGraph = Graph(State, Named(Arrow))

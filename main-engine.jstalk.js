@@ -147,11 +147,9 @@ vtables.domNode = {
     const [l,t,r,b] = [bb.x,bb.y,bb.x+bb.width,bb.y+bb.height];
     return [ [l,t], [r,t], [r,b], [l,b] ];
   },
-  ['centerPt']: (self) => {
-    const verts = ⟦self vertices⟧;
-    let sum = [0,0];
-    for (let v of verts) sum = vadd(sum, v);
-    return vmul(1/verts.length, sum);
+  ['center']: self => {
+    const vs = ⟦self vertices⟧;
+    return vmul(1/vs.length, sum(...vs));
   },
   ['isClosed']: (self) => true,
   ['lineSegments']: (self) => explode_poly_segs(⟦self vertices⟧, ⟦self isClosed⟧),
@@ -476,10 +474,6 @@ vtables.byTag['polygon'] = {
     if (isect) return send({vtable: 'Polygon'}, 'fromVertices:', isect);
     else return null;
   },
-  ['center']: self => {
-    const vs = ⟦self vertices⟧;
-    return vmul(1/vs.length, sum(vs));
-  },
   ['translateBy:']: (self, vec) => {
     const vs = ⟦self vertices⟧.map(v => vadd(v,vec));
     attr(self, 'points', vs.map(v => v.join(',')).join(' '));
@@ -666,6 +660,7 @@ vtables.byTag['g'] = {
 
 // TODO: shift some functionality into tag dispatch
 similarShapes = function(sh1, sh2) {
+  if (⟦sh1 id⟧ === ⟦sh2 id⟧) return true; // Seems correct
   const st1 = getComputedStyle(sh1);
   const st2 = getComputedStyle(sh2);
   for (const prop of ['strokeWidth', 'stroke', 'fill'])
@@ -689,8 +684,8 @@ similarShapes = function(sh1, sh2) {
     for (let i=1; i<vs1.length; i++) {
       const [v1, v2] = [vsub(vs1[i], o1), vsub(vs2[i], o2)];
       const dv = vsub(v1, v2);
-      // SMELL epsilon is 1px - empirically necessary
-      if (Math.abs(dv[0]) > 1 || Math.abs(dv[1]) > 1) return false;
+      // SMELL epsilon is 2px - empirically necessary (keeps increasing lol)
+      if (Math.abs(dv[0]) > 2 || Math.abs(dv[1]) > 2) return false;
     }
   }
   return true;
@@ -1096,7 +1091,7 @@ vtables['Labeller'] = {
   },
 
   ['drawLLL:to:']: (self, label, labellable) => {
-    const [x1,y1] = ⟦label centerPt⟧;
+    const [x1,y1] = ⟦label center⟧;
     const [x2,y2] = self.attachAt(labellable, [x1,y1]);
     // note: static member ref
     const wrapper = svgel('g', { class: vtables.Labeller.LLL_CLASS }, self.scope);

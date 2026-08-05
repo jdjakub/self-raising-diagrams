@@ -16,6 +16,9 @@ vtables.AnimationNotation = {
   ['SeqGraph']: (self) => send(self, 'GraphWithVertices:', 'Text',
                                 'andEdges:', (self) => send(self, 'Named:', 'SeqArrow')),
 
+  // Hence:
+  ['textsCanBeVertices']: () => true,
+
   ['seqColor']:     () => 'rgb(184, 10, 10)',
   ['namingColor']:  () => 'rgb(45, 184, 10)',
 
