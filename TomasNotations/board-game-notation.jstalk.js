@@ -15,10 +15,16 @@ vtables.BoardGameNotation = {
       return [instName, ruleName, r.inner];
     }).filter(r => r !== null);
 
+    // Ensure BoardState gets parsed second, to define the board zones
+    const i = regions.findIndex(([,ruleName]) => ruleName === 'BoardState');
+    if (i >= regions.length) throw 'No BoardState region';
+    const [boardState] = regions.splice(i,1);
+    regions.unshift(boardState);
+
     // Ensure BoardLegend gets parsed first, to define the BoardPiece rule
-    const i = regions.findIndex(([,ruleName]) => ruleName === 'BoardLegend');
-    if (i >= regions.length) throw 'No BoardLegend region';
-    const [legend] = regions.splice(i,1);
+    const j = regions.findIndex(([,ruleName]) => ruleName === 'BoardLegend');
+    if (j >= regions.length) throw 'No BoardLegend region';
+    const [legend] = regions.splice(j,1);
     regions.unshift(legend);
 
     const regionSemantics = {};
@@ -28,24 +34,23 @@ vtables.BoardGameNotation = {
         console.warn('No such rule: BoardGameNotation>>'+ruleName); continue;
       }
       const result = match(vtables.BoardGameNotation, ⟦r interior⟧, ruleName);
-      if (ruleName === 'BoardLegend') {
+      if (ruleName === 'BoardLegend')
         vtables.BoardGameNotation['boardPieces'] = () => result;
-      }
+      else if (ruleName === 'BoardState')
+        vtables.BoardGameNotation['boardZones'] = () => result.zones;
       result.fromRule = ruleName;
       regionSemantics[instName] = result;
     }
     return regionSemantics;
   },
 
-  ['abstractSemantics:']: (self, regionSemantics) => {
-    
-  },
-
-  ['checkersTest:']: (self, sem) => {
-    const assert = b => { if (!b) throw 'Assertion failure'; };
+  ['testCheckers']: (self) => {
+    window.semantics = ⟦self fromRegion: svg_parent⟧;
+    // If that went well... let's check the results
+    const assert = b => { if (!b) throw 'You broke Checkers!'; };
     // === MoveSpec ===
     const moveSpec = key =>
-      sem[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
+      semantics[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
       .join('\n');
     // Beware of reorderings - jump that bridge when we get there
     assert(moveSpec('MOVES - REGULAR') ===
@@ -61,7 +66,7 @@ vtables.BoardGameNotation = {
 0,0,Regular 2,1,1,Any 1,2,2,empty -> 0,0,empty,1,1,empty,2,2,Regular 2`
     );
     const namedMoveSpec = key =>
-      sem[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
+      semantics[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
       .join('\n');
     assert(namedMoveSpec('MOVES - KING') ===
 `0,0,empty,1,1,King 1 --LU--> 0,0,King 1,1,1,empty
@@ -85,7 +90,7 @@ vtables.BoardGameNotation = {
     );
     // === CombosSpec ===
     const combosSpec = key =>
-      sem[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
+      semantics[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
       .join('\n')
     // I ain't implementing graph isomorphism. Beware reorderings, different IDs etc
     // Should be stable...
@@ -105,8 +110,8 @@ c441 --KING[LD]*--> e409
 e457 --REGULAR--> e458
 e463 --REGULAR_JUMP--> e463`
     );
-    assert(Object.entries(sem['COMBINATIONS'].stateClasses)
-           .map(kv => kv.join(' is a ')).join('\n')) ===
+    assert(Object.entries(semantics['COMBINATIONS'].stateClasses)
+           .map(kv => kv.join(' is a ')).join('\n') ===
 `e409 is a Initial / final state
 e411 is a e411
 e412 is a e411
@@ -120,6 +125,80 @@ e457 is a Initial / final state
 e458 is a e411
 e463 is a Initial / final state`
     );
+    // === BoardState ===
+    assert(semantics['INITIAL'].pieces.join('\n') ===
+`0,0,empty,BLACK KING AREA
+1,0,Regular 2,BLACK KING AREA
+2,0,empty,BLACK KING AREA
+3,0,Regular 2,BLACK KING AREA
+4,0,empty,BLACK KING AREA
+5,0,Regular 2,BLACK KING AREA
+6,0,empty,BLACK KING AREA
+7,0,Regular 2,BLACK KING AREA
+0,1,Regular 2
+1,1,empty
+2,1,Regular 2
+3,1,empty
+4,1,Regular 2
+5,1,empty
+6,1,Regular 2
+7,1,empty
+0,2,empty
+1,2,Regular 2
+2,2,empty
+3,2,Regular 2
+4,2,empty
+5,2,Regular 2
+6,2,empty
+7,2,Regular 2
+0,3,empty
+1,3,empty
+2,3,empty
+3,3,empty
+4,3,empty
+5,3,empty
+6,3,empty
+7,3,empty
+0,4,empty
+1,4,empty
+2,4,empty
+3,4,empty
+4,4,empty
+5,4,empty
+6,4,empty
+7,4,empty
+0,5,Regular 1
+1,5,empty
+2,5,Regular 1
+3,5,empty
+4,5,Regular 1
+5,5,empty
+6,5,Regular 1
+7,5,empty
+0,6,empty
+1,6,Regular 1
+2,6,empty
+3,6,Regular 1
+4,6,empty
+5,6,Regular 1
+6,6,empty
+7,6,Regular 1
+0,7,Regular 1,WHITE KING AREA
+1,7,empty,WHITE KING AREA
+2,7,Regular 1,WHITE KING AREA
+3,7,empty,WHITE KING AREA
+4,7,Regular 1,WHITE KING AREA
+5,7,empty,WHITE KING AREA
+6,7,Regular 1,WHITE KING AREA
+7,7,empty,WHITE KING AREA`
+    );
+    // === TransformSpec ===
+    assert(semantics['TRANSFORMS'].map(([zone,before,after]) =>
+      `${before} in ${zone} becomes ${after}`).join('\n') ===
+`Regular 1 in BLACK KING AREA becomes King 1
+Regular 2 in WHITE KING AREA becomes King 2`
+    );
+    log('Great Success! Don\'t fret - there\'s still plenty of ways to break Checkers.' );
   },
 
   // Legend entries: each shape (tile, piece glyph) with its name above it.
@@ -181,7 +260,9 @@ e463 is a Initial / final state`
         const innerPiece = ⟦contained[0] boundaryShape⟧;
         innerName = ⟦self identifyPiece: innerPiece⟧;
       }
-      return [coords, innerName];
+      const result = [coords, innerName];
+      result.dom = piece; // HACK so we don't mess up the testing prints, but can still xref...
+      return result;
     });
     return pattern;
   },
@@ -204,11 +285,32 @@ e463 is a Initial / final state`
   },
 
   // TransformSpec = BeforeAfter(ZonePat, BoardPiece)
-  ['TransformSpec']: (self) => ⟦self many1: () => ⟦self Before: 'ZonePat' After: 'SinglePiece'⟧⟧,
+  ['TransformSpec']: (self) => {
+    const rules = ⟦self many1: () => ⟦self Before: 'ZonePat' After: 'SinglePiece'⟧⟧
+                  .map(nt => nt.inner); // We don't expect names
+    return rules.map(({before, after}) => {
+      const beforeZone = ⟦self identifyZone: before⟧;
+      // SMELL duped from BoardPat
+      const contained = ⟦before interior⟧.children;
+      let beforeName = 'empty';
+      if (contained.length > 0) {
+        const innerPiece = ⟦contained[0] boundaryShape⟧;
+        beforeName = ⟦self identifyPiece: innerPiece⟧;
+      } // end smell
+      const afterName = ⟦self identifyPiece: after⟧;
+      return [beforeZone, beforeName, afterName];
+    });
+  },
   ['SinglePiece']: (self) => ⟦self claimMatching: 'BoardPiece'⟧,
 
+  ['identifyZone:']: (self, dom) => {
+    const zones = ⟦self boardZones⟧;
+    const exemplar = zones.find(z => similarStyles(z.inner, dom));
+    return exemplar && ⟦exemplar name⟧ || null;
+  },
+
   // ZonePat = Zone(BoardPiece)
-  ['ZonePat']: (self) => ⟦self many: () => ⟦self claimMatching: 'Zone'⟧⟧,
+  ['ZonePat']: (self) => ⟦self claimMatching: 'Zone'⟧,
 
   // Zone = a red/green rect (but just look for a rect)
   ['ZoneSel']: (self) => 'rect.boundary-shape[stroke-width="3.00038"]', // HACK until BoardLegend supplies
@@ -264,10 +366,19 @@ e463 is a Initial / final state`
   // Pieces first: nothing claimed yet, so the search descends freely into the
   // zones and collects the pieces inside them. The zone rects stay unclaimed,
   // hence still reachable by the second pass.
-  // BoardState = BoardPiece* Named(Zone)*
+  // BoardState = BoardPat Named(Zone)*
   ['BoardState']: (self) => {
-    const pieces = ⟦self many: () => ⟦self claimMatching: 'BoardPiece'⟧⟧;
+    let pieces = ⟦self apply: 'BoardPat'⟧;
     const zones  = ⟦self many: () => ⟦self Named: 'Zone'⟧⟧;
+    for (const piece of pieces) {
+      for (const zone of zones) {
+        if (⟦zone.inner interior⟧.contains(piece.dom))
+          piece.dom.zone = zone.name;
+      }
+    }
+    pieces = pieces.map(piece =>
+      piece.dom.zone !== undefined ? [...piece, piece.dom.zone] : piece
+    );
     return { pieces, zones };
   },
 };

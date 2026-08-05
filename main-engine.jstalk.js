@@ -658,13 +658,18 @@ vtables.byTag['g'] = {
   },
 }
 
-// TODO: shift some functionality into tag dispatch
-similarShapes = function(sh1, sh2) {
-  if (⟦sh1 id⟧ === ⟦sh2 id⟧) return true; // Seems correct
+similarStyles = function(sh1, sh2) {
   const st1 = getComputedStyle(sh1);
   const st2 = getComputedStyle(sh2);
   for (const prop of ['strokeWidth', 'stroke', 'fill'])
     if (st1[prop] !== st2[prop]) return false;
+  return true;
+}
+
+// TODO: shift some functionality into tag dispatch
+similarShapes = function(sh1, sh2) {
+  if (⟦sh1 id⟧ === ⟦sh2 id⟧) return true; // Seems correct
+  if (!similarStyles(sh1, sh2)) return false; // Included for now
   if (⟦sh1 isCurved⟧ !== ⟦sh2 isCurved⟧) return false;
   if (⟦sh1 isCurved⟧) {
     if (!['circle', 'ellipse'].includes(sh1.tagName) ||
