@@ -91,6 +91,15 @@ inTopToBottomOrder = (a, b) => {
   return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1;
 }
 
+depthOf = el => {
+  let d = 0;
+  while (el.parentElement) {
+    d++;
+    el = el.parentElement;
+  }
+  return d;
+};
+
 vadd = ([a, b], [c, d]) => [a+c, b+d];
 vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
@@ -102,6 +111,7 @@ dist2 = ([x,y],[z,w]) => (z-x)**2 + (w-y)**2;
 vnormed = v => vmul(1/Math.sqrt(vdot(v,v)), v);
 vswap = ([x,y]) => [y,x];
 vmag = v => Math.sqrt(vdot(v,v));
+vmid = (u,v) => vmul(0.5, vadd(u, v));
 
 vinbasis = (e1,e2) => v => {
   const e1_w_e2 = vwedge(e1, e2);
@@ -143,7 +153,9 @@ some = selector => {
   if (tmp.length === 0) return null;
   return tmp[0];
 }
-byId = id => document.getElementById(id.trim());
+// wrapped so that FF doesn't display an annoying warning when typing
+// in console "empty thing passed to getElementById" due to eager preview
+byId = id => id ? document.getElementById(id) : undefined;
 
 // Thanks https://stackoverflow.com/a/65090521
 cloneNode = function(node, tag) {

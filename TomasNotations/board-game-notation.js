@@ -73,7 +73,7 @@ vtables.BoardGameNotation = {
 
   ['boxAt:']: (self, pt) => {
     const boxes = [...self.cursor.scope.querySelectorAll('rect.boundary-shape')];
-    return boxes.find(bx => send(bx, 'signedDistanceToPt:', pt) <= send(self, 'connectorEpsilon'));
+    return boxes.find(bx => send(bx, 'signedDistanceToPt:', pt) <= send(self, 'connectToShapeEpsilon'));
   },
 
   // BoardPat = BoardPiece*   (region-claims within the lent interior scope)

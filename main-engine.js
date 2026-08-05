@@ -641,9 +641,27 @@ vtables.byTag['g'] = {
   ['endpoints']: (self) => props(self.dataset, 'originPt', 'targetPt').map(atov),
   ['lineSegments']: needsSuper((supr, self) => {
     if (self.matches('.connector-wrapper'))
-      return send(self.querySelector('.is-shaft'), 'lineSegments');
+      return send(self.querySelector('.connector-shaft'), 'lineSegments');
     return supr('lineSegments');
   }),
+  ['closestPtToPt:']: (self, pt)=> { // SMELL duped from <polygon>
+    // Intended for .text-wrapper ie bbox
+    const segs = send(self, 'lineSegments');
+    const closest_seg = closest_line_seg_to_pt(pt, segs);
+    return closest_pt_on_line_seg(pt, ...closest_seg);
+  },
+  ['isIncidentOn:']: (self, other) => {
+    if (!self.matches('.connector-wrapper')) throw 'Not a connector';
+    const [originPt, originT] = props(self.dataset, 'originPt', 'originOut').map(atov);
+    const [targetPt, targetT] = props(self.dataset, 'targetPt', 'targetOut').map(atov);
+    const closestToOrigin = send(other, 'closestPtToPt:', originPt);
+    const closestToTarget = send(other, 'closestPtToPt:', targetPt);
+    const relOrigin = vsub(closestToOrigin, originPt);
+    const relTarget = vsub(closestToTarget, targetPt);
+    const frontOfOrigin = vdot(relOrigin, originT);
+    const frontOfTarget = vdot(relTarget, targetT);
+    return frontOfOrigin > 0 || frontOfTarget > 0;
+  },
 }
 
 // TODO: shift some functionality into tag dispatch

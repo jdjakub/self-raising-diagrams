@@ -866,6 +866,7 @@ vtables.NotationGrammar = {
   ['fromDocument']: (self) => {
     window.semantics = send(self, 'fromRegion:', svg_parent);
   },
+  ['fromRegion:']: (self, scope) => match(self.vtable, scope, 'Root'), // May override
 
   // ---- Named: decorator combinator ----------------------------------------
   // Named(inner): claim the inner thing, then claim a name-text near it.
@@ -894,7 +895,7 @@ vtables.NotationGrammar = {
             catch (f) { if (f !== fail) throw f; }
             self.cursor = savedCursor;
             if (text === null) return null;
-            return send(self, 'isNear:', text, 'to:', thing) ? { value: text } : null;
+            return send(self, 'isName:', text, 'for:', thing) ? { value: text } : null;
           },
           'onExhausted:', () => null,   // optional: null, not fail
           'piercing:', true, // Search for labels may pierce the opacity of claimed vertices
@@ -911,28 +912,46 @@ vtables.NotationGrammar = {
     return 0 <= sd && sd <= send(self, 'nameEpsilon');
   },
 
+  // A name-text must be Near `thing` — and for CONNECTORS, must not be one of
+  // the vertices at its endpoints (those positions host what it connects to).
+  ['isName:for:']: (self, text, thing) => {
+    if (!send(self, 'isNear:', text, 'to:', thing)) return false;
+    if (thing.matches('.connector-wrapper')) {
+      if (send(thing, 'isIncidentOn:', text)) return false; // SMELL inappropriate for eg BoxGraph
+      //for (const pt of send(thing, 'endpoints'))
+      //  if (send(self, 'elementAt:', pt, 'matching:', 'Label') === text) return false;
+    }
+    return true;
+  },
+
   // ---- Near / epsilon: overridable proximity, locally quantifiable ---------
   // A context can override `epsilon` (or `Near:of:` wholesale) to tune snapping.
-  ['nameEpsilon']:      (self) => 20,
-  ['connectorEpsilon']: (self) => 3,
+  ['nameEpsilon']:           () => 20,
+  ['connectToShapeEpsilon']: () => 3,
+  ['connectToTextEpsilon']:  () => 15,
+
+  // Attachment tolerance depends on what's being attached to.
+  ['epsilonFor:']: (self, elt) =>
+    elt.classList.contains('text-wrapper') ? send(self, 'connectToTextEpsilon')
+                                           : send(self, 'connectToShapeEpsilon'),
 
   // Contract vocabulary — the normalised DOM's own primitives, overridable.
   // (Default) Label = a text paragraph in Text Canonical Form
-  ['LabelSel']: (self) => 'g.text-wrapper',
+  ['LabelSel']: () => 'g.text-wrapper',
   ['Label']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'LabelSel')));
     return elt;
   },
 
-  ['ShapeSel']: (self) => '.boundary-shape',
+  ['ShapeSel']: () => '.boundary-shape',
   ['Shape']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'ShapeSel')));
     return elt;
   },
 
-  ['ConnectorSel']: (self) => 'g.connector-wrapper',
+  ['ConnectorSel']: () => 'g.connector-wrapper',
   ['Connector']:    (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'ConnectorSel')));
@@ -940,7 +959,7 @@ vtables.NotationGrammar = {
   },
 
   // BoxShape = a rect in Closed Canonical Form (focus rule)
-  ['BoxShapeSel']: (self) => 'rect.boundary-shape',
+  ['BoxShapeSel']: () => 'rect.boundary-shape',
   ['BoxShape']: (self) => {
     const elt = self.cursor.dict;
     send(self, 'pred:', elt.matches(send(self, 'BoxShapeSel')));
@@ -961,7 +980,7 @@ vtables.NotationGrammar = {
     const vs = send(self, 'many:', () => send(self, 'applyClaiming:', vertexRule));
     return { vtable: 'GraphObject',
              nodes: vs, edges: es,
-             epsilon: send(self, 'connectorEpsilon') };
+             epsilonFor: e => send(self, 'epsilonFor:', e) }; // HACK TODO inherit
   },
 
   // plain name ⇒ claim it (leaf classifier); thunk ⇒ trust it to claim itself
@@ -969,6 +988,49 @@ vtables.NotationGrammar = {
     (typeof designator === 'function')
       ? designator(self)                       // Named(Box) — self-claiming
       : send(self, 'claimMatching:', designator),      // 'Box' — wrap as leaf classifier
+
+  // BiGraph(from, via, to) — edge-driven bipartite graph.
+  // Claims every `via` connector; for each, resolves its origin against `from`
+  // and its target against `to` by endpoint hit-test. Endpoints are REFERENCED,
+  // not claimed: several edges may share a vertex, and `to` is typically
+  // unscannable. Returns [{ edge, from, to }].
+  ['BiGraphFrom:via:to:']: (self, fromRule, viaRule, toRule) => {
+    const edges = send(self, 'many:', () => send(self, 'applyClaiming:', viaRule));
+    return edges.map(e => {
+      const [op, tp] = send(e, 'endpoints');
+      return { edge: e,
+               from: send(self, 'elementAt:', op, 'matching:', fromRule),
+               to:   send(self, 'elementAt:', tp, 'matching:', toRule) };
+    });
+  },
+
+  // The element within connectToShapeEpsilon of `pt` satisfying focus rule `rule`.
+  // Does NOT claim. Skips consumed elements — which excludes the connectors
+  // themselves (each sits at distance 0 from its own endpoints).
+  ['elementAt:matching:']: (self, pt, rule) => {
+    const selRule = (typeof rule === 'string') ? rule + 'Sel' : null;
+    const sel = (selRule && hasRule(self, selRule)) ? send(self, 'apply:', selRule) : '*';
+    const saved = self.cursor;
+    const hits = [];
+    for (const c of saved.scope.querySelectorAll(sel)) {
+      if (saved.consumed.has(c)) continue;
+      if (send(c, 'signedDistanceToPt:', pt) > send(self, 'epsilonFor:', c)) continue;
+      hits.push(c);
+    }
+    // Containment is treeified ⇒ the DEEPEST hit is the tightest one.
+    hits.sort((a, b) => depthOf(b) - depthOf(a));
+    for (const c of hits) {
+      self.cursor = { scope: saved.scope, consumed: saved.consumed, dict: c };
+      try { const v = send(self, 'applyRule:', rule); self.cursor = saved; return v; }
+      catch (f) { if (f !== fail) throw f; self.cursor = saved; }
+    }
+    return null;
+  },
+
+  // Any — matches whatever it's focused on. Narrowed by AnySel to contract
+  // primitives, since '*' would hit <g>s that can't answer signedDistanceToPt:.
+  ['AnySel']: () => '.boundary-shape, g.text-wrapper',
+  ['Any']: (self) => self.cursor.dict,
 };
 
 // The runtime object the Graph combinator produces. Eager sets (nodes, edges)
@@ -976,7 +1038,7 @@ vtables.NotationGrammar = {
 // "semantic face" of the notation — distinct from the grammar face above.
 vtables['GraphObject'] = {
   ['nodeAt:']: (self, pt) => self.nodes.find(n =>
-    send(n, 'signedDistanceToPt:', pt) <= self.epsilon) || null,
+    send(n, 'signedDistanceToPt:', pt) <= self.epsilonFor(n)) || null,
 
   ['connectionsOf:']: (self, edge) => {
     if (edge._connections) return edge._connections;
@@ -1299,9 +1361,33 @@ vtables.PowerpointArrowPath = {
     const tip = send(self, 'apply:', 'point');
     // `...` — remainder deliberately unmatched; we just stop here.
 
-    return [vmul(0.5, vadd(b1, b2)), tip];
+    return [vmid(b1, b2), tip];
   },
 };
+
+vtables.AffinityArrowPath = {
+  _parent: vtables.PathDataGrammar,
+
+  // M b1 L tip L b2 ... => target=tip, tangent = unit(tip - (b1 ~ b2))
+  ['head']: (self) => {
+    send(self, 'apply:', 'cmd:', 'with:', ['M']);
+    const b1 = send(self, 'apply:', 'point');
+    send(self, 'apply:', 'cmd:', 'with:', ['L']);
+    const tip = send(self, 'apply:', 'point');
+    send(self, 'apply:', 'cmd:', 'with:', ['L']);
+    const b2 = send(self, 'apply:', 'point');
+    return { headTip: tip, headTangent: vnormed(vsub(tip, vmid(b1, b2))) };
+  },
+
+  // M start L end => origin=start, tangent = unit(start - end)
+  ['shaft']: (self) => {
+    send(self, 'apply:', 'cmd:', 'with:', ['M']);
+    const start = send(self, 'apply:', 'point');
+    send(self, 'apply:', 'cmd:', 'with:', ['L']);
+    const end = send(self, 'apply:', 'point');
+    return { shaftOrigin: start, originTangent: vnormed(vsub(start,end)) };
+  },
+}
 
 vtables.MathchaVocab = {
   /*
@@ -1427,11 +1513,16 @@ vtables.AffinityVocab = {
     let pairs = [];
     for (let i=0; i<paths.length; i+=2) pairs.push([paths[i], paths[i+1]]);
     pairs.forEach(([p1,p2]) => {
-      const g = svgel('g');
+      const g = svgel('g', {class: 'connector-wrapper'});
       p1.replaceWith(g);
       g.appendChild(p1); p1.classList.add('connector-head')
+      const {headTip, headTangent} = match(vtables.AffinityArrowPath, attr(p1, 'd'), 'head');
+      g.dataset.targetPt = legible(...headTip);
+      g.dataset.targetOut = legible(...headTangent);
       g.appendChild(p2); p2.classList.add('connector-shaft');
-      g.classList.add('connector-wrapper');
+      const {shaftOrigin, originTangent} = match(vtables.AffinityArrowPath, attr(p2, 'd'), 'shaft');
+      g.dataset.originPt = legible(...shaftOrigin);
+      g.dataset.originOut = legible(...originTangent);
     });
   },
   ['seedElements']: (self) => all('path, .boundary-shape, .text-wrapper'),
@@ -1530,8 +1621,8 @@ vtables.PowerpointVocab = {
           for (let c of [...g.children]) {
             if (c.tagName === 'polygon') {
               if (send(c, 'vertices').length === 3) c.classList.add('is-head');
-              else c.classList.add('is-shaft');
-            } else c.classList.add('is-shaft'); // SMELL: Embedded head in this case
+              else c.classList.add('connector-shaft');
+            } else c.classList.add('connector-shaft'); // SMELL: Embedded head in this case
           }
           // Now parse the *original* <path> for the endpoints
           const [originPt, targetPt] = match(vtables.PowerpointArrow, p, 'endpoints');

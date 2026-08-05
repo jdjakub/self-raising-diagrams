@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html><body><!-- HTML wrapper added to guarantee Element Inspector highlights -->
 <svg width="100%" height="100%" viewBox="0 0 1064 795" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-miterlimit:1.5;">
-    <script href="../utils.js"></script>
-	<script href="../bracket-hole-carving.js"></script>
-	<script href="../lang-sweettalk.js"></script>
-	<script href="../lang-descartes.js"></script>
-	<script href="../main-engine.js"></script>
-	<script href="../omnimeta.js"></script>
+    <script href="../utils.js"/>
+	<script href="../bracket-hole-carving.js"/>
+	<script href="../lang-sweettalk.js"/>
+	<script href="../lang-descartes.js"/>
+	<script href="../main-engine.js"/>
+	<script href="../omnimeta.js"/>
+    <script href="./animation-notation.js"/>
     <rect id="Example---animating-a-stack" serif:id="Example — animating a stack" x="0" y="0" width="1064" height="795" style="fill:none;"/>
     <g transform="matrix(24,0,0,24,346.976,58.068)">
     </g>
@@ -129,9 +130,8 @@
         <g transform="matrix(24,0,0,24,940.185,454.068)">
         </g>
         <text x="841.497px" y="454.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">opacity 0</text>
-        <rect x="505" y="423" width="447.841" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
-    </g>
-    <g>
+        <rect x="505" y="423" width="447.841" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" height="103"/>
+    
         <path d="M621.38,499.73L630.92,504.5L621.38,509.27L621.38,499.73Z" style="fill:rgb(184,10,10);"/>
         <path d="M556,504.5L623.288,504.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
         <path d="M819.301,499.73L828.841,504.5L819.301,509.27L819.301,499.73Z" style="fill:rgb(184,10,10);"/>
@@ -148,8 +148,9 @@
         <g transform="matrix(24,0,0,24,940.185,511.068)">
         </g>
         <text x="841.497px" y="511.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">opacity 1</text>
-        <rect x="505" y="480" width="447.841" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
+        
     </g>
+    
     <g>
         <g transform="matrix(24,0,0,24,543.616,630.068)">
         </g>
@@ -165,9 +166,8 @@
             </g>
             <text x="44px" y="489.404px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">text 4</text>
         </g>
-        <rect x="505" y="589" width="447.841" height="65" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
-    </g>
-    <g>
+        <rect x="505" y="589" width="447.841" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" height="122"/>
+    
         <path d="M621.38,685.73L630.92,690.5L621.38,695.27L621.38,685.73Z" style="fill:rgb(184,10,10);"/>
         <path d="M556,690.5L623.288,690.5" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
         <path d="M819.301,685.73L828.841,690.5L819.301,695.27L819.301,685.73Z" style="fill:rgb(184,10,10);"/>
@@ -184,8 +184,9 @@
         <g transform="matrix(24,0,0,24,940.185,697.068)">
         </g>
         <text x="841.497px" y="697.068px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);">opacity 1</text>
-        <rect x="505" y="666" width="447.841" height="45" style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;"/>
+        
     </g>
+    
     <g transform="matrix(24,0,0,24,320.992,368.068)">
     </g>
     <text x="244.96px" y="368.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">push 5</text>
