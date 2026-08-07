@@ -44,163 +44,6 @@ vtables.BoardGameNotation = {
     return regionSemantics;
   },
 
-  ['testCheckers']: (self) => {
-    window.semantics = ⟦self fromRegion: svg_parent⟧;
-    // If that went well... let's check the results
-    const assert = b => { if (!b) throw 'You broke Checkers!'; };
-    // === MoveSpec ===
-    const moveSpec = key =>
-      semantics[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
-      .join('\n');
-    // Beware of reorderings - jump that bridge when we get there
-    assert(moveSpec('MOVES - REGULAR') ===
-`0,0,empty,1,1,Regular 1 -> 0,0,Regular 1,1,1,empty
-0,0,empty,-1,1,Regular 1 -> 0,0,Regular 1,-1,1,empty
-0,0,Regular 2,1,1,empty -> 0,0,empty,1,1,Regular 2
-0,0,Regular 2,-1,1,empty -> 0,0,empty,-1,1,Regular 2`
-    );
-    assert(moveSpec('MOVES - REGULAR_JUMP') ===
-`0,0,empty,-1,1,Any 2,-2,2,Regular 1 -> 0,0,Regular 1,-1,1,empty,-2,2,empty
-0,0,empty,1,1,Any 2,2,2,Regular 1 -> 0,0,Regular 1,1,1,empty,2,2,empty
-0,0,Regular 2,-1,1,Any 1,-2,2,empty -> 0,0,empty,-1,1,empty,-2,2,Regular 2
-0,0,Regular 2,1,1,Any 1,2,2,empty -> 0,0,empty,1,1,empty,2,2,Regular 2`
-    );
-    const namedMoveSpec = key =>
-      semantics[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
-      .join('\n');
-    assert(namedMoveSpec('MOVES - KING') ===
-`0,0,empty,1,1,King 1 --LU--> 0,0,King 1,1,1,empty
-0,0,empty,-1,1,King 1 --RU--> 0,0,King 1,-1,1,empty
-0,0,King 1,1,1,empty --RD--> 0,0,empty,1,1,King 1
-0,0,King 1,-1,1,empty --LD--> 0,0,empty,-1,1,King 1
-0,0,empty,1,1,King 2 --LU--> 0,0,King 2,1,1,empty
-0,0,empty,-1,1,King 2 --RU--> 0,0,King 2,-1,1,empty
-0,0,King 2,1,1,empty --RD--> 0,0,empty,1,1,King 2
-0,0,King 2,-1,1,empty --LD--> 0,0,empty,-1,1,King 2`
-    );
-    assert(namedMoveSpec('MOVES - KING_JUMP') ===
-`0,0,empty,-1,1,Any 2,-2,2,King 1 --RU--> 0,0,King 1,-1,1,empty,-2,2,empty
-0,0,King 1,1,1,Any 2,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 1
-0,0,empty,-1,1,Any 1,-2,2,King 2 --RU--> 0,0,King 2,-1,1,empty,-2,2,empty
-0,0,King 2,1,1,Any 1,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 2
-0,0,King 1,-1,1,Any 2,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 1
-0,0,empty,1,1,Any 2,2,2,King 1 --LU--> 0,0,King 1,1,1,empty,2,2,empty
-0,0,King 2,-1,1,Any 1,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 2
-0,0,empty,1,1,Any 1,2,2,King 2 --LU--> 0,0,King 2,1,1,empty,2,2,empty`
-    );
-    // === CombosSpec ===
-    const combosSpec = key =>
-      semantics[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
-      .join('\n')
-    // I ain't implementing graph isomorphism. Beware reorderings, different IDs etc
-    // Should be stable...
-    assert(combosSpec('COMBINATIONS') ===
-`e409 --KING[RU]*--> e411
-e411 --KING_JUMP[RU]--> e412
-e412 --KING[RU]*--> e409
-e409 --KING[RD]*--> c422
-c422 --KING_JUMP[RD]--> c423
-e409 --KING[LU]*--> c431
-c431 --KING_JUMP[LU]--> c432
-e409 --KING[LD]*--> c440
-c440 --KING_JUMP[LD]--> c441
-c423 --KING[RD]*--> e409
-c432 --KING[LU]*--> e409
-c441 --KING[LD]*--> e409
-e457 --REGULAR--> e458
-e463 --REGULAR_JUMP--> e463`
-    );
-    assert(Object.entries(semantics['COMBINATIONS'].stateClasses)
-           .map(kv => kv.join(' is a ')).join('\n') ===
-`e409 is a Initial / final state
-e411 is a e411
-e412 is a e411
-c422 is a e411
-c423 is a e411
-c431 is a e411
-c432 is a e411
-c440 is a e411
-c441 is a e411
-e457 is a Initial / final state
-e458 is a e411
-e463 is a Initial / final state`
-    );
-    // === BoardState ===
-    assert(semantics['INITIAL'].pieces.join('\n') ===
-`0,0,empty,BLACK KING AREA
-1,0,Regular 2,BLACK KING AREA
-2,0,empty,BLACK KING AREA
-3,0,Regular 2,BLACK KING AREA
-4,0,empty,BLACK KING AREA
-5,0,Regular 2,BLACK KING AREA
-6,0,empty,BLACK KING AREA
-7,0,Regular 2,BLACK KING AREA
-0,1,Regular 2
-1,1,empty
-2,1,Regular 2
-3,1,empty
-4,1,Regular 2
-5,1,empty
-6,1,Regular 2
-7,1,empty
-0,2,empty
-1,2,Regular 2
-2,2,empty
-3,2,Regular 2
-4,2,empty
-5,2,Regular 2
-6,2,empty
-7,2,Regular 2
-0,3,empty
-1,3,empty
-2,3,empty
-3,3,empty
-4,3,empty
-5,3,empty
-6,3,empty
-7,3,empty
-0,4,empty
-1,4,empty
-2,4,empty
-3,4,empty
-4,4,empty
-5,4,empty
-6,4,empty
-7,4,empty
-0,5,Regular 1
-1,5,empty
-2,5,Regular 1
-3,5,empty
-4,5,Regular 1
-5,5,empty
-6,5,Regular 1
-7,5,empty
-0,6,empty
-1,6,Regular 1
-2,6,empty
-3,6,Regular 1
-4,6,empty
-5,6,Regular 1
-6,6,empty
-7,6,Regular 1
-0,7,Regular 1,WHITE KING AREA
-1,7,empty,WHITE KING AREA
-2,7,Regular 1,WHITE KING AREA
-3,7,empty,WHITE KING AREA
-4,7,Regular 1,WHITE KING AREA
-5,7,empty,WHITE KING AREA
-6,7,Regular 1,WHITE KING AREA
-7,7,empty,WHITE KING AREA`
-    );
-    // === TransformSpec ===
-    assert(semantics['TRANSFORMS'].map(([zone,before,after]) =>
-      `${before} in ${zone} becomes ${after}`).join('\n') ===
-`Regular 1 in BLACK KING AREA becomes King 1
-Regular 2 in WHITE KING AREA becomes King 2`
-    );
-    log('Great Success! Don\'t fret - there\'s still plenty of ways to break Checkers.' );
-  },
-
   // Legend entries: each shape (tile, piece glyph) with its name above it.
   // Same name-string on several shapes is fine — they're exemplars of one
   // category; Named stays injective per element.
@@ -380,5 +223,162 @@ Regular 2 in WHITE KING AREA becomes King 2`
       piece.dom.zone !== undefined ? [...piece, piece.dom.zone] : piece
     );
     return { pieces, zones };
+  },
+
+  ['testCheckers']: (self) => {
+    window.semantics = ⟦self fromRegion: svg_parent⟧;
+    // If that went well... let's check the results
+    const assert = b => { if (!b) throw 'You broke Checkers!'; };
+    // === MoveSpec ===
+    const moveSpec = key =>
+      semantics[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
+      .join('\n');
+    // Beware of reorderings - jump that bridge when we get there
+    assert(moveSpec('MOVES - REGULAR') ===
+`0,0,empty,1,1,Regular 1 -> 0,0,Regular 1,1,1,empty
+0,0,empty,-1,1,Regular 1 -> 0,0,Regular 1,-1,1,empty
+0,0,Regular 2,1,1,empty -> 0,0,empty,1,1,Regular 2
+0,0,Regular 2,-1,1,empty -> 0,0,empty,-1,1,Regular 2`
+    );
+    assert(moveSpec('MOVES - REGULAR_JUMP') ===
+`0,0,empty,-1,1,Any 2,-2,2,Regular 1 -> 0,0,Regular 1,-1,1,empty,-2,2,empty
+0,0,empty,1,1,Any 2,2,2,Regular 1 -> 0,0,Regular 1,1,1,empty,2,2,empty
+0,0,Regular 2,-1,1,Any 1,-2,2,empty -> 0,0,empty,-1,1,empty,-2,2,Regular 2
+0,0,Regular 2,1,1,Any 1,2,2,empty -> 0,0,empty,1,1,empty,2,2,Regular 2`
+    );
+    const namedMoveSpec = key =>
+      semantics[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
+      .join('\n');
+    assert(namedMoveSpec('MOVES - KING') ===
+`0,0,empty,1,1,King 1 --LU--> 0,0,King 1,1,1,empty
+0,0,empty,-1,1,King 1 --RU--> 0,0,King 1,-1,1,empty
+0,0,King 1,1,1,empty --RD--> 0,0,empty,1,1,King 1
+0,0,King 1,-1,1,empty --LD--> 0,0,empty,-1,1,King 1
+0,0,empty,1,1,King 2 --LU--> 0,0,King 2,1,1,empty
+0,0,empty,-1,1,King 2 --RU--> 0,0,King 2,-1,1,empty
+0,0,King 2,1,1,empty --RD--> 0,0,empty,1,1,King 2
+0,0,King 2,-1,1,empty --LD--> 0,0,empty,-1,1,King 2`
+    );
+    assert(namedMoveSpec('MOVES - KING_JUMP') ===
+`0,0,empty,-1,1,Any 2,-2,2,King 1 --RU--> 0,0,King 1,-1,1,empty,-2,2,empty
+0,0,King 1,1,1,Any 2,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 1
+0,0,empty,-1,1,Any 1,-2,2,King 2 --RU--> 0,0,King 2,-1,1,empty,-2,2,empty
+0,0,King 2,1,1,Any 1,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 2
+0,0,King 1,-1,1,Any 2,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 1
+0,0,empty,1,1,Any 2,2,2,King 1 --LU--> 0,0,King 1,1,1,empty,2,2,empty
+0,0,King 2,-1,1,Any 1,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 2
+0,0,empty,1,1,Any 1,2,2,King 2 --LU--> 0,0,King 2,1,1,empty,2,2,empty`
+    );
+    // === CombosSpec ===
+    const combosSpec = key =>
+      semantics[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
+      .join('\n')
+    // I ain't implementing graph isomorphism. Beware reorderings, different IDs etc
+    // Should be stable...
+    assert(combosSpec('COMBINATIONS') ===
+`e409 --KING[RU]*--> e411
+e411 --KING_JUMP[RU]--> e412
+e412 --KING[RU]*--> e409
+e409 --KING[RD]*--> c422
+c422 --KING_JUMP[RD]--> c423
+e409 --KING[LU]*--> c431
+c431 --KING_JUMP[LU]--> c432
+e409 --KING[LD]*--> c440
+c440 --KING_JUMP[LD]--> c441
+c423 --KING[RD]*--> e409
+c432 --KING[LU]*--> e409
+c441 --KING[LD]*--> e409
+e457 --REGULAR--> e458
+e463 --REGULAR_JUMP--> e463`
+    );
+    assert(Object.entries(semantics['COMBINATIONS'].stateClasses)
+           .map(kv => kv.join(' is a ')).join('\n') ===
+`e409 is a Initial / final state
+e411 is a e411
+e412 is a e411
+c422 is a e411
+c423 is a e411
+c431 is a e411
+c432 is a e411
+c440 is a e411
+c441 is a e411
+e457 is a Initial / final state
+e458 is a e411
+e463 is a Initial / final state`
+    );
+    // === BoardState ===
+    assert(semantics['INITIAL'].pieces.join('\n') ===
+`0,0,empty,BLACK KING AREA
+1,0,Regular 2,BLACK KING AREA
+2,0,empty,BLACK KING AREA
+3,0,Regular 2,BLACK KING AREA
+4,0,empty,BLACK KING AREA
+5,0,Regular 2,BLACK KING AREA
+6,0,empty,BLACK KING AREA
+7,0,Regular 2,BLACK KING AREA
+0,1,Regular 2
+1,1,empty
+2,1,Regular 2
+3,1,empty
+4,1,Regular 2
+5,1,empty
+6,1,Regular 2
+7,1,empty
+0,2,empty
+1,2,Regular 2
+2,2,empty
+3,2,Regular 2
+4,2,empty
+5,2,Regular 2
+6,2,empty
+7,2,Regular 2
+0,3,empty
+1,3,empty
+2,3,empty
+3,3,empty
+4,3,empty
+5,3,empty
+6,3,empty
+7,3,empty
+0,4,empty
+1,4,empty
+2,4,empty
+3,4,empty
+4,4,empty
+5,4,empty
+6,4,empty
+7,4,empty
+0,5,Regular 1
+1,5,empty
+2,5,Regular 1
+3,5,empty
+4,5,Regular 1
+5,5,empty
+6,5,Regular 1
+7,5,empty
+0,6,empty
+1,6,Regular 1
+2,6,empty
+3,6,Regular 1
+4,6,empty
+5,6,Regular 1
+6,6,empty
+7,6,Regular 1
+0,7,Regular 1,WHITE KING AREA
+1,7,empty,WHITE KING AREA
+2,7,Regular 1,WHITE KING AREA
+3,7,empty,WHITE KING AREA
+4,7,Regular 1,WHITE KING AREA
+5,7,empty,WHITE KING AREA
+6,7,Regular 1,WHITE KING AREA
+7,7,empty,WHITE KING AREA`
+    );
+    // === TransformSpec ===
+    assert(semantics['TRANSFORMS'].map(([zone,before,after]) =>
+      `${before} in ${zone} becomes ${after}`).join('\n') ===
+`Regular 1 in BLACK KING AREA becomes King 1
+Regular 2 in WHITE KING AREA becomes King 2`
+    );
+    log('Great Success! Don\'t fret - there\'s still plenty of ways to break Checkers.' );
   },
 };

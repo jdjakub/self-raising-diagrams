@@ -630,6 +630,7 @@ vtables.byTag['g'] = {
       if (send(c, 'specialize')) anySpecialized = true;
     return anySpecialized? self : null;
   },
+  ['string']: (self) => self.dataset.string,
   ['boundaryShape']: (self) => self.querySelector('.boundary-shape'),
   ['interior']: (self) => self.querySelector('.shape-interior'),
   ['endpoints']: (self) => props(self.dataset, 'originPt', 'targetPt').map(atov),
