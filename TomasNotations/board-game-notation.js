@@ -44,6 +44,51 @@ vtables.BoardGameNotation = {
     return regionSemantics;
   },
 
+  ['exportJSForApp']: (self, regionSemantics) => {
+    if (!regionSemantics) regionSemantics = semantics;
+    const moveSpecRules = [];
+    const transformRules = [];
+    const zones = {};
+    for (const [instName, sem] of Object.entries(regionSemantics)) {
+      // Add full move label and anchor piece to each MoveSpec rule
+      if (sem.fromRule === 'MoveSpec') {
+        const parts = instName.split(' '); // eg 'MOVES', '-', 'REGULAR'
+        const movePrefix = last(parts); // 'REGULAR'
+        moveSpecRules.push(...sem.map(({name,inner}) => {
+          // Move label = last part of inst name (+ [rule name])
+          if (name === undefined || name === null) name = '';
+          else name = '['+name+']'
+          const label = movePrefix+name;
+          // Anchor piece = the non-wildcard board piece in the rule
+          const {before, after} = inner;
+          const rulePieces = before.map(([,,piece]) => piece)
+            .filter(piece => piece !== null && !piece.startsWith('any-'));
+          // ^ Unfortunate harcoded exclusion of wildcard any-* but idk what else to do
+          const anchor = rulePieces.length > 0 ? rulePieces[0] : null;
+
+          return { piece: anchor, label, before, after };
+        }));
+      } else if (sem.fromRule === 'TransformSpec') {
+        transformRules.push(...sem.map(([zone,beforePiece,afterPiece]) => ({
+          piece: beforePiece, region: zone, transform: afterPiece
+        })));
+      } else if (sem.fromRule === 'BoardState') {
+        const cells = sem.pieces.map(([x,y,,zone]) => [x,y,zone]).filter(([,,zone]) => zone);
+        for (const [x,y,zone] of cells) {
+          let zoneCells = zones[zone];
+          if (!zoneCells) zoneCells = zones[zone] = [];
+          zoneCells.push([x,y]);
+        }
+      }
+    }
+    const rulesSpec = 'const rules = [\n' +
+      moveSpecRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
+    const transformSpec = 'const transforms = [\n' +
+      transformRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
+    const zoneSpec = 'const areas = ' + toJSish(zones) + ';'
+    return [rulesSpec,transformSpec,zoneSpec].join('\n\n');
+  },
+
   // Legend entries: each shape (tile, piece glyph) with its name above it.
   // Same name-string on several shapes is fine — they're exemplars of one
   // category; Named stays injective per element.
@@ -98,15 +143,22 @@ vtables.BoardGameNotation = {
       const fracCoords = vcmul([1/width,1/height], localCenter);
       const coords = fracCoords.map(Math.round);
       const contained = send(piece, 'interior').children;
-      let innerName = 'empty';
+      let innerName = null; // Means tile is empty
       if (contained.length > 0) {
         const innerPiece = send(contained[0], 'boundaryShape');
         innerName = send(self, 'identifyPiece:', innerPiece);
+        innerName = innerName.replaceAll(' ','-').toLowerCase(); // 'Regular 1' => 'regular-1'
       }
-      const result = [coords, innerName];
+      const result = [...coords, innerName];
       result.dom = piece; // HACK so we don't mess up the testing prints, but can still xref...
       return result;
     });
+    // Finally, translate coords to be nonnegative
+    const minX = Math.min(...pattern.map(([x,y,]) => x));
+    const minY = Math.min(...pattern.map(([x,y,]) => y));
+    for (const cell of pattern) {
+      cell[0] -= minX; cell[1] -= minY;
+    }
     return pattern;
   },
 
@@ -141,7 +193,7 @@ vtables.BoardGameNotation = {
         beforeName = send(self, 'identifyPiece:', innerPiece);
       } // end smell
       const afterName = send(self, 'identifyPiece:', after);
-      return [beforeZone, beforeName, afterName];
+      return [beforeZone, beforeName, afterName].map(s => s.replaceAll(' ','-').toLowerCase());
     });
   },
   ['SinglePiece']: (self) => send(self, 'claimMatching:', 'BoardPiece'),
@@ -216,7 +268,7 @@ vtables.BoardGameNotation = {
     for (const piece of pieces) {
       for (const zone of zones) {
         if (send(zone.inner, 'interior').contains(piece.dom))
-          piece.dom.zone = zone.name;
+          piece.dom.zone = zone.name.replaceAll(' ','-').toLowerCase();
       }
     }
     pieces = pieces.map(piece =>
@@ -231,48 +283,48 @@ vtables.BoardGameNotation = {
     const assert = b => { if (!b) throw 'You broke Checkers!'; };
     // === MoveSpec ===
     const moveSpec = key =>
-      semantics[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
-      .join('\n');
+      log(semantics[key].map(({name,inner}) => `${inner.before} -> ${inner.after}`)
+      .join('\n'));
     // Beware of reorderings - jump that bridge when we get there
     assert(moveSpec('MOVES - REGULAR') ===
-`0,0,empty,1,1,Regular 1 -> 0,0,Regular 1,1,1,empty
-0,0,empty,-1,1,Regular 1 -> 0,0,Regular 1,-1,1,empty
-0,0,Regular 2,1,1,empty -> 0,0,empty,1,1,Regular 2
-0,0,Regular 2,-1,1,empty -> 0,0,empty,-1,1,Regular 2`
+`0,0,,1,1,regular-1 -> 0,0,regular-1,1,1,
+1,0,,0,1,regular-1 -> 1,0,regular-1,0,1,
+0,0,regular-2,1,1, -> 0,0,,1,1,regular-2
+1,0,regular-2,0,1, -> 1,0,,0,1,regular-2`
     );
     assert(moveSpec('MOVES - REGULAR_JUMP') ===
-`0,0,empty,-1,1,Any 2,-2,2,Regular 1 -> 0,0,Regular 1,-1,1,empty,-2,2,empty
-0,0,empty,1,1,Any 2,2,2,Regular 1 -> 0,0,Regular 1,1,1,empty,2,2,empty
-0,0,Regular 2,-1,1,Any 1,-2,2,empty -> 0,0,empty,-1,1,empty,-2,2,Regular 2
-0,0,Regular 2,1,1,Any 1,2,2,empty -> 0,0,empty,1,1,empty,2,2,Regular 2`
+`2,0,,1,1,any-2,0,2,regular-1 -> 2,0,regular-1,1,1,,0,2,
+0,0,,1,1,any-2,2,2,regular-1 -> 0,0,regular-1,1,1,,2,2,
+2,0,regular-2,1,1,any-1,0,2, -> 2,0,,1,1,,0,2,regular-2
+0,0,regular-2,1,1,any-1,2,2, -> 0,0,,1,1,,2,2,regular-2`
     );
     const namedMoveSpec = key =>
-      semantics[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
-      .join('\n');
+      log(semantics[key].map(({name,inner}) => `${inner.before} --${name}--> ${inner.after}`)
+      .join('\n'));
     assert(namedMoveSpec('MOVES - KING') ===
-`0,0,empty,1,1,King 1 --LU--> 0,0,King 1,1,1,empty
-0,0,empty,-1,1,King 1 --RU--> 0,0,King 1,-1,1,empty
-0,0,King 1,1,1,empty --RD--> 0,0,empty,1,1,King 1
-0,0,King 1,-1,1,empty --LD--> 0,0,empty,-1,1,King 1
-0,0,empty,1,1,King 2 --LU--> 0,0,King 2,1,1,empty
-0,0,empty,-1,1,King 2 --RU--> 0,0,King 2,-1,1,empty
-0,0,King 2,1,1,empty --RD--> 0,0,empty,1,1,King 2
-0,0,King 2,-1,1,empty --LD--> 0,0,empty,-1,1,King 2`
+`0,0,,1,1,king-1 --LU--> 0,0,king-1,1,1,
+1,0,,0,1,king-1 --RU--> 1,0,king-1,0,1,
+0,0,king-1,1,1, --RD--> 0,0,,1,1,king-1
+1,0,king-1,0,1, --LD--> 1,0,,0,1,king-1
+0,0,,1,1,king-2 --LU--> 0,0,king-2,1,1,
+1,0,,0,1,king-2 --RU--> 1,0,king-2,0,1,
+0,0,king-2,1,1, --RD--> 0,0,,1,1,king-2
+1,0,king-2,0,1, --LD--> 1,0,,0,1,king-2`
     );
     assert(namedMoveSpec('MOVES - KING_JUMP') ===
-`0,0,empty,-1,1,Any 2,-2,2,King 1 --RU--> 0,0,King 1,-1,1,empty,-2,2,empty
-0,0,King 1,1,1,Any 2,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 1
-0,0,empty,-1,1,Any 1,-2,2,King 2 --RU--> 0,0,King 2,-1,1,empty,-2,2,empty
-0,0,King 2,1,1,Any 1,2,2,empty --RD--> 0,0,empty,1,1,empty,2,2,King 2
-0,0,King 1,-1,1,Any 2,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 1
-0,0,empty,1,1,Any 2,2,2,King 1 --LU--> 0,0,King 1,1,1,empty,2,2,empty
-0,0,King 2,-1,1,Any 1,-2,2,empty --LD--> 0,0,empty,-1,1,empty,-2,2,King 2
-0,0,empty,1,1,Any 1,2,2,King 2 --LU--> 0,0,King 2,1,1,empty,2,2,empty`
+`2,0,,1,1,any-2,0,2,king-1 --RU--> 2,0,king-1,1,1,,0,2,
+0,0,king-1,1,1,any-2,2,2, --RD--> 0,0,,1,1,,2,2,king-1
+2,0,,1,1,any-1,0,2,king-2 --RU--> 2,0,king-2,1,1,,0,2,
+0,0,king-2,1,1,any-1,2,2, --RD--> 0,0,,1,1,,2,2,king-2
+2,0,king-1,1,1,any-2,0,2, --LD--> 2,0,,1,1,,0,2,king-1
+0,0,,1,1,any-2,2,2,king-1 --LU--> 0,0,king-1,1,1,,2,2,
+2,0,king-2,1,1,any-1,0,2, --LD--> 2,0,,1,1,,0,2,king-2
+0,0,,1,1,any-1,2,2,king-2 --LU--> 0,0,king-2,1,1,,2,2,`
     );
     // === CombosSpec ===
     const combosSpec = key =>
-      semantics[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
-      .join('\n')
+      log(semantics[key].edges.map(([f,n,t]) => `${f} --${n}--> ${t}`)
+      .join('\n'))
     // I ain't implementing graph isomorphism. Beware reorderings, different IDs etc
     // Should be stable...
     assert(combosSpec('COMBINATIONS') ===
@@ -308,76 +360,76 @@ e463 is a Initial / final state`
     );
     // === BoardState ===
     assert(semantics['INITIAL'].pieces.join('\n') ===
-`0,0,empty,BLACK KING AREA
-1,0,Regular 2,BLACK KING AREA
-2,0,empty,BLACK KING AREA
-3,0,Regular 2,BLACK KING AREA
-4,0,empty,BLACK KING AREA
-5,0,Regular 2,BLACK KING AREA
-6,0,empty,BLACK KING AREA
-7,0,Regular 2,BLACK KING AREA
-0,1,Regular 2
-1,1,empty
-2,1,Regular 2
-3,1,empty
-4,1,Regular 2
-5,1,empty
-6,1,Regular 2
-7,1,empty
-0,2,empty
-1,2,Regular 2
-2,2,empty
-3,2,Regular 2
-4,2,empty
-5,2,Regular 2
-6,2,empty
-7,2,Regular 2
-0,3,empty
-1,3,empty
-2,3,empty
-3,3,empty
-4,3,empty
-5,3,empty
-6,3,empty
-7,3,empty
-0,4,empty
-1,4,empty
-2,4,empty
-3,4,empty
-4,4,empty
-5,4,empty
-6,4,empty
-7,4,empty
-0,5,Regular 1
-1,5,empty
-2,5,Regular 1
-3,5,empty
-4,5,Regular 1
-5,5,empty
-6,5,Regular 1
-7,5,empty
-0,6,empty
-1,6,Regular 1
-2,6,empty
-3,6,Regular 1
-4,6,empty
-5,6,Regular 1
-6,6,empty
-7,6,Regular 1
-0,7,Regular 1,WHITE KING AREA
-1,7,empty,WHITE KING AREA
-2,7,Regular 1,WHITE KING AREA
-3,7,empty,WHITE KING AREA
-4,7,Regular 1,WHITE KING AREA
-5,7,empty,WHITE KING AREA
-6,7,Regular 1,WHITE KING AREA
-7,7,empty,WHITE KING AREA`
+`0,0,,black-king-area
+1,0,regular-2,black-king-area
+2,0,,black-king-area
+3,0,regular-2,black-king-area
+4,0,,black-king-area
+5,0,regular-2,black-king-area
+6,0,,black-king-area
+7,0,regular-2,black-king-area
+0,1,regular-2
+1,1,
+2,1,regular-2
+3,1,
+4,1,regular-2
+5,1,
+6,1,regular-2
+7,1,
+0,2,
+1,2,regular-2
+2,2,
+3,2,regular-2
+4,2,
+5,2,regular-2
+6,2,
+7,2,regular-2
+0,3,
+1,3,
+2,3,
+3,3,
+4,3,
+5,3,
+6,3,
+7,3,
+0,4,
+1,4,
+2,4,
+3,4,
+4,4,
+5,4,
+6,4,
+7,4,
+0,5,regular-1
+1,5,
+2,5,regular-1
+3,5,
+4,5,regular-1
+5,5,
+6,5,regular-1
+7,5,
+0,6,
+1,6,regular-1
+2,6,
+3,6,regular-1
+4,6,
+5,6,regular-1
+6,6,
+7,6,regular-1
+0,7,regular-1,white-king-area
+1,7,,white-king-area
+2,7,regular-1,white-king-area
+3,7,,white-king-area
+4,7,regular-1,white-king-area
+5,7,,white-king-area
+6,7,regular-1,white-king-area
+7,7,,white-king-area`
     );
     // === TransformSpec ===
     assert(semantics['TRANSFORMS'].map(([zone,before,after]) =>
       `${before} in ${zone} becomes ${after}`).join('\n') ===
-`Regular 1 in BLACK KING AREA becomes King 1
-Regular 2 in WHITE KING AREA becomes King 2`
+`regular-1 in black-king-area becomes king-1
+regular-2 in white-king-area becomes king-2`
     );
     log('Great Success! Don\'t fret - there\'s still plenty of ways to break Checkers.' );
   },

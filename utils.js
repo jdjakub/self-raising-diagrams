@@ -100,6 +100,16 @@ depthOf = el => {
   return d;
 };
 
+toJSish = function(obj, indent = 0) {
+  let s = JSON.stringify(obj, null, indent)
+    .replace(/"([a-zA-Z_$][a-zA-Z0-9_$]*)":/g, '$1: ')
+    .replace(/(":)(?=(?:[^"]*"[^"]*")*[^"]*$)/g, '$1 ');
+  s = s.replace(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g, ', ');
+  s = s.replace(/\{(?=(?:[^"]*"[^"]*")*[^"]*$)(?!\})/g, '{ ');
+  s = s.replace(/(?<!\{)\}(?=(?:[^"]*"[^"]*")*[^"]*$)/g, ' }');
+  return s;
+}
+
 vadd = ([a, b], [c, d]) => [a+c, b+d];
 vsub = ([a, b], [c, d]) => [a-c, b-d];
 vdot = ([a, b], [c, d]) => a*c + b*d;
