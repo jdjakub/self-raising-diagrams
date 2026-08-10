@@ -44,6 +44,7 @@
 
       const pieces = defaultPieces();
 
+      /* OLD RULES - GENERATED MANUALLY / VIA AI
       // Move rules. Offsets are normalized to be non-negative (each rule's cells
       // start at 0) — matching what extraction from the SVG's MOVES boxes yields.
       // The anchor (the cell whose content is the rule's own `piece`) is found at
@@ -79,47 +80,6 @@
         { piece: "king-2", label: "KING_JUMP[RU]", before: [[0, 2, "king-2"], [1, 1, "any-1"], [2, 0, null]], after: [[0, 2, null], [1, 1, null], [2, 0, "king-2"]] },
         { piece: "king-2", label: "KING_JUMP[LU]", before: [[2, 2, "king-2"], [1, 1, "any-1"], [0, 0, null]], after: [[2, 2, null], [1, 1, null], [0, 0, "king-2"]] },
       ];
-
-      /* Generated via send({vtable: 'BoardGameNotation'}, 'exportJSForApp')
-      const rules = [
-        { piece: "regular-1", label: "REGULAR", before: [[0, 0, null], [1, 1, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null]] },
-        { piece: "regular-1", label: "REGULAR", before: [[1, 0, null], [0, 1, "regular-1"]], after: [[1, 0, "regular-1"], [0, 1, null]] },
-        { piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
-        { piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
-        { piece: "regular-1", label: "REGULAR_JUMP", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "regular-1"]], after: [[2, 0, "regular-1"], [1, 1, null], [0, 2, null]] },
-        { piece: "regular-1", label: "REGULAR_JUMP", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null], [2, 2, null]] },
-        { piece: "regular-2", label: "REGULAR_JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
-        { piece: "regular-2", label: "REGULAR_JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] },
-        { piece: "king-1", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null]] },
-        { piece: "king-1", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-1"]], after: [[1, 0, "king-1"], [0, 1, null]] },
-        { piece: "king-1", label: "KING[RD]", before: [[0, 0, "king-1"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-1"]] },
-        { piece: "king-1", label: "KING[LD]", before: [[1, 0, "king-1"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-1"]] },
-        { piece: "king-2", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null]] },
-        { piece: "king-2", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-2"]], after: [[1, 0, "king-2"], [0, 1, null]] },
-        { piece: "king-2", label: "KING[RD]", before: [[0, 0, "king-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-2"]] },
-        { piece: "king-2", label: "KING[LD]", before: [[1, 0, "king-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-2"]] },
-        { piece: "king-1", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "king-1"]], after: [[2, 0, "king-1"], [1, 1, null], [0, 2, null]] },
-        { piece: "king-1", label: "KING_JUMP[RD]", before: [[0, 0, "king-1"], [1, 1, "any-2"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-1"]] },
-        { piece: "king-2", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-1"], [0, 2, "king-2"]], after: [[2, 0, "king-2"], [1, 1, null], [0, 2, null]] },
-        { piece: "king-2", label: "KING_JUMP[RD]", before: [[0, 0, "king-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-2"]] },
-        { piece: "king-1", label: "KING_JUMP[LD]", before: [[2, 0, "king-1"], [1, 1, "any-2"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-1"]] },
-        { piece: "king-1", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null], [2, 2, null]] },
-        { piece: "king-2", label: "KING_JUMP[LD]", before: [[2, 0, "king-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-2"]] },
-        { piece: "king-2", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-1"], [2, 2, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null], [2, 2, null]] }
-      ];
-
-      // TODO: combinations
-
-      const transforms = [
-        { piece: "regular-1", region: "black-king-area", transform: "king-1" },
-        { piece: "regular-2", region: "white-king-area", transform: "king-2" }
-      ];
-
-      const areas = {
-        "black-king-area": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]],
-        "white-king-area": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7]]
-      };
-      */
 
       const combinations = {
         initial: "start",
@@ -168,6 +128,77 @@
       const areas = {
         "black-king-area": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]],
         "white-king-area": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7]],
+      };*/
+
+      // Generated via send({vtable: 'BoardGameNotation'}, 'exportJSForApp')
+      const rules = [
+        { piece: "regular-1", label: "REGULAR", before: [[0, 0, null], [1, 1, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null]] },
+        { piece: "regular-1", label: "REGULAR", before: [[1, 0, null], [0, 1, "regular-1"]], after: [[1, 0, "regular-1"], [0, 1, null]] },
+        { piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
+        { piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
+        { piece: "regular-1", label: "REGULAR_JUMP", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "regular-1"]], after: [[2, 0, "regular-1"], [1, 1, null], [0, 2, null]] },
+        { piece: "regular-1", label: "REGULAR_JUMP", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null], [2, 2, null]] },
+        { piece: "regular-2", label: "REGULAR_JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
+        { piece: "regular-2", label: "REGULAR_JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] },
+        { piece: "king-1", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null]] },
+        { piece: "king-1", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-1"]], after: [[1, 0, "king-1"], [0, 1, null]] },
+        { piece: "king-1", label: "KING[RD]", before: [[0, 0, "king-1"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-1"]] },
+        { piece: "king-1", label: "KING[LD]", before: [[1, 0, "king-1"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-1"]] },
+        { piece: "king-2", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null]] },
+        { piece: "king-2", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-2"]], after: [[1, 0, "king-2"], [0, 1, null]] },
+        { piece: "king-2", label: "KING[RD]", before: [[0, 0, "king-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-2"]] },
+        { piece: "king-2", label: "KING[LD]", before: [[1, 0, "king-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-2"]] },
+        { piece: "king-1", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "king-1"]], after: [[2, 0, "king-1"], [1, 1, null], [0, 2, null]] },
+        { piece: "king-1", label: "KING_JUMP[RD]", before: [[0, 0, "king-1"], [1, 1, "any-2"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-1"]] },
+        { piece: "king-2", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-1"], [0, 2, "king-2"]], after: [[2, 0, "king-2"], [1, 1, null], [0, 2, null]] },
+        { piece: "king-2", label: "KING_JUMP[RD]", before: [[0, 0, "king-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-2"]] },
+        { piece: "king-1", label: "KING_JUMP[LD]", before: [[2, 0, "king-1"], [1, 1, "any-2"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-1"]] },
+        { piece: "king-1", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null], [2, 2, null]] },
+        { piece: "king-2", label: "KING_JUMP[LD]", before: [[2, 0, "king-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-2"]] },
+        { piece: "king-2", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-1"], [2, 2, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null], [2, 2, null]] }
+      ];
+
+      const combinations = {
+        initial: "start",
+        terminal: ["e411", "e412", "c422", "c431", "c440", "c423", "c432", "c441", "e458", "end"],
+        transitions: [
+          ["start", "REGULAR", "e458"],
+          ["start", "REGULAR_JUMP", "end"],
+
+          ["start", "KING[RU]", "e411"],
+          ["e411", "KING[RU]", "e411"],
+          ["start", "KING_JUMP[RU]", "e412"],
+          ["e411", "KING_JUMP[RU]", "e412"],
+          ["e412", "KING[RU]", "e412"],
+
+          ["start", "KING[RD]", "c422"],
+          ["c422", "KING[RD]", "c422"],
+          ["start", "KING_JUMP[RD]", "c423"],
+          ["c422", "KING_JUMP[RD]", "c423"],
+          ["c423", "KING[RD]", "c423"],
+
+          ["start", "KING[LU]", "c431"],
+          ["c431", "KING[LU]", "c431"],
+          ["start", "KING_JUMP[LU]", "c432"],
+          ["c431", "KING_JUMP[LU]", "c432"],
+          ["c432", "KING[LU]", "c432"],
+
+          ["start", "KING[LD]", "c440"],
+          ["c440", "KING[LD]", "c440"],
+          ["start", "KING_JUMP[LD]", "c441"],
+          ["c440", "KING_JUMP[LD]", "c441"],
+          ["c441", "KING[LD]", "c441"],
+        ]
+      };
+
+      const transforms = [
+        { piece: "regular-1", region: "black-king-area", transform: "king-1" },
+        { piece: "regular-2", region: "white-king-area", transform: "king-2" }
+      ];
+
+      const areas = {
+        "black-king-area": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]],
+        "white-king-area": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7]]
       };
 
       // Rule tokens starting with this prefix are wildcards: "any-2" matches any

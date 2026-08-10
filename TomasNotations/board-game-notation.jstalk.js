@@ -49,6 +49,7 @@ vtables.BoardGameNotation = {
     const moveSpecRules = [];
     const transformRules = [];
     const zones = {};
+    const combosGraph = { terminal: new Set(), transitions: [] };
     for (const [instName, sem] of Object.entries(regionSemantics)) {
       // Add full move label and anchor piece to each MoveSpec rule
       if (sem.fromRule === 'MoveSpec') {
@@ -79,14 +80,53 @@ vtables.BoardGameNotation = {
           if (!zoneCells) zoneCells = zones[zone] = [];
           zoneCells.push([x,y]);
         }
+      } else if (sem.fromRule === 'CombosSpec') {
+        const outEdges = {};
+        for (const [from,edge,to] of sem.edges) {
+          if (!outEdges[from]) outEdges[from] = [];
+          outEdges[from].push([edge,to]);
+        }
+        const isInitial = state => sem.stateClasses[state].toLowerCase().includes('initial');
+        combosGraph.transitions = sem.edges.flatMap(([from,edge,to]) => {
+          log([from,edge,to]);
+          const starred = edge.endsWith('*');
+          const destarred = edge.substring(0, edge.length-1);
+          const fromm = isInitial(from) ? 'start' : from; // Only one initial node in output
+          if (isInitial(to)) {
+            if (isInitial(from)) {
+              combosGraph.terminal.add('end');
+              return [[fromm,edge,'end']];
+            }
+            if (starred) {
+              combosGraph.terminal.add(from); // Finality spreads back thru * edges
+              return [[from,destarred,from]] // `from` now a final state; compile star to loop
+            }
+          }
+          if (isInitial(from) && starred // Finality spreads forward thru * edges
+              || !outEdges[to]) // No out edges => final
+            combosGraph.terminal.add(to);
+          if (starred) {
+            return [[fromm,destarred,to], // Take one step to preserve direction memory
+                    [to,destarred,to]] // then consume any number
+              .concat(outEdges[to].map(([edge2,to2]) => [fromm,edge2,to2]));
+              // ^ if 0 iterations, act as if we are the `to` state
+          }
+          return [[fromm,edge,to]]; // Default
+        });
       }
     }
     const rulesSpec = 'const rules = [\n' +
       moveSpecRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
+    const combosSpec = 'const combinations = {\n' +
+      'initial: "start",\n' +
+      'terminal: ' + toJSish(Array.from(combosGraph.terminal)) + ',\n' +
+      'transitions: [\n' +
+        combosGraph.transitions.map(t => toJSish(t)).join(',\n') +
+      '\n]\n};';
     const transformSpec = 'const transforms = [\n' +
       transformRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
     const zoneSpec = 'const areas = ' + toJSish(zones) + ';'
-    return [rulesSpec,transformSpec,zoneSpec].join('\n\n');
+    return [rulesSpec,combosSpec,transformSpec,zoneSpec].join('\n\n');
   },
 
   // Legend entries: each shape (tile, piece glyph) with its name above it.
