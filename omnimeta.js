@@ -1192,6 +1192,14 @@ vtables.HeadShaftArrow = {
     send(s, 'origin:', o);
     send(h, 'lookAlong:', send(s, 'outwardTangentAtTarget'));
   },
+
+  ['tangents']: (self) => {
+    const h = send(self, 'apply:', 'head');
+    send(self, 'not:', () => send(self, 'apply:', 'head'));
+    const s = send(self, 'apply:', 'shaft');
+    send(s, 'orientWith:', h);
+    return [ send(s, 'outwardTangentAtOrigin'), send(s, 'outwardTangentAtTarget') ];
+  },
 };
 
 // ── MathchaArrow: the adapter ────────────────────────────────────────────────
@@ -1381,11 +1389,18 @@ vtables.AffinityArrowPath = {
     return { headTip: tip, headTangent: vnormed(vsub(tip, vmid(b1, b2))) };
   },
 
-  // M start L end => origin=start, tangent = unit(start - end)
+  // M start (L | C _ _ ) end => origin=start, tangent = unit(start - end)
   ['shaft']: (self) => {
     send(self, 'apply:', 'cmd:', 'with:', ['M']);
     const start = send(self, 'apply:', 'point');
-    send(self, 'apply:', 'cmd:', 'with:', ['L']);
+    send(self, 'or:', [
+      () => send(self, 'apply:', 'cmd:', 'with:', ['L']),
+      () => {
+        send(self, 'apply:', 'cmd:', 'with:', ['C']);
+        send(self, 'apply:', 'point');
+        send(self, 'apply:', 'point');
+      },
+    ]);
     const end = send(self, 'apply:', 'point');
     return { shaftOrigin: start, originTangent: vnormed(vsub(start,end)) };
   },
@@ -1413,6 +1428,16 @@ vtables.MathchaVocab = {
 
   ['init']: () => {
     // Pre-process Mathcha SVG into a sane structure
+    const diagramSvg = some('svg.role-diagram-draw-area');
+    const textSvg = diagramSvg.nextElementSibling;
+    for (const c of [...textSvg.childNodes]) diagramSvg.appendChild(c);
+    textSvg.remove();
+    diagramSvg.replaceWith(...diagramSvg.childNodes);
+
+    // Remove useless empty <g>s
+    let gs = all('g');
+    gs.filter(g => g.children.length === 0).forEach(g => g.remove());
+
     all('g.composite-shape').forEach(g => {
       g.classList.remove('composite-shape');
       g.classList.add('boundary-wrapper');
@@ -1423,20 +1448,26 @@ vtables.MathchaVocab = {
         shape.classList.add('boundary-shape');
       }
     });
-    all('.connection.real').forEach(e => {
-      e.classList.remove('connection');
-      e.classList.remove('real');
-      e.classList.add('connector-shaft');
-    })
     all('g.arrow-line').forEach(g => {
       g.classList.remove('arrow-line');
       g.classList.add('connector-wrapper');
+      const [originPt, targetPt] = match(vtables.MathchaArrow, g, 'endpoints');
+      g.dataset.originPt = legible(...originPt);
+      g.dataset.targetPt = legible(...targetPt);
+      const [originTangent, targetTangent] = match(vtables.MathchaArrow, g, 'tangents');
+      g.dataset.originOut = legible(...originTangent);
+      g.dataset.targetOut = legible(...targetTangent);
       const head = g.querySelector('g');
       if (head) {
         //send(head, 'bakeStyles');
         // TODO: connector-head
       }
     });
+    all('.connection.real').forEach(e => {
+      e.classList.remove('connection');
+      e.classList.remove('real');
+      e.classList.add('connector-shaft');
+    })
     all('g').forEach((self) => {
       if (self.children.length === 0) return false;
       for (let child of self.children) {
@@ -1456,6 +1487,7 @@ vtables.MathchaVocab = {
       self.dataset.string = lines.join('\n');
       if (self.children.length > 1) self.classList.add('is-multiline');
       self.classList.add('text-wrapper');
+
       return true;
     });
   },
@@ -1479,8 +1511,8 @@ vtables.AffinityVocab = {
       send(t, 'simplifyTransform');
       send(t, 'pushTransformToDescendants');
     });
-    // Unwrap all groups containing <rects> (later: closed shapes)
-    gs = all('g > rect').map(e => e.parentElement);
+    // Unwrap all groups containing <rects> and those with ids (luckily, paragraphs lack id)
+    gs = new Set(all('g > rect').map(e => e.parentElement)).union(new Set(all('g[id]')));
     gs.forEach(g => g.replaceWith(...g.childNodes));
     // Now wrap each naked single-line <text> in a <g>
     let texts = all('svg > text');
@@ -1512,20 +1544,24 @@ vtables.AffinityVocab = {
     });
     // Now pair up all the arrowhead/shaft path pairs
     let paths = all('path');
-    let pairs = [];
-    for (let i=0; i<paths.length; i+=2) pairs.push([paths[i], paths[i+1]]);
-    pairs.forEach(([p1,p2]) => {
+    while (paths.length > 0) {
+      const p1 = paths.shift();
+      const p1match = match(vtables.AffinityArrowPath, attr(p1, 'd'), 'head');
+      if (!p1match) continue;
+      const p2 = paths.shift();
+      const p2match = match(vtables.AffinityArrowPath, attr(p2, 'd'), 'shaft');
+      if (!p2match) continue;
       const g = svgel('g', {class: 'connector-wrapper'});
       p1.replaceWith(g);
       g.appendChild(p1); p1.classList.add('connector-head')
-      const {headTip, headTangent} = match(vtables.AffinityArrowPath, attr(p1, 'd'), 'head');
+      const {headTip, headTangent}  = p1match;
       g.dataset.targetPt = legible(...headTip);
       g.dataset.targetOut = legible(...headTangent);
       g.appendChild(p2); p2.classList.add('connector-shaft');
-      const {shaftOrigin, originTangent} = match(vtables.AffinityArrowPath, attr(p2, 'd'), 'shaft');
+      const {shaftOrigin, originTangent} = p2match;
       g.dataset.originPt = legible(...shaftOrigin);
       g.dataset.originOut = legible(...originTangent);
-    });
+    }
   },
   ['seedElements']: (self) => all('path, .boundary-shape, .text-wrapper'),
 };
