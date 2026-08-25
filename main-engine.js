@@ -447,10 +447,12 @@ vtables.byTag['polygon'] = {
     let newTag = null;
     const vertices = send(self, 'vertices');
     if (vertices.length === 4) {
-      const [tl,tr,br,bl] = vertices;
+      let [tl,tr,br,bl] = vertices;
       // NB: requires axis-aligned and clockwise starting from top-left
-      if (tl[0] === bl[0] && tr[0] === br[0] && tl[1] === tr[1] && bl[1] === br[1]) {
-        const params = {x: tl[0], y: tl[1], width: tr[0]-tl[0], height: bl[1]-tl[1]};
+      if (tr[0] - tl[0] < 0) [tl,tr,br,bl] = [tr,tl,bl,br]; // PPT: try hor flip
+      if (tl[0] === bl[0] && tr[0] === br[0] && tl[1] === tr[1] && bl[1] === br[1]) { // SMELL exact
+        const params = { x: legible(tl[0]), y: legible(tl[1]),
+          width: legible(tr[0]-tl[0]), height: legible(bl[1]-tl[1]) };
         attr(self, params);
         newTag = 'rect';
       }
@@ -1612,7 +1614,8 @@ function init() {
   //
   //      And all open path nodes (path, polyline, line, etc) are in Open Canonical Form:
   //
-  //      <g .connector-wrapper data-origin-pt="x,y" data-target=pt="x,y"> 
+  //      <g .connector-wrapper data-origin-pt="x,y" data-origin-out="x,y"
+  //                            data-target=pt="x,y" data-target-out="x,y"> 
   //        <long-shape .connector-shaft ... /> 
   //        (<shape .connector-head ... />)+
   //      </g>

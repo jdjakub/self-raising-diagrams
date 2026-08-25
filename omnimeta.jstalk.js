@@ -938,6 +938,23 @@ vtables.NotationGrammar = {
   ['epsilonFor:']: (self, elt) =>
     elt.classList.contains('text-wrapper') ? ⟦self connectToTextEpsilon⟧
                                            : ⟦self connectToShapeEpsilon⟧,
+  
+  // Claim every unconsumed element matching focus-rule `rule` whose distance
+  // to `anchor` is within eps. Satellite pattern: markers-on-path, wheels-
+  // near-body, (cf. nameTextNear:). Returns the claimed list (possibly empty).
+  ['claimAll:near:within:']: (self, rule, anchor, eps) => {
+    const selRule = rule + 'Sel';
+    const sel = hasRule(self, selRule) ? ⟦self apply: selRule⟧ : null;
+    return ⟦self many: () => send(self, 'claimFirst:', (elem) => {
+      if (⟦anchor signedDistanceTo: elem⟧ > eps) return null;
+      const saved = self.cursor;
+      self.cursor = { ...saved, dict: elem };
+      try { const v = ⟦self applyRule: rule⟧; self.cursor = saved; return { value: v }; }
+      catch (f) { if (f !== fail) throw f; self.cursor = saved; return null; }
+    }, 'onExhausted:', () => { throw fail; },
+       'piercing:', false,
+       'quickTest:', sel ? (e => e.matches(sel)) : null)⟧;
+  },
 
   // Contract vocabulary — the normalised DOM's own primitives, overridable.
   // (Default) Label = a text paragraph in Text Canonical Form
@@ -1573,9 +1590,10 @@ vtables.PowerpointVocab = {
   ['init']: () => {
     // Pre-process PPT into a sane structure
     // First, kill the clip <g> and <defs> with clipPath
-    const clipG = some('g[clip-path');
-    clipG.replaceWith(...clipG.childNodes);
-    some('defs').remove();
+    const defs = some('defs');
+    const rootG = defs.nextSibling;
+    if (rootG.tagName === 'g') rootG.replaceWith(...rootG.childNodes); 
+    //defs.remove();
     // For some reason, <text>s use transform attr instead of x/y. Must bake
     let texts = all('text');
     texts.forEach(t => {
@@ -1645,7 +1663,12 @@ vtables.PowerpointVocab = {
     });
     // Now wrap paths, tagging arrows as cued by magic colours
     let paths = all('path');
-    paths.filter(p => ['#C00000','#385723'].includes(attr(p, 'fill')))
+    const MAGIC_ARROW_COLORS = [ // TODO: come up with a better solution
+      '#C00000','#385723',  // checkers.svg
+      '#2E75B0', '#D23630', // cars.svg
+      // Possible protocol: lower 4 bits of RGB = 0 --> cue for arrow?
+    ];
+    paths.filter(p => MAGIC_ARROW_COLORS.includes(attr(p, 'fill')))
       .forEach(p => {
         let specialized = ⟦p specialize⟧;
         let g = specialized?.tagName === 'g' ? specialized : svgel('g');

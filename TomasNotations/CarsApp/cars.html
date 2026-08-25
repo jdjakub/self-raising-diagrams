@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SVG Cars — minimal Elm-like demo</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px; background: #f4f4f5; }
+    #app { border: 1px solid #d4d4d8; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 24px; max-width: 100%; }
+    /* The game canvas is the referenced SVG's own size (1280x720); let it scale
+       down on narrow windows rather than overflowing the card. */
+    #app svg { display: block; max-width: 100%; height: auto; }
+    /* Embedded reference: the source SVG defining the cars' road and shapes.
+       Linked as a standalone file (works over http://); its inner SVG DOM is
+       reachable via document.getElementById('rules-source').contentDocument. */
+    #rules-source-wrap { width: 100%; max-width: 90vw; padding-top: 16px; }
+    #rules-source-wrap h2 { font-size: 14px; font-weight: 600; color: #52525b; margin: 0 0 8px; }
+    /* Scrolling lives on this wrapper div, not on the iframe: an iframe's own
+       'overflow' is ignored, and cars.svg's root <svg overflow="hidden">
+       suppresses the inner document's scrollbars. So we size the iframe to the
+       SVG's intrinsic 1280x720 and let this fixed-size box scroll around it. */
+    #rules-source-scroll { width: 100%; height: 60vh; overflow: auto; border: 1px solid #e4e4e7; background: #fff; }
+    #rules-source { display: block; width: 1280px; height: 720px; border: 0; }
+    #start { font: inherit; padding: 8px 20px; border: 1px solid #d4d4d8; border-radius: 6px; background: #fff; color: #27272a; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    #start:hover { background: #fafafa; }
+  </style>
+</head>
+<body onload="startGame()">
+  <div id="app"></div>
+  <button id="start" type="button">Start</button>
+  <section id="rules-source-wrap">
+    <h2>Reference source (cars.svg) — linked standalone file</h2>
+    <div id="rules-source-scroll">
+      <iframe id="rules-source" src="cars-spin.svg" title="cars.svg reference"></iframe>
+    </div>
+  </section>
+  <script src="cars.js"></script>
+  <script>
+    // ---- Game-specific setup (uses the engine defined in cars.js) -----------
+    // Called from <body onload>: reads the referenced SVG, builds the initial
+    // state, and starts the Elm-like loop.
+    //
+    // SCAFFOLD: the config below is the placeholder standing in for what will
+    // eventually be exported from the SVG itself.
+    function startGame() {
+      const rulesDoc = document.getElementById('rules-source').contentDocument;
+
+      // Shapes cloned from the referenced SVG, drawn at their own position.
+      const scenery = [
+        'bg',           // background photo
+        'road',         // the road itself (thick dark stroke)
+        'road-white',   // dashed centre line
+      ];
+
+      // Everything that moves, each with the route it follows and the
+      // keyframes along it. These are the actual SVG elements: the engine does
+      // the geometry, measuring where each keyframe falls along the path and
+      // cutting the path into legs. Starting positions are not written down
+      // here — an object begins at the start of its own path.
+      // `facing` is the direction each shape is drawn pointing in the SVG, in
+      // degrees clockwise from east — both cars are drawn facing west. The
+      // engine turns them by the difference between this and their heading.
+      //
+      // The keyframe colours are *not* the car body colours (#D33636 and
+      // #2E75B7) — the markers are a shade off, so these are the marker fills.
+      const objects = [
+        { id: 'red-car',  path: rulesDoc.getElementById('red-path'),  stops: extractStops(rulesDoc, '#D23636'), facing: 180 },
+        { id: 'blue-car', path: rulesDoc.getElementById('blue-path'), stops: extractStops(rulesDoc, '#2E75B6'), facing: 180 },
+      ];
+      for (const { id, stops } of objects) {
+        console.log("%c%s: %d keyframes", "color:#80a030;", id, stops.length);
+      }
+
+      // `run` hands back its dispatch, so the animation is just a timer
+      // pushing events into the same loop the view uses.
+      const dispatch = run(document.getElementById('app'),
+        { init: () => init(scenery, objects), update, view }, rulesDoc);
+
+      // The button starts the timer. Clearing first means repeated clicks
+      // restart the animation rather than stacking timers on top of it.
+      let timer = null;
+      document.getElementById('start').addEventListener('click', () => {
+        clearInterval(timer);
+        timer = setInterval(() => dispatch({ type: 'advance' }), FRAME_MS);
+      });
+    }
+
+    // Time between ticks. A leg of the journey takes PROGRESS_MAX ticks, so
+    // this alone sets how long an object takes to get from one keyframe to
+    // the next.
+    const FRAME_MS = 10;
+
+    // The keyframe markers drawn in `color`. All the markers share
+    // class="path-stop" and carry nothing else to tell them apart, so the fill
+    // is what says which route a marker belongs to.
+    //
+    // These are the elements themselves — the engine measures where they fall
+    // along the path, including putting them in travel order, so document
+    // order does not matter here.
+    function extractStops(rulesDoc, color) {
+      const wanted = color.toUpperCase();
+      const markers = [...rulesDoc.querySelectorAll('.path-stop')]
+        .filter(marker => (marker.getAttribute('fill') || '').toUpperCase() === wanted);
+
+      if (markers.length === 0) console.warn(`no .path-stop markers filled "${color}"`);
+      return markers;
+    }
+  </script>
+</body>
+</html>

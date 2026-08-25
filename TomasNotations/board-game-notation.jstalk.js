@@ -81,6 +81,8 @@ vtables.BoardGameNotation = {
           zoneCells.push([x,y]);
         }
       } else if (sem.fromRule === 'CombosSpec') {
+        // First, delete spaces caused by with weird PPT text-run breaks
+        sem.edges = sem.edges.map(([from,edge,to]) => [from,edge.replaceAll(' ',''),to]);
         const outEdges = {};
         for (const [from,edge,to] of sem.edges) {
           if (!outEdges[from]) outEdges[from] = [];

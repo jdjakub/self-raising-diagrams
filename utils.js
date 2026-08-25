@@ -579,3 +579,120 @@ function rayPolyHit(poly, ray_start, ray_dir) {
 
   return best_t === Infinity ? null : vadd(ray_start, vmul(best_t, ray_dir));
 }
+
+
+// TY Claude
+bezEval = function(p0,c1,c2,p1,t) {
+  const mt = 1-t;
+  return [
+    mt*mt*mt*p0[0] + 3*mt*mt*t*c1[0] + 3*mt*t*t*c2[0] + t*t*t*p1[0],
+    mt*mt*mt*p0[1] + 3*mt*mt*t*c1[1] + 3*mt*t*t*c2[1] + t*t*t*p1[1]
+  ];
+}
+
+// chord-length parameterisation of pts[first..last], normalised to [0,1]
+chordParams = function(pts, first, last) {
+  const u = [0];
+  for (let i = first+1; i <= last; i++) u.push(u[u.length-1] + vmag(vsub(pts[i], pts[i-1])));
+  const total = u[u.length-1];
+  return u.map(x => x/total);
+}
+
+// least-squares fit of one cubic to pts[first..last] with given end tangents
+generateBezier = function(pts, first, last, u, tHat1, tHat2) {
+  const p0 = pts[first], p1 = pts[last];
+  const n = last - first + 1;
+  let c00=0, c01=0, c11=0, x0=0, x1=0;
+  for (let i = 0; i < n; i++) {
+    const t = u[i], mt = 1-t;
+    const b0 = mt*mt*mt, b1 = 3*mt*mt*t, b2 = 3*mt*t*t, b3 = t*t*t;
+    const a0 = vmul(b1, tHat1), a1 = vmul(b2, tHat2);
+    c00 += vdot(a0,a0); c01 += vdot(a0,a1); c11 += vdot(a1,a1);
+    const tmp = vsub(pts[first+i], vadd(vmul(b0+b1, p0), vmul(b2+b3, p1)));
+    x0 += vdot(a0, tmp); x1 += vdot(a1, tmp);
+  }
+  const det = c00*c11 - c01*c01;
+  let alphaL, alphaR;
+  if (Math.abs(det) < 1e-12) { alphaL = alphaR = 0; }
+  else { alphaL = (x0*c11 - x1*c01)/det; alphaR = (c00*x1 - c01*x0)/det; }
+  // degenerate solution -> Wu/Barsky heuristic
+  const segLen = vmag(vsub(p1,p0));
+  if (alphaL < 1e-6*segLen || alphaR < 1e-6*segLen) alphaL = alphaR = segLen/3;
+  return [p0, vadd(p0, vmul(alphaL, tHat1)), vadd(p1, vmul(alphaR, tHat2)), p1];
+}
+
+maxError = function(pts, first, last, bez, u) {
+  let maxDist = 0, splitAt = Math.floor((first+last)/2);
+  for (let i = first+1; i < last; i++) {
+    const q = bezEval(bez[0],bez[1],bez[2],bez[3], u[i-first]);
+    const dist = vmag(vsub(q, pts[i]));
+    if (dist > maxDist) { maxDist = dist; splitAt = i; }
+  }
+  return [maxDist, splitAt];
+}
+
+fitCubic = function(pts, first, last, tHat1, tHat2, tol, out) {
+  if (last - first === 1) {   // only two points: straight-line heuristic
+    const d = vmag(vsub(pts[last], pts[first]))/3;
+    out.push([vadd(pts[first], vmul(d,tHat1)), vadd(pts[last], vmul(d,tHat2)), pts[last]]);
+    return;
+  }
+  const u = chordParams(pts, first, last);
+  const bez = generateBezier(pts, first, last, u, tHat1, tHat2);
+  const [err, splitAt] = maxError(pts, first, last, bez, u);
+  if (err < tol) { out.push([bez[1], bez[2], bez[3]]); return; }
+  // split at worst point; centred-difference tangent there
+  const tHatC = vnormed(vsub(pts[splitAt-1], pts[splitAt+1]));
+  fitCubic(pts, first, splitAt, tHat1, tHatC, tol, out);
+  fitCubic(pts, splitAt, last, vmul(-1,tHatC), tHat2, tol, out);
+}
+
+/**
+ * fitPathElement(pathElt, tolerance, sampleSpacing) -> new "d" string
+ *
+ * Simplifies and de-jitters a hand-drawn path by fitting cubic Beziers
+ * adaptively: one long segment across a large smooth sweep, several short
+ * ones through a tight turn. Segment placement follows curvature, not arc
+ * length, so the output has no more segments than the shape actually needs.
+ *
+ * - tolerance: the only perceptual knob. Maximum distance (in path units)
+ *   the simplified curve may stray from the original. Jitter with amplitude
+ *   below this is absorbed for free — the fit is not obliged to chase
+ *   deviations it is permitted to ignore — while genuine large-scale shape
+ *   is preserved to within the same bound. Raising it yields fewer, longer
+ *   segments and a looser fit; lowering it tracks the original more closely
+ *   at the cost of more segments. Start around the visual amplitude of the
+ *   jitter you want gone and adjust by eye.
+ *
+ * - sampleSpacing (default tolerance/2): arc-length distance between samples
+ *   taken off the original path before fitting. Purely a numerical-accuracy
+ *   knob, not a perceptual one — it must be fine enough that the sample set
+ *   still describes the shape, but making it finer does not add segments to
+ *   the output (segment count is governed by tolerance alone). Rarely needs
+ *   changing; lower it only if the original has detail finer than the
+ *   default resolves.
+ *
+ * Note: sharp corners in the input are rounded off, as tangents at split
+ * points are estimated assuming continuity. Fine for hand-drawn motion
+ * paths; not for shapes with intentional hard corners.
+ */
+fitPathElement = function(pathElt, tolerance, sampleSpacing = tolerance/2) {
+  const total = pathElt.getTotalLength();
+  const n = Math.max(3, Math.floor(total/sampleSpacing));
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const pt = pathElt.getPointAtLength(i*total/n);
+    pts.push([pt.x, pt.y]);
+  }
+  const out = [];
+  fitCubic(pts, 0, pts.length-1,
+           vnormed(vsub(pts[1], pts[0])),
+           vnormed(vsub(pts[pts.length-2], pts[pts.length-1])),
+           tolerance, out);
+  let d = `M ${legible(pts[0][0])} ${legible(pts[0][1])} `;
+  out.forEach(([c1,c2,p1]) => {
+    const o = legible(c1[0],c1[1],c2[0],c2[1],p1[0],p1[1]);
+    d += `C ${o[0]} ${o[1]}, ${o[2]} ${o[3]}, ${o[4]} ${o[5]} `;
+  });
+  return d;
+}
