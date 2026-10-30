@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0"
+  width="717.6000162760416" height="412.1333414713542"
+  style="
+        width:717.6000162760416px;
+        height:412.1333414713542px;
+        background: #FFF;
+        fill: none;
+">
+        <script href="./utils.js"></script>
+	<script href="./bracket-hole-carving.js"></script>
+	<script href="./lang-sweettalk.js"></script>
+	<script href="./lang-descartes.js"></script>
+	<script href="./main-engine.js"></script>
+        <script href="./omnimeta.js"></script>
+
+  <svg xmlns="http://www.w3.org/2000/svg" class="role-diagram-draw-area">
+    <g class="shapes-region" style="stroke: black; fill: none;">
+      <g class="composite-shape">
+        <path class="real" d="M40,41 L166,41 L166,220 L40,220 Z"
+          style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" />
+      </g>
+      <g class="composite-shape">
+        <path class="real" d="M56,110 L146,110 L146,200 L56,200 Z"
+          style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" />
+      </g>
+      <g class="arrow-line">
+        <path class="connection real" stroke-dasharray="" d="M76,70 L124.66,167.32"
+          style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" />
+        <g stroke="none" fill="#000"
+          transform="matrix(-0.45,-0.89,0.89,-0.45,126,170)"
+          style="stroke: none; fill: rgb(0, 0, 0); stroke-width: 1px;">
+          <path d=" M8.93,-4.29 L0,0 L8.93,4.29 Z" />
+        </g>
+      </g>
+      <g />
+    </g><!-- react-empty: 2366 -->
+    <g />
+    <g />
+    <g />
+  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="716"
+    height="410.5333251953125"
+    style="width:716px;height:410.5333251953125px;font-family:Asana-Math, Asana;background:#FFF;">
+    <g>
+      <g>
+        <g>
+          <text x="53.9" y="51.9"
+            style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;">foo</text>
+        </g>
+      </g>
+    </g>
+    <g>
+      <g>
+        <g>
+          <text x="112.8" y="170.9"
+            style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;">bar</text>
+        </g>
+      </g>
+    </g>
+  </svg>
+</svg>
+</body>
+</html>

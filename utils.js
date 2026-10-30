@@ -63,7 +63,9 @@ svgel = (tag, attrs, parent) => create_element(tag, attrs, parent, 'http://www.w
 whereis = (pt_or_x,maybe_y) => {
   let [cx,cy] = [pt_or_x, maybe_y];
   if (cy === undefined) {
-    [cx,cy] = pt_or_x;
+    const pt = pt_or_x;
+    if ('x' in pt && 'y' in pt) [cx,cy] = [pt.x, pt.y];
+    else [cx,cy] = pt;
   }
   return svgel('circle', {cx, cy, r: 5, style: 'fill: magenta', class: 'debug-pt'});
 }

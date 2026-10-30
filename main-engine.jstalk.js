@@ -247,6 +247,22 @@ vtables.domNode = {
     [...self.children].forEach(c => ⟦c pushTransformToDescendants⟧);
   },
   ['interior']: (self) => ⟦⟦self localRoot⟧ interior⟧,
+  ['exposeGeometryControls']: (self) => {
+    // Wrap in a <g> !! WARN experimental, will break lots of stuff
+    const g = svgel('g', {class: 'edit-controls'});
+    self.replaceWith(g); g.appendChild(self);
+    const [cx,cy] = ⟦self center⟧; // local coords
+    createControls(['translate', [cx,cy], self, (x,y) => {
+      // Intent: The coords of the control, in the (x,y) system, should become (x,y)
+      const [tx,ty] = legible(x-cx, y-cy);
+      const t = g.transform.baseVal[0];
+      if (!t) attr(g, 'transform', `translate(${tx},${ty})`);
+      else {
+        t.matrix.e += tx; t.matrix.f += ty;
+      }
+      return ⟦self center⟧;
+    }]);
+  },
 };
 
 vtables.byTag['path'] = {
@@ -378,6 +394,22 @@ vtables.byTag['path'] = {
     self.removeAttribute('transform');
     return true;
   },
+  ['commandsUpdated']: (self) => {
+    const d = self.cmds.map(([c,...pts]) => c+' '+showpts(pts)).join(' ');
+    attr(self, 'd', d);
+  },
+  ['exposeGeometryControls']: needsSuper((supr, self) => {
+    ⟦super exposeGeometryControls⟧;
+    if (self.tagName !== 'path') return;
+    self.cmds = ⟦self commands⟧;
+    createControls(...self.cmds.map(([c,...pts],i) => pts.map((pt,j) => [
+      c+''+i+'-'+j, pt, self, (...editPos) => {
+        self.cmds[i][j+1] = editPos;
+        ⟦self commandsUpdated⟧;
+        return editPos;
+      }]
+    )).flat());
+  }),
 };
 
 vtables.byTag['polyline'] = {
@@ -530,6 +562,17 @@ vtables.byTag['rect'] = {
     self.removeAttribute('transform');
     return true;
   },
+  ['exposeGeometryControls']: needsSuper((supr, self) => {
+    ⟦super exposeGeometryControls⟧;
+    const tl = ⟦self topLeft⟧;
+    const wh = attrs(self, 'width', 'height').map(Number);
+    createControls(['width-height', vadd(tl,wh), self, (...pos) => {
+      const tl = ⟦self topLeft⟧;
+      const [width,height] = vmax(0,vsub(pos, tl));
+      attr(self, {width, height});
+      return vadd(tl, [width,height]);
+    }]);
+  }),
 }
 
 vtables.byTag['ellipse'] = {
@@ -581,6 +624,16 @@ vtables.byTag['circle'] = {
     return [r,r];
   },
   ['specialize']: () => null,
+  ['exposeGeometryControls']: needsSuper((supr,self) => {
+    ⟦super exposeGeometryControls⟧;
+    const center = nums(attrs(self, 'cx', 'cy'));
+    createControls(['radius', vadd(center,[+attr(self, 'r'),0]), self, (...pos) => {
+      const center = nums(attrs(self, 'cx', 'cy'));
+      const rel = vsub(pos, center);
+      attr(self, 'r', legible(vmag(rel)));
+      return pos;
+    }]);
+  }),
 }
 
 vtables.byTag['text'] = {
@@ -602,6 +655,36 @@ vtables.byTag['text'] = {
     self.removeAttribute('transform');
     return true;
   },
+}
+
+tool = null;
+svg_parent.onmouseup = e => {
+  if (tool === 'select') {
+    if (!svg_parent.onmousemove && e.target.tagName !== 'svg') try {
+      ⟦e.target exposeGeometryControls⟧;
+    } catch (e) {
+      if (!e.length || e[1] !== " didn't understand: ") throw e;
+    }
+  }
+  svg_parent.onmousemove = null;
+};
+
+function createControls(...specs) {
+  for (const [name, [x0,y0], elt, onMove] of specs) {
+    const control = svgel('circle', {
+      cx: x0, cy: y0, r: 5, stroke: 'black', fill: 'yellow', class: 'ctl-'+name},
+      elt.parentElement);
+    control.onmousedown = e => {
+      svg_parent.onmousemove = ({clientX,clientY}) => {
+        const pt = new DOMPoint(clientX, clientY);
+        const svgUnits = pt.matrixTransform(svg_parent.getScreenCTM().inverse());
+        const eltUnits = svgUnits.matrixTransform(elt.parentElement.getCTM().inverse());
+        const [cx,cy] = onMove(eltUnits.x, eltUnits.y);
+        attr(e.target, {cx, cy});
+      };
+      e.preventDefault();
+    }
+  }
 }
 
 vtables.byTag['tspan'] = {
