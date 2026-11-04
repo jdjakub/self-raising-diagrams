@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md (CLAUDE.md is a symlink to this file)
 
 ## What this is
 Augmented Diagrams / Vector Vision Engine (VVE): SVG diagrams drawn in ordinary
@@ -17,7 +17,9 @@ the implementation map.
   any plan step that touches a hard requirement (below) or changes architecture.
 - Keep ARCHITECTURE.md current as part of every change that alters structure.
   It is how future sessions (and Joel) recover the map.
-- Run the regression suite before declaring a task done (see Testing).
+- Run the regression suite before declaring a task done (see Testing). There
+  is none yet; until there is, say so when reporting, and list exactly what
+  Joel should check by hand in Firefox.
 - Prose: concise, British spelling. Code: American spelling.
 
 ## Hard requirements (never trade away)
@@ -26,7 +28,10 @@ the implementation map.
    in our vtables, bypassing the native DOM API. `send`, `sendNoKw` and the
    vtable dispatch must stay global and must work on raw DOM elements. Do not
    replace this with native JS classes, prototypes on DOM interfaces, or
-   anything that clashes with native DOM behaviour.
+   anything that clashes with native DOM behaviour. Known gap: only tags with
+   a `vtables.byTag` entry dispatch (`path polyline line polygon rect ellipse
+   circle text tspan g`); `send` on any other element (`<svg>`, `<defs>`, ...)
+   currently crashes with a TypeError instead of `doesNotUnderstand:`.
 2. **The document is the ground truth.** Any state affecting a diagram's
    meaning lives in the SVG document; JS objects are projections/caches.
    Distinguish pure caches (derivable from geometry; may live JS-side) from
@@ -41,7 +46,9 @@ the implementation map.
    Never propose having the engine induce rules from examples
    (programming-by-example is out of scope).
 5. **Works over `file://`.** No web server, no bundler required at runtime.
-   SVGs load scripts via `<script href="...">`.
+   SVGs load scripts via `<script href="...">`. Known gap (unverified): the
+   HTML apps in `TomasNotations/*App/` read an iframe's `contentDocument`,
+   which Firefox probably blocks over `file://`.
 
 ## JSTalk
 `*.jstalk.js` files are JS plus Smalltalk-style sends:
@@ -54,15 +61,19 @@ their first parameter.
 - `compile-jstalk` hardcodes its file list. When adding a new `.jstalk.js`,
   add a matching line to it.
 - Files with no `.jstalk.js` counterpart (e.g. `utils.js`, `lang-*.js`,
-  `bracket-hole-carving.js`) are plain JS; edit directly.
+  `bracket-hole-carving.js`, `boxGraph-bootstrap.js`, `svgEdit.js`, and the
+  app `.js` files under `TomasNotations/*App/`) are plain JS; edit directly.
 - LF line endings everywhere (enforced by `.gitattributes`); never write CRLF.
 
 ## Conventions
 - Vtables: uppercase names; `_parent` chains for inheritance; DOM elements
   dispatch via `vtables.byTag[tagName]`. Instances are built by sending
   constructor messages to objects with explicit vtable fields.
-- Rule/selector names in Smalltalk keyword style (`Before:After:`). `Root` is
-  the start rule in every notation vtable.
+- Rule/selector names in Smalltalk keyword style (`Before:After:`). In OmniMeta
+  notations, `Root` is the default start rule (`NotationGrammar`'s
+  `fromRegion:` matches it). Not every notation has one yet:
+  BoardGameNotation overrides `fromRegion:`, and BoxGraphOM's top rule is
+  `BoxGraph`.
 - Return raw elements; add wrapper objects only when they add a message.
 - Wrap every number written to an SVG attribute in `legible()`.
 - `{[` / `]}` delimit JS holes in SweetTalk.
@@ -73,16 +84,24 @@ their first parameter.
   assignments (no `const`/`let`/`var`), so it can be re-pasted.
 
 ## Repo map
-- `main-engine.jstalk.js`: dispatch (`send` etc.), core vtables, pipeline.
-  (Formerly `general-containment`.)
+- `main-engine.jstalk.js`: dispatch (`send` etc.), DOM/geometry vtables, the
+  `init()` pipeline, and the *classic* notation layer (GraphNotation,
+  Labeller, BoxGraph, DefaultMetaNotation, CodeExecutionNotation, ...).
+  The classic layer is being retired in favour of OmniMeta: don't extend it.
+  (Formerly `general-containment`; some old SVGs still load that name.)
 - `omnimeta.jstalk.js`: OmniMeta, the substrate-neutral OMeta for DOM/vector
-  matching.
-- `utils.js`: geometry and DOM helpers.
-- `lang-sweettalk.js`, `lang-descartes.js`, `*.ometa*`, `bracket-hole-carving.js`:
-  the textual DSL stack.
+  matching, plus the editor vocabularies (MathchaVocab, AffinityVocab,
+  PowerpointVocab) that `init()` needs. An SVG must load `omnimeta.js` for
+  `init()` to work.
+- `utils.js`: geometry and DOM helpers; sets `svg_parent` at load.
+- `lang-sweettalk.js`, `lang-descartes.js`, `bracket-hole-carving.js`: the
+  textual DSL stack. `sweettalk.ometa` and `descartes.ometa.txt` are reference
+  grammars only; nothing loads them.
 - `TomasNotations/`, `CamilleNotations/`: notations and apps by collaborators
   (checkers, cars, animation). Treat their SVGs as test fixtures.
-- `principles/`: diagrams illustrating the core parsing principles.
+- `principles/`: diagrams illustrating the core parsing principles. Their
+  XML snippets show pre-canonical encodings (`composite-shape`, `arrow-line`,
+  `is-paragraph`, `data-connects`); ARCHITECTURE.md §4 has the current forms.
 - `old-approaches/`: archive. Read for history only; do not modify.
 - `JSTalk/`: transpiler (`jstalk2js.pl`) and VS Code extension.
 - `issues.txt`: Joel's own issue/idea log. `README.md` is stale (describes
