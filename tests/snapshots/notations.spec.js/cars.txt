@@ -1,0 +1,14 @@
+## cars
+
+## road paths
+path @160,97 963x515 fill=none markers: 5
+  polygon(10) @1099,461 36x36 fill=#2E75B6
+  polygon(10) @853,82 36x36 fill=#D23636
+  polygon(10) @989,82 36x36 fill=#2E75B6
+  polygon(10) @825,614 36x36 fill=#D23636
+  polygon(10) @590,590 36x36 fill=#D23636
+path @153,100 968x550 fill=none markers: 0
+
+## arrows
+connector 483.88,521 -> 411,521
+connector 480.88,600 -> 408,600

@@ -112,15 +112,14 @@ All three are `NotationGrammar` subclasses, loaded as the last `<script>` of the
 - Side effect: installs `boardPieces`/`boardZones` closures on the shared vtable, breaking the stateless-grammar rule. Bug: `findIndex` returns -1 for a missing region, which the `i >= length` checks never catch.
 - Launch, as the diagram instructs, in `TomasNotations/checkers.svg`: `init()` (my addition **[inferred]**); `send({vtable:'BoardGameNotation'}, 'fromDocument')`; `send({vtable:'BoardGameNotation'}, 'exportJSForApp')`. The last returns JS source, pasted by hand into `CheckersApp/index.html` (the Turkish rules are the active block now).
 - `*-normalized.svg` have `data-normalized`, so `init()` stops at step 2; they probably parse without it **[inferred]**.
-- `testCheckers` is the repo's only automated assertion. It expects ids such as `e409` that appear in no committed file, so it presumably needs ids assigned by `init()` on raw `checkers.svg` **[inferred]**.
+- `testCheckers` (Tomas's own assertions) now fails, because it hardcodes auto-ids that have shifted. The harness runs a port of it that compares ids by order of appearance; that passes on the raw and normalised files.
 
-**CarsNotation** (`cars-notation.jstalk.js`, PowerPoint `cars.svg`). `Root = Car* RoadPath* Arrow*`. `Car` = a 9-vertex polygon plus exactly 2 circles within 10px (`claimAll:near:within:`). `RoadPath` = a path with stroke-width `1.33333px` plus 10-vertex polygon markers within 2px. Launch: `init()`; `send({vtable:'CarsNotation'}, 'fromDocument')` **[inferred, the file gives no instructions]**. `CarsApp/` does **not** use it: `cars.html` reads hardcoded ids from the script-free `cars-spin.svg` in an iframe.
+**CarsNotation** (`cars-notation.jstalk.js`, PowerPoint `cars.svg`; unfinished: on cars.svg it currently finds no cars, see CLEANUP.md fire 15). `Root = Car* RoadPath* Arrow*`. `Car` = a 9-vertex polygon plus exactly 2 circles within 10px (`claimAll:near:within:`). `RoadPath` = a path with stroke-width `1.33333px` plus 10-vertex polygon markers within 2px. Launch: `init()`; `send({vtable:'CarsNotation'}, 'fromDocument')` **[inferred, the file gives no instructions]**. `CarsApp/` does **not** use it: `cars.html` reads hardcoded ids from the script-free `cars-spin.svg` in an iframe.
 
 **AnimationNotation** (`CamilleNotations/animation-notation.jstalk.js`; Affinity SVGs, except Mathcha `anim-test.svg`).
 - `Root`: a green (`rgb(45,184,10)`) arrow from a green label names its target element. Red (`rgb(184,10,10)`) boxes each hold a `SeqGraph = Graph(Text, Named(SeqArrow))`; texts can be vertices, so the name-vs-endpoint test is on.
 - Compiles to an `AnimationController` (`byEvent`, `cmdsByState`). Commands: `opacity stroke scale text wait anim`. Events: `click`, `click N`, `Ns`.
 - Launch: `init()`; `send({vtable:'AnimationNotation'}, 'fromDocument')`; `send(semantics, 'beginSlideshow')`; click **[inferred]**.
-- `scale` sets an attribute `transform_origin` (underscore); probably meant `transform-origin` **[inferred]**.
 
 **Apps**: `CheckersApp/index.html` + `app.js` and `CarsApp/cars.html` + `cars.js` are standalone Elm-style HTML pages. They read their SVG through `iframe.contentDocument`. The comment says "works over http://". Firefox's default file:// policy gives each file its own origin, so this probably returns null over file://, against hard requirement 5 **[inferred]**.
 
@@ -166,4 +165,5 @@ Playwright driving its own Firefox build over `file://`. It is dev-only: no SVG 
 - `lib.js`: shared helpers (open a fixture, record errors, turn page values into JSON, scrub machine paths).
 - `specs/smoke.spec.js` (stage 1): for every fixture, records its `<script href>` references and whether each file exists, any page or console errors, and whether `init()` exists and what it returned or threw.
 - `snapshots/<spec>/<fixture>.json`: committed results. A failing fixture's snapshot records the failure, so a fix shows up as a snapshot diff.
-- Stages 2 (notation results) and 3 (normalised DOM) are still to come (CLEANUP.md "Order of work").
+- `specs/notations.spec.js` (stage 2): launches each collaborator notation as a person would in the console and records its result as a readable text report: checkers (all four files, plus the `testCheckers` port against `expected/tomas-checkers.json`), cars, both animation diagrams (with a simulated click-and-wait playback on a fake clock), and BoxGraphOM. Reports avoid auto-ids: elements are described by appearance (`rect @30,40 90x80 fill=...`), and any remaining ids become `#1`, `#2`, ... in order of appearance.
+- Stage 3 (normalised DOM) is still to come (CLEANUP.md "Order of work").

@@ -66,7 +66,8 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - Classic `Labeller` matches labels globally: closest pair first, arrows labelled at their origin, single-line texts only.
   - OmniMeta `Named:` matches in document order, first come first served, using the whole connector and any text.
   - Retiring the classic layer silently changes which label names which thing.
-  - `BoxGraphOM Label` still uses the classic constant `ALL_LABELS` (`.is-paragraph`), so OmniMeta BoxGraph names are never found **[inferred, high]**.
+  - `BoxGraphOM Label` still uses the classic constant `ALL_LABELS` (`.is-paragraph`), so OmniMeta BoxGraph names are never found **[confirmed]**: every box and arrow in boxGraph-example comes out unnamed.
+  - Separately, asking BoxGraphOM which boxes an arrow connects crashes **[confirmed]**: the graph object passes the *named wrapper* to `epsilonFor:`, which expects a raw element. It works in notations whose vertices aren't `Named:` (checkers' combos graph, the animation sequences).
 - **Prediction**: keep `Named:`'s structure but make the matching independent of document order (closest first among candidates). Document order is invisible in the picture, so depending on it breaks "no hidden state". Single-line vs multi-line becomes a per-notation `LabelSel`.
 - **Confidence**: medium.
 - **Decision**: JOEL.
@@ -77,7 +78,8 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - `CheckersApp/checkers.svg` is a script-free copy.
   - `CarsApp/cars-spin.svg` is a hand-edited variant of `cars.svg` with ids added.
   - `exportJSForApp` output is pasted by hand into `CheckersApp/index.html`, which holds three rule blocks, two of them commented out.
-  - `testCheckers` hardcodes auto-generated ids (`e409`) that appear in no committed file.
+  - `testCheckers` hardcodes auto-generated ids (`e409`) that appear in no committed file. **[confirmed]**: it now fails on `checkers.svg` because two elements were added and the ids shifted by two; every section's *meaning* is unchanged. The harness ports it with ids compared by order of appearance, and it passes on both the raw and normalised files.
+  - The normalised files are faithful: raw and `-normalized` checkers (and the Turkish pair) give identical results, exported app code included **[confirmed]**.
 - **Prediction**:
   - Raw editor exports are the sources.
   - Normalised files become harness snapshots, regenerated and diffed rather than hand-kept.
@@ -177,11 +179,11 @@ One quick call per file:
 |---|---|---|
 | `JS{[SweetTalk]}` calls undefined `HOLE_DELIMS`/`compile_nested_holes` | delete (Sucrose covers it) | high |
 | `BoardGameNotation` `findIndex` guards never fire | fix (`i < 0`) | high |
-| `AnimationController` sets the attribute `transform_origin` | fix to `transform-origin`; tell Camille | medium |
 | `BoxGraphOM Box` "TEMP black only" | resolve with fire 4 | medium |
 | `VertexGrammar` (unused) | keep: issues.txt plans rect recognition with it | medium |
 | `ActiveButton`, `TextGraph asJS`, `BoxGraph asJSOG` (classic) | port or drop with the retirement | medium |
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
+| `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. The first road also claims markers of both colours, leaving the second with none **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
 | `g encloses:` and the ID-box target use `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
 | `learnEditor` falls back to MathchaVocab for unknown documents, so `init()` on a page with no drawing (empty-console) throws **[confirmed]** | fail with a clear message, or do nothing, when no editor is recognised | high |
 
@@ -214,7 +216,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
    - Playwright drives its own patched Firefox build, not your Firefox, so your hand testing stays the ground truth.
    - Installing it needs network access (`npm`, Playwright's browser download), which the sandbox may block.
 1. **Smoke test** every SVG over `file://` (**done**). Record script-load errors, whether `init()` throws, and console errors. This turns every [inferred] item here into confirmed or refuted. Broken fixtures are recorded as *known-failing*, so fixing one shows up as a visible change.
-2. **Semantic tests for the working OmniMeta notations**:
+2. **Semantic tests for the working OmniMeta notations** (**done**; `specs/notations.spec.js`):
    - `checkers.svg`: the `testCheckers` assertions, plus a snapshot of `exportJSForApp`.
    - `checkers-turkish.svg`, and both `-normalized` files.
    - `cars.svg`: `CarsNotation` output.

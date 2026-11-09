@@ -68,4 +68,62 @@ const IN_PAGE_DESCRIBE = `
   };
 `;
 
-module.exports = { REPO, fixturePath, snapshotName, scrub, toSnapshot, scriptReferences, openFixture, IN_PAGE_DESCRIBE };
+/**
+ * Runs inside the page: helpers for describing results without auto-generated ids
+ * (which shift whenever an element is added to a diagram).
+ *   __el(element)  -> what it looks like: 'text "foo"', 'rect @10,20 30x40 fill=#fff', ...
+ *   __canon(el|id) -> a stable label '#1', '#2', ... in order of first use
+ *   __legend()     -> lines explaining each '#n' label via __el
+ * Safe to install repeatedly: the label numbering survives re-installation.
+ */
+const IN_PAGE_HELPERS = IN_PAGE_DESCRIBE + `
+  globalThis.__el = (e) => {
+    if (!(e instanceof Element)) return String(e);
+    if (e.matches('g.text-wrapper')) return 'text ' + JSON.stringify(e.dataset.string);
+    if (e.matches('g.connector-wrapper'))
+      return 'connector ' + (e.dataset.originPt || '?') + ' -> ' + (e.dataset.targetPt || '?');
+    const r = Math.round;
+    let bb = null;
+    try { bb = e.getBBox(); } catch (err) { /* not rendered */ }
+    const n = ['polygon', 'polyline'].includes(e.tagName) ? '(' + send(e, 'vertices').length + ')' : '';
+    const fill = e.getAttribute('fill') || e.style.fill || '';
+    return e.tagName + n + (bb ? ' @' + r(bb.x) + ',' + r(bb.y) + ' ' + r(bb.width) + 'x' + r(bb.height) : '')
+      + (fill ? ' fill=' + fill : '');
+  };
+  globalThis.__canonMap = globalThis.__canonMap || new Map();
+  globalThis.__canon = (x) => {
+    const key = (typeof x === 'string' && document.getElementById(x)) || x;
+    if (!__canonMap.has(key)) __canonMap.set(key, '#' + (__canonMap.size + 1));
+    return __canonMap.get(key);
+  };
+  globalThis.__legend = () => [...__canonMap].map(([k, v]) => v + ' = ' + (k instanceof Element ? __el(k) : String(k)));
+`;
+
+/**
+ * Run `fn` inside the page with the helpers installed. `fn` must be self-contained
+ * (it is sent to the page as source text); `arg` is passed to it.
+ */
+async function inPage(page, fn, arg) {
+  return page.evaluate(([helpers, src, a]) => {
+    (0, eval)(helpers);
+    return (0, eval)('(' + src + ')')(a);
+  }, [IN_PAGE_HELPERS, fn.toString(), arg]);
+}
+
+/**
+ * Rename auto-generated element ids (e411, c424, t41, ...) to #1, #2, ... in order of
+ * first appearance, so text reports stay stable when ids shift.
+ * Only for text known not to contain user-written names of the same shape.
+ */
+function canonIds(text) {
+  const seen = new Map();
+  return text.replace(/\b(?:pl|par|e|c|p|t|r|l|g|a)\d+\b/g, (id) => {
+    if (!seen.has(id)) seen.set(id, '#' + (seen.size + 1));
+    return seen.get(id);
+  });
+}
+
+module.exports = {
+  REPO, fixturePath, snapshotName, scrub, toSnapshot, scriptReferences, openFixture,
+  IN_PAGE_DESCRIBE, IN_PAGE_HELPERS, inPage, canonIds,
+};

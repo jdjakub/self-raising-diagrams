@@ -7,11 +7,11 @@ module.exports = [
   { file: 'TomasNotations/checkers-normalized.svg', note: 'pre-normalised: init() stops early (fire 5)' },
   { file: 'TomasNotations/checkers-turkish.svg', note: 'PowerPoint; BoardGameNotation' },
   { file: 'TomasNotations/checkers-turkish-normalized.svg', note: 'pre-normalised (fire 5)' },
-  { file: 'TomasNotations/cars.svg', note: 'PowerPoint; CarsNotation' },
+  { file: 'TomasNotations/cars.svg', note: 'PowerPoint; CarsNotation (unfinished: finds no cars, fire 15)' },
   { file: 'CamilleNotations/Example — animating a stack.svg', note: 'Affinity; AnimationNotation' },
   { file: 'CamilleNotations/anim-test.svg', note: 'Mathcha; AnimationNotation' },
   { file: 'CamilleNotations/Description of the notation.svg', note: 'Affinity; documentation that loads the engine' },
-  { file: 'boxGraph-example.svg', note: 'Mathcha; BoxGraphOM (label bug, fire 4)' },
+  { file: 'boxGraph-example.svg', note: 'Mathcha; BoxGraphOM: names never found, connections crash (fire 4)' },
 
   // Classic-layer demos (currently broken; fires 1, 12, 13)
   { file: 'magic-red-id-test.svg', note: 'init() throws normalising a double-headed arrow (fire 12); then fire 1' },

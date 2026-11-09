@@ -52,4 +52,4 @@ Regression harness in `tests/` (Playwright + Firefox over `file://`; dev-only, n
 - Fixtures are listed in `tests/fixtures.js`. A snapshot records what currently happens, including known failures, so fixing a broken fixture shows up as a snapshot change.
 - Needs Node 20 or newer, installed via nvm. The system Node (18) is too old. If `node --version` shows 18 in your shell, prefix commands with `. ~/.nvm/nvm.sh && nvm use default &&`.
 - First-time setup needs network access, which the agent sandbox lacks, so Joel runs it in an ordinary terminal: `cd tests && npm install && npx playwright install firefox`.
-- Stages: smoke (every SVG loads; does `init()` run?), then notation results, then normalised-DOM snapshots (in progress; see CLEANUP.md "Order of work").
+- Stages: smoke (every SVG loads; does `init()` run?), then notation results (both done), then normalised-DOM snapshots (to come; see CLEANUP.md "Order of work"). Snapshot reports must not contain auto-generated ids (`e411`, `t41`): use `__el`/`__canon` in `tests/lib.js`, or `canonIds`.

@@ -1,0 +1,209 @@
+## BOARD (:BoardLegend)
+Board: rect @122,590 46x46 fill=#FFF2CC
+Board: rect @179,590 46x46 fill=#7F6000
+Regular 1: ellipse @255,561 32x31 fill=#262626
+Regular 2: circle @256,620 32x32 fill=#F2F2F2
+King 1: polygon(32) @396,554 38x38 fill=#262626
+King 2: polygon(32) @397,611 39x39 fill=#F2F2F2
+Any 1: polygon(3) @531,557 32x28 fill=#262626
+Any 2: polygon(3) @533,616 32x28 fill=#F2F2F2
+
+## INITIAL zones
+BLACK KING AREA
+WHITE KING AREA
+
+## INITIAL (:BoardState)
+0,0,,black-king-area
+1,0,regular-2,black-king-area
+2,0,,black-king-area
+3,0,regular-2,black-king-area
+4,0,,black-king-area
+5,0,regular-2,black-king-area
+6,0,,black-king-area
+7,0,regular-2,black-king-area
+0,1,regular-2
+1,1,
+2,1,regular-2
+3,1,
+4,1,regular-2
+5,1,
+6,1,regular-2
+7,1,
+0,2,
+1,2,regular-2
+2,2,
+3,2,regular-2
+4,2,
+5,2,regular-2
+6,2,
+7,2,regular-2
+0,3,
+1,3,
+2,3,
+3,3,
+4,3,
+5,3,
+6,3,
+7,3,
+0,4,
+1,4,
+2,4,
+3,4,
+4,4,
+5,4,
+6,4,
+7,4,
+0,5,regular-1
+1,5,
+2,5,regular-1
+3,5,
+4,5,regular-1
+5,5,
+6,5,regular-1
+7,5,
+0,6,
+1,6,regular-1
+2,6,
+3,6,regular-1
+4,6,
+5,6,regular-1
+6,6,
+7,6,regular-1
+0,7,regular-1,white-king-area
+1,7,,white-king-area
+2,7,regular-1,white-king-area
+3,7,,white-king-area
+4,7,regular-1,white-king-area
+5,7,,white-king-area
+6,7,regular-1,white-king-area
+7,7,,white-king-area
+
+## MOVES - REGULAR (:MoveSpec)
+0,0,,1,1,regular-1 -> 0,0,regular-1,1,1,
+1,0,,0,1,regular-1 -> 1,0,regular-1,0,1,
+0,0,regular-2,1,1, -> 0,0,,1,1,regular-2
+1,0,regular-2,0,1, -> 1,0,,0,1,regular-2
+
+## MOVES - REGULAR_JUMP (:MoveSpec)
+2,0,,1,1,any-2,0,2,regular-1 -> 2,0,regular-1,1,1,,0,2,
+0,0,,1,1,any-2,2,2,regular-1 -> 0,0,regular-1,1,1,,2,2,
+2,0,regular-2,1,1,any-1,0,2, -> 2,0,,1,1,,0,2,regular-2
+0,0,regular-2,1,1,any-1,2,2, -> 0,0,,1,1,,2,2,regular-2
+
+## TRANSFORMS (:TransformSpec)
+regular-1 in black-king-area becomes king-1
+regular-2 in white-king-area becomes king-2
+
+## MOVES - KING (:MoveSpec)
+0,0,,1,1,king-1 --LU--> 0,0,king-1,1,1,
+1,0,,0,1,king-1 --RU--> 1,0,king-1,0,1,
+0,0,king-1,1,1, --RD--> 0,0,,1,1,king-1
+1,0,king-1,0,1, --LD--> 1,0,,0,1,king-1
+0,0,,1,1,king-2 --LU--> 0,0,king-2,1,1,
+1,0,,0,1,king-2 --RU--> 1,0,king-2,0,1,
+0,0,king-2,1,1, --RD--> 0,0,,1,1,king-2
+1,0,king-2,0,1, --LD--> 1,0,,0,1,king-2
+
+## MOVES - KING_JUMP (:MoveSpec)
+2,0,,1,1,any-2,0,2,king-1 --RU--> 2,0,king-1,1,1,,0,2,
+0,0,king-1,1,1,any-2,2,2, --RD--> 0,0,,1,1,,2,2,king-1
+2,0,,1,1,any-1,0,2,king-2 --RU--> 2,0,king-2,1,1,,0,2,
+0,0,king-2,1,1,any-1,2,2, --RD--> 0,0,,1,1,,2,2,king-2
+2,0,king-1,1,1,any-2,0,2, --LD--> 2,0,,1,1,,0,2,king-1
+0,0,,1,1,any-2,2,2,king-1 --LU--> 0,0,king-1,1,1,,2,2,
+2,0,king-2,1,1,any-1,0,2, --LD--> 2,0,,1,1,,0,2,king-2
+0,0,,1,1,any-1,2,2,king-2 --LU--> 0,0,king-2,1,1,,2,2,
+
+## COMBINATIONS stateClasses
+#1 is a Initial / final state
+#2 is a #2
+#3 is a #2
+#4 is a #2
+#5 is a #2
+#6 is a #2
+#7 is a #2
+#8 is a #2
+#9 is a #2
+#10 is a Initial / final state
+#11 is a #2
+#12 is a Initial / final state
+
+## COMBINATIONS (:CombosSpec)
+#1 --KING[RU]*--> #2
+#2 --KING_JUMP[RU]--> #3
+#3 --KING[RU]*--> #1
+#1 --KING[RD]*--> #4
+#4 --KING_JUMP[RD]--> #5
+#1 --KING[LU]*--> #6
+#6 --KING_JUMP[LU]--> #7
+#1 --KING[LD]*--> #8
+#8 --KING_JUMP[LD]--> #9
+#5 --KING[RD]*--> #1
+#7 --KING[LU]*--> #1
+#9 --KING[LD]*--> #1
+#10 --REGULAR--> #11
+#12 --REGULAR_JUMP--> #12
+
+## exportJSForApp
+const rules = [
+{ piece: "regular-1", label: "REGULAR", before: [[0, 0, null], [1, 1, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null]] },
+{ piece: "regular-1", label: "REGULAR", before: [[1, 0, null], [0, 1, "regular-1"]], after: [[1, 0, "regular-1"], [0, 1, null]] },
+{ piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
+{ piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
+{ piece: "regular-1", label: "REGULAR_JUMP", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "regular-1"]], after: [[2, 0, "regular-1"], [1, 1, null], [0, 2, null]] },
+{ piece: "regular-1", label: "REGULAR_JUMP", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null], [2, 2, null]] },
+{ piece: "regular-2", label: "REGULAR_JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
+{ piece: "regular-2", label: "REGULAR_JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] },
+{ piece: "king-1", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null]] },
+{ piece: "king-1", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-1"]], after: [[1, 0, "king-1"], [0, 1, null]] },
+{ piece: "king-1", label: "KING[RD]", before: [[0, 0, "king-1"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-1"]] },
+{ piece: "king-1", label: "KING[LD]", before: [[1, 0, "king-1"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-1"]] },
+{ piece: "king-2", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null]] },
+{ piece: "king-2", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-2"]], after: [[1, 0, "king-2"], [0, 1, null]] },
+{ piece: "king-2", label: "KING[RD]", before: [[0, 0, "king-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-2"]] },
+{ piece: "king-2", label: "KING[LD]", before: [[1, 0, "king-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-2"]] },
+{ piece: "king-1", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "king-1"]], after: [[2, 0, "king-1"], [1, 1, null], [0, 2, null]] },
+{ piece: "king-1", label: "KING_JUMP[RD]", before: [[0, 0, "king-1"], [1, 1, "any-2"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-1"]] },
+{ piece: "king-2", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-1"], [0, 2, "king-2"]], after: [[2, 0, "king-2"], [1, 1, null], [0, 2, null]] },
+{ piece: "king-2", label: "KING_JUMP[RD]", before: [[0, 0, "king-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-2"]] },
+{ piece: "king-1", label: "KING_JUMP[LD]", before: [[2, 0, "king-1"], [1, 1, "any-2"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-1"]] },
+{ piece: "king-1", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null], [2, 2, null]] },
+{ piece: "king-2", label: "KING_JUMP[LD]", before: [[2, 0, "king-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-2"]] },
+{ piece: "king-2", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-1"], [2, 2, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null], [2, 2, null]] }
+];
+
+const combinations = {
+initial: "start",
+terminal: ["#2", "#3", "#4", "#6", "#8", "#5", "#7", "#9", "#11", "end"],
+transitions: [
+["start", "KING[RU]", "#2"],
+["#2", "KING[RU]", "#2"],
+["start", "KING_JUMP[RU]", "#3"],
+["#2", "KING_JUMP[RU]", "#3"],
+["#3", "KING[RU]", "#3"],
+["start", "KING[RD]", "#4"],
+["#4", "KING[RD]", "#4"],
+["start", "KING_JUMP[RD]", "#5"],
+["#4", "KING_JUMP[RD]", "#5"],
+["start", "KING[LU]", "#6"],
+["#6", "KING[LU]", "#6"],
+["start", "KING_JUMP[LU]", "#7"],
+["#6", "KING_JUMP[LU]", "#7"],
+["start", "KING[LD]", "#8"],
+["#8", "KING[LD]", "#8"],
+["start", "KING_JUMP[LD]", "#9"],
+["#8", "KING_JUMP[LD]", "#9"],
+["#5", "KING[RD]", "#5"],
+["#7", "KING[LU]", "#7"],
+["#9", "KING[LD]", "#9"],
+["start", "REGULAR", "#11"],
+["start", "REGULAR_JUMP", "end"]
+]
+};
+
+const transforms = [
+{ piece: "regular-1", region: "black-king-area", transform: "king-1" },
+{ piece: "regular-2", region: "white-king-area", transform: "king-2" }
+];
+
+const areas = { "black-king-area": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]], "white-king-area": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7]] };

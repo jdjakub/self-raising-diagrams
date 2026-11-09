@@ -1,0 +1,96 @@
+## names
+e2 = text "8"
+s1 = text "push 5"
+s2 = text "push 8"
+s3 = text "pop"
+s4 = text "push 4"
+e1 = text "5"
+
+## transitions (event: element / sequence: state -> state)
+init: e1 / Operation 1: start -> #1
+init: s1 / Operation 1: start -> #1
+init: e2 / Operation 2: start -> #2
+init: s2 / Operation 2: start -> #2
+init: s3 / Operation 3: start -> #3
+init: s4 / Operation 4: start -> #4
+click: e1 / Operation 1: #1 -> #5
+click: s1 / Operation 1: #1 -> #5
+click 2: e2 / Operation 2: #2 -> #6
+click 2: s2 / Operation 2: #2 -> #6
+click 3: e2 / Operation 3: start -> #7
+click 3: s3 / Operation 3: #3 -> #8
+click 4: e2 / Operation 4: start -> #9
+click 4: s4 / Operation 4: #4 -> #10
+
+## commands per state
+#11: []
+#1: [["opacity","0"]]
+#5: [["opacity","1"]]
+#12: []
+#2: [["opacity","0"]]
+#6: [["opacity","1"]]
+#13: []
+#7: [["opacity","0"]]
+#14: []
+#3: [["opacity","0"]]
+#8: [["opacity","1"]]
+#15: []
+#9: [["opacity","1"],["text","4"]]
+#16: []
+#4: [["opacity","0"]]
+#10: [["opacity","1"]]
+
+## playback
+after beginSlideshow:
+  e2: style="opacity: 0;" transform="" text="8"
+  s1: style="opacity: 0;" transform="" text="push 5"
+  s2: style="opacity: 0;" transform="" text="push 8"
+  s3: style="opacity: 0;" transform="" text="pop"
+  s4: style="opacity: 0;" transform="" text="push 4"
+  e1: style="opacity: 0;" transform="" text="5"
+after click:
+  e2: style="opacity: 0;" transform="" text="8"
+  s1: style="opacity: 1;" transform="" text="push 5"
+  s2: style="opacity: 0;" transform="" text="push 8"
+  s3: style="opacity: 0;" transform="" text="pop"
+  s4: style="opacity: 0;" transform="" text="push 4"
+  e1: style="opacity: 1;" transform="" text="5"
+after click:
+  e2: style="opacity: 1;" transform="" text="8"
+  s1: style="opacity: 1;" transform="" text="push 5"
+  s2: style="opacity: 1;" transform="" text="push 8"
+  s3: style="opacity: 0;" transform="" text="pop"
+  s4: style="opacity: 0;" transform="" text="push 4"
+  e1: style="opacity: 1;" transform="" text="5"
+after click:
+  e2: style="opacity: 0;" transform="" text="8"
+  s1: style="opacity: 1;" transform="" text="push 5"
+  s2: style="opacity: 1;" transform="" text="push 8"
+  s3: style="opacity: 1;" transform="" text="pop"
+  s4: style="opacity: 0;" transform="" text="push 4"
+  e1: style="opacity: 1;" transform="" text="5"
+after click:
+  e2: style="opacity: 1;" transform="" text="4"
+  s1: style="opacity: 1;" transform="" text="push 5"
+  s2: style="opacity: 1;" transform="" text="push 8"
+  s3: style="opacity: 1;" transform="" text="pop"
+  s4: style="opacity: 1;" transform="" text="push 4"
+  e1: style="opacity: 1;" transform="" text="5"
+
+## legend
+#1 = text "opacity 0"
+#2 = text "opacity 0"
+#3 = text "opacity 0"
+#4 = text "opacity 0"
+#5 = text "opacity 1"
+#6 = text "opacity 1"
+#7 = text "opacity 0"
+#8 = text "opacity 1"
+#9 = text "opacity 1\ntext 4"
+#10 = text "opacity 1"
+#11 = text "e1, s1"
+#12 = text "e2, s2"
+#13 = text "e2"
+#14 = text "s3"
+#15 = text "e2"
+#16 = text "s4"
