@@ -1,0 +1,199 @@
+## canonical forms
+  boundary-shape: 10
+  boundary-wrapper: 10
+  connector-head: 17
+  connector-shaft: 17
+  connector-wrapper: 17
+  is-multiline: 3
+  shape-interior: 10
+  text-wrapper: 41
+
+## elements by tag
+  g: 78
+  line: 17
+  path: 1
+  polygon: 16
+  rect: 10
+  script: 7
+  svg: 1
+  text: 44
+  tspan: 3
+
+## tree
+<svg data-normalized="true" height="795" style="fill-rule:evenodd;clip-rule:evenodd;stroke-miterlimit:1.5;" version="1.1" viewBox="0 0 1064 795" width="1064" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:serif="http://www.serif.com/" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <script href="../utils.js">
+  <script href="../bracket-hole-carving.js">
+  <script href="../lang-sweettalk.js">
+  <script href="../lang-descartes.js">
+  <script href="../main-engine.js">
+  <script href="../omnimeta.js">
+  <script href="./animation-notation.js">
+  <g class="text-wrapper" data-string="Example: animating a stack" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="32px" y="58.07px"> "Example: animating a stack"
+  <g class="text-wrapper is-multiline" data-string="This example describes a step-by-step\nanimation of a stack data structure." id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;" x="32px" y="98.14px"> "This example describes a step-by-step"
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;" x="32px" y="122.81px"> "animation of a stack data structur"
+      <tspan x="391.66px 404.55px " y="122.81px 122.81px"> "e."
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="204">
+    <g class="shape-interior">
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="288">
+    <g class="shape-interior">
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="372">
+    <g class="shape-interior">
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="456">
+    <g class="shape-interior">
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="540">
+    <g class="shape-interior">
+      <g class="text-wrapper" data-string="8" id=auto>
+        <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:48px;" x="127.16px" y="599.14px"> "8"
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="84" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" width="84" x="98.5" y="624">
+    <g class="shape-interior">
+      <g class="text-wrapper" data-string="5" id=auto>
+        <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:48px;" x="127.16px" y="683.14px"> "5"
+  <g class="connector-wrapper" data-origin-out="0,1" data-origin-pt="226,254" data-target-out="0,-1" data-target-pt="226,177" id=auto>
+    <path class="connector-head" d="M218.5,192L226,177L233.5,192C229.75,188.25 222.25,188.25 218.5,192Z" id=auto style="fill:rgb(128,128,128);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(128,128,128);stroke-width:5px;" x1="226" x2="226" y1="254" y2="189">
+  <g class="text-wrapper is-multiline" data-string="The stack grows\nin that direction" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;fill:rgb(128,128,128);" x="244.96px" y="211.72px"> "The stack grs"
+      <tspan x="387.21px 401.87px" y="211.72px 211.72px"> "ow"
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;fill:rgb(128,128,128);" x="244.96px" y="236.42px"> "in that dirtion"
+      <tspan x="353.39px 367.17px" y="236.42px 236.42px"> "ec"
+  <g class="text-wrapper" data-string="Operation 1" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);" x="505px" y="193.43px"> "Operation 1"
+  <g class="text-wrapper" data-string="Operation 2" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);" x="505px" y="301.43px"> "Operation 2"
+  <g class="text-wrapper" data-string="Operation 3" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);" x="505px" y="412.43px"> "Operation 3"
+  <g class="text-wrapper" data-string="Operation 4" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(128,128,128);" x="505px" y="577.43px"> "Operation 4"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="223,582" data-target-out="-1,0" data-target-pt="160,582" id=auto>
+    <polygon class="connector-head" id=auto points="169,586.5 160,582 169,577.5 169,586.5" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="223" x2="167.2" y1="582" y2="582">
+  <g class="text-wrapper" data-string="e2" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="230.38px" y="588.44px"> "e2"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="393,361.44" data-target-out="-1,0" data-target-pt="330,361.44" id=auto>
+    <polygon class="connector-head" id=auto points="339,365.94 330,361.44 339,356.94 339,365.94" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="393" x2="337.2" y1="361.44" y2="361.44">
+  <g class="text-wrapper" data-string="s1" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="400.38px" y="367.88px"> "s1"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="393,398.44" data-target-out="-1,0" data-target-pt="330,398.44" id=auto>
+    <polygon class="connector-head" id=auto points="339,402.94 330,398.44 339,393.94 339,402.94" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="393" x2="337.2" y1="398.44" y2="398.44">
+  <g class="text-wrapper" data-string="s2" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="400.38px" y="404.88px"> "s2"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="393,436.44" data-target-out="-1,0" data-target-pt="301.21,436.44" id=auto>
+    <polygon class="connector-head" id=auto points="310.21,440.94 301.21,436.44 310.21,431.94 310.21,440.94" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="393" x2="308.41" y1="436.44" y2="436.44">
+  <g class="text-wrapper" data-string="s3" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="400.38px" y="442.88px"> "s3"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="393,474.44" data-target-out="-1,0" data-target-pt="330,474.44" id=auto>
+    <polygon class="connector-head" id=auto points="339,478.94 330,474.44 339,469.94 339,478.94" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="393" x2="337.2" y1="474.44" y2="474.44">
+  <g class="text-wrapper" data-string="s4" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="400.38px" y="480.88px"> "s4"
+  <g class="connector-wrapper" data-origin-out="1,0" data-origin-pt="223,667" data-target-out="-1,0" data-target-pt="160,667" id=auto>
+    <polygon class="connector-head" id=auto points="169,671.5 160,667 169,662.5 169,671.5" style="fill:rgb(45,184,10);">
+    <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(45,184,10);stroke-width:2px;" x1="223" x2="167.2" y1="667" y2="667">
+  <g class="text-wrapper" data-string="e1" id=auto>
+    <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(45,184,10);" x="230.38px" y="673.44px"> "e1"
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="45" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" width="486.84" x="505" y="205">
+    <g class="shape-interior">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="595,229.5" data-target-out="1,0" data-target-pt="669.92,229.5" id=auto>
+        <polygon class="connector-head" id=auto points="660.38,224.73 669.92,229.5 660.38,234.27 660.38,224.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="595" x2="662.29" y1="229.5" y2="229.5">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="792.92,229.5" data-target-out="1,0" data-target-pt="867.84,229.5" id=auto>
+        <polygon class="connector-head" id=auto points="858.3,224.73 867.84,229.5 858.3,234.27 858.3,224.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="792.92" x2="860.21" y1="229.5" y2="229.5">
+      <g class="text-wrapper" data-string="e1, s1" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.54px" y="236.07px"> "e1, s1"
+      <g class="text-wrapper" data-string="opacity 0" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="682.08px" y="236.07px"> "opacity 0"
+      <g class="text-wrapper" data-string="click" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="812.05px" y="224.68px"> "click"
+      <g class="text-wrapper" data-string="opacity 1" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="880.5px" y="236.07px"> "opacity 1"
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="45" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" width="486.84" x="505" y="314">
+    <g class="shape-interior">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="595,338.5" data-target-out="1,0" data-target-pt="669.92,338.5" id=auto>
+        <polygon class="connector-head" id=auto points="660.38,333.73 669.92,338.5 660.38,343.27 660.38,333.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="595" x2="662.29" y1="338.5" y2="338.5">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="792.92,338.5" data-target-out="1,0" data-target-pt="867.84,338.5" id=auto>
+        <polygon class="connector-head" id=auto points="858.3,333.73 867.84,338.5 858.3,343.27 858.3,333.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="792.92" x2="860.21" y1="338.5" y2="338.5">
+      <g class="text-wrapper" data-string="e2, s2" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.54px" y="345.07px"> "e2, s2"
+      <g class="text-wrapper" data-string="opacity 0" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="682.08px" y="345.07px"> "opacity 0"
+      <g class="text-wrapper" data-string="click 2" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="804.54px" y="333.68px"> "click 2"
+      <g class="text-wrapper" data-string="opacity 1" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="880.5px" y="345.07px"> "opacity 1"
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="103" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" width="447.84" x="505" y="423">
+    <g class="shape-interior">
+      <g class="text-wrapper" data-string="e2" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.38px" y="454.07px"> "e2"
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="556,447.5" data-target-out="1,0" data-target-pt="828.84,447.5" id=auto>
+        <polygon class="connector-head" id=auto points="819.3,442.73 828.84,447.5 819.3,452.27 819.3,442.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="556" x2="821.21" y1="447.5" y2="447.5">
+      <g class="text-wrapper" data-string="click 3" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="666.58px" y="442.68px"> "click 3"
+      <g class="text-wrapper" data-string="opacity 0" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="841.5px" y="454.07px"> "opacity 0"
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="556,504.5" data-target-out="1,0" data-target-pt="630.92,504.5" id=auto>
+        <polygon class="connector-head" id=auto points="621.38,499.73 630.92,504.5 621.38,509.27 621.38,499.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="556" x2="623.29" y1="504.5" y2="504.5">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="753.92,504.5" data-target-out="1,0" data-target-pt="828.84,504.5" id=auto>
+        <polygon class="connector-head" id=auto points="819.3,499.73 828.84,504.5 819.3,509.27 819.3,499.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="753.92" x2="821.21" y1="504.5" y2="504.5">
+      <g class="text-wrapper" data-string="s3" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.83px" y="511.07px"> "s3"
+      <g class="text-wrapper" data-string="opacity 0" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="643.08px" y="511.07px"> "opacity 0"
+      <g class="text-wrapper" data-string="click 3" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="765.54px" y="499.68px"> "click 3"
+      <g class="text-wrapper" data-string="opacity 1" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="841.5px" y="511.07px"> "opacity 1"
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" height="122" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" width="447.84" x="505" y="589">
+    <g class="shape-interior">
+      <g class="text-wrapper" data-string="e2" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.38px" y="630.07px"> "e2"
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="556,624.56" data-target-out="1,0" data-target-pt="828.84,624.56" id=auto>
+        <polygon class="connector-head" id=auto points="819.3,619.79 828.84,624.56 819.3,629.33 819.3,619.79" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="556" x2="821.21" y1="624.56" y2="624.56">
+      <g class="text-wrapper" data-string="click 4" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="666.58px" y="619.73px"> "click 4"
+      <g class="text-wrapper is-multiline" data-string="opacity 1\ntext 4" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="840.84px" y="617.73px"> "opacity 1"
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="840.84px" y="642.4px"> "text 4"
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="556,690.5" data-target-out="1,0" data-target-pt="630.92,690.5" id=auto>
+        <polygon class="connector-head" id=auto points="621.38,685.73 630.92,690.5 621.38,695.27 621.38,685.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="556" x2="623.29" y1="690.5" y2="690.5">
+      <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="753.92,690.5" data-target-out="1,0" data-target-pt="828.84,690.5" id=auto>
+        <polygon class="connector-head" id=auto points="819.3,685.73 828.84,690.5 819.3,695.27 819.3,685.73" style="fill:rgb(184,10,10);">
+        <line class="connector-shaft" id=auto style="fill:none;stroke:rgb(184,10,10);stroke-width:2px;stroke-linejoin:round;" x1="753.92" x2="821.21" y1="690.5" y2="690.5">
+      <g class="text-wrapper" data-string="s4" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="517.83px" y="697.07px"> "s4"
+      <g class="text-wrapper" data-string="opacity 0" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="643.08px" y="697.07px"> "opacity 0"
+      <g class="text-wrapper" data-string="click 4" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:18px;fill:rgb(184,10,10);" x="765.54px" y="685.68px"> "click 4"
+      <g class="text-wrapper" data-string="opacity 1" id=auto>
+        <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;fill:rgb(184,10,10);" x="841.5px" y="697.07px"> "opacity 1"
+  <g class="text-wrapper" data-string="push 5" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="244.96px" y="368.07px"> "push 5"
+  <g class="text-wrapper" data-string="push 8" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="244.96px" y="405.87px"> "push 8"
+  <g class="text-wrapper" data-string="pop" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="244.96px" y="443.67px"> "pop"
+  <g class="text-wrapper" data-string="push 4" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="244.96px" y="481.46px"> "push 4"

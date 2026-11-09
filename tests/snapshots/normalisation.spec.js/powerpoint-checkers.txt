@@ -1,0 +1,1400 @@
+## canonical forms
+  boundary-shape: 362
+  boundary-wrapper: 362
+  connector-head: 14
+  connector-shaft: 40
+  connector-wrapper: 40
+  is-multiline: 5
+  shape-interior: 358
+  text-wrapper: 55
+
+## elements by tag
+  circle: 45
+  clipPath: 1
+  defs: 1
+  ellipse: 12
+  g: 816
+  path: 26
+  polygon: 78
+  rect: 255
+  script: 7
+  svg: 1
+  text: 134
+
+## tree
+<svg data-normalized="true" height="2268" overflow="scroll" width="2646" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <script href="../utils.js">
+  <script href="../bracket-hole-carving.js">
+  <script href="../lang-sweettalk.js">
+  <script href="../lang-descartes.js">
+  <script href="../main-engine.js">
+  <script href="../omnimeta.js">
+  <script href="./board-game-notation.js">
+  <defs>
+    <clipPath id="clip0">
+  <g class="boundary-wrapper">
+    <rect class="boundary-shape" fill="#FFFFFF" height="2268.05" id=auto width="2646" x="0" y="0">
+    <g class="shape-interior">
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" height="2268" id=auto width="2646" x="0" y="0">
+        <g class="shape-interior">
+      <g class="text-wrapper" data-string="BOARD (:BoardLegend)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="104.31" y="533"> "BOARD (:BoardLegend)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="138" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="569" x="102.5" y="537.51">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="121.5" y="589.51">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="178.5" y="589.51">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <ellipse class="boundary-shape" cx="271" cy="576.51" fill="#262626" fill-rule="evenodd" id=auto rx="16" ry="15.5">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <circle class="boundary-shape" cx="271.5" cy="635.51" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+            <g class="shape-interior">
+          <g class="text-wrapper" data-string="Regular 1" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="293.08" y="580"> "Regular 1"
+          <g class="text-wrapper" data-string="Regular 2" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="293.08" y="637"> "Regular 2"
+          <g class="text-wrapper" data-string="Board" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="120.81" y="580"> "Board"
+          <g class="text-wrapper" data-string="Board" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="180.81" y="580"> "Board"
+          <g class="boundary-wrapper">
+            <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="396,573.01 401.02,570.23 397.45,565.74 403.15,565.1 401.56,559.58 407.08,561.16 407.73,555.46 412.22,559.03 415,554.01 417.78,559.03 422.27,555.46 422.92,561.16 428.44,559.58 426.85,565.1 432.55,565.74 428.98,570.23 434,573.01 428.98,575.79 432.55,580.28 426.85,580.93 428.44,586.45 422.92,584.86 422.27,590.57 417.78,586.99 415,592.01 412.22,586.99 407.73,590.57 407.08,584.86 401.56,586.45 403.15,580.93 397.45,580.28 401.02,575.79">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="396.5,630.01 401.66,627.16 397.98,622.55 403.84,621.89 402.21,616.22 407.88,617.85 408.54,612 413.15,615.67 416,610.51 418.85,615.67 423.46,612 424.13,617.85 429.79,616.22 428.16,621.89 434.02,622.55 430.34,627.16 435.5,630.01 430.34,632.87 434.02,637.48 428.16,638.14 429.79,643.8 424.13,642.17 423.46,648.03 418.85,644.36 416,649.51 413.15,644.36 408.54,648.03 407.88,642.17 402.21,643.8 403.84,638.14 397.98,637.48 401.66,632.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+            <g class="shape-interior">
+          <g class="text-wrapper" data-string="King 1" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="440.98" y="579"> "King 1"
+          <g class="text-wrapper" data-string="King 2" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="440.98" y="636"> "King 2"
+          <g class="text-wrapper" data-string="Any 1" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="572.48" y="578"> "Any 1"
+          <g class="text-wrapper" data-string="Any 2" id=auto>
+            <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="17.51" font-weight="400" x="572.48" y="636"> "Any 2"
+          <g class="boundary-wrapper">
+            <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="531,585.01 547,557.01 563,585.01">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="532.5,643.51 548.5,615.51 564.5,643.51" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+            <g class="shape-interior">
+      <g class="text-wrapper" data-string="INITIAL (:BoardState)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="103.2" y="707"> "INITIAL (:BoardState)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="539.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="492" x="103.5" y="717.51">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="856.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="191.5" cy="879.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="856.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="856.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="283.5" cy="879.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="856.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="902.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="902.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="237.5" cy="925.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="902.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="902.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="329.5" cy="925.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="1040.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="191" cy="1063.52" fill="#262626" fill-rule="evenodd" id=auto rx="16" ry="15.5">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="1040.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="1040.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="283" cy="1064.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="1040.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="1086.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="1086.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="237" cy="1109.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="1086.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="1086.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="329" cy="1109.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="856.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="374.5" cy="879.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="856.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="856.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="466.5" cy="879.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="856.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="902.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="902.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="420.5" cy="925.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="902.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="902.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="512.5" cy="924.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="948.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="1040.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="374" cy="1063.52" fill="#262626" fill-rule="evenodd" id=auto rx="16" ry="15.5">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="1040.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="994.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="1040.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="466" cy="1063.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="1040.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="1086.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="1086.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="420" cy="1109.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#FFF2CC" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="1086.52">
+            <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="1086.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="512" cy="1108.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="75" id=auto stroke="#FF0000" stroke-miterlimit="8" stroke-width="3" width="395" x="156.5" y="795.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="810.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="810.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="237.5" cy="833.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="810.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="810.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="328.5" cy="833.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="810.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="810.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="420.5" cy="833.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="810.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="810.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="512.5" cy="833.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="75" id=auto stroke="#00C000" stroke-miterlimit="8" stroke-width="3" width="395" x="154.5" y="1118.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="168.5" y="1131.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="191" cy="1154.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="214.5" y="1131.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="260.5" y="1131.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="283" cy="1155.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="306.5" y="1131.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="351.5" y="1131.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="374" cy="1154.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="397.5" y="1131.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="443.5" y="1131.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="466" cy="1154.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#FFF2CC" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="489.5" y="1131.52">
+                <g class="shape-interior">
+          <g class="text-wrapper" data-string="BLACK KING AREA" id=auto>
+            <text fill="#FF0000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="152.95" y="790"> "BLACK KING AREA"
+          <g class="text-wrapper" data-string="WHITE KING AREA" id=auto>
+            <text fill="#00C000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="152.34" y="1214"> "WHITE KING AREA"
+      <g class="text-wrapper" data-string="MOVES - REGULAR (:MoveSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="748.08" y="581"> "MOVES"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="814.22" y="581"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="824.89" y="581"> "REGULAR (:MoveSpec)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="373.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="848" x="747.5" y="591.51">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="777.5" y="640.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="796.5" y="656.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="842.5" y="702.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="865" cy="726.01" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="989.5" y="641.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1009.5" y="657.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1032" cy="679.01" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1055.5" y="703.51">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="917.5,702.51" data-target-out="1,0.01" data-target-pt="990.14,703.41" id=auto>
+            <path class="connector-shaft" d="M917.5 702.18 989.46 703.06 989.45 703.73 917.5 702.85ZM977.71 696.29 990.14 703.41 977.53 710.21C977.37 710.3 977.17 710.24 977.08 710.08 977 709.91 977.06 709.71 977.22 709.62L989.3 703.1 989.29 703.69 977.37 696.87C977.21 696.78 977.16 696.58 977.25 696.42 977.34 696.26 977.54 696.2 977.71 696.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="777.5" y="791.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="796.5" y="854.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="819" cy="876.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="842.5" y="807.52">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="989.5" y="792.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1012.5" y="851.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1058.5" y="804.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1081" cy="827.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="917.5,853.52" data-target-out="1,0.01" data-target-pt="990.14,854.41" id=auto>
+            <path class="connector-shaft" d="M917.5 853.18 989.46 854.07 989.45 854.73 917.5 853.85ZM977.71 847.3 990.14 854.41 977.53 861.21C977.37 861.3 977.17 861.24 977.08 861.08 977 860.92 977.06 860.71 977.22 860.63L989.3 854.11 989.29 854.69 977.37 847.88C977.21 847.78 977.16 847.58 977.25 847.42 977.34 847.26 977.54 847.21 977.71 847.3Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1178.5" y="640.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1197.5" y="657.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1220.5" cy="679.51" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1243.5" y="703.51">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1390.5" y="641.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1410.5" y="658.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1455.5" y="704.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1478.5" cy="727.51" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1318.5,702.51" data-target-out="1,0.01" data-target-pt="1391.14,703.41" id=auto>
+            <path class="connector-shaft" d="M1318.5 702.18 1390.46 703.06 1390.45 703.73 1318.5 702.85ZM1378.7 696.29 1391.14 703.41 1378.53 710.21C1378.37 710.3 1378.17 710.24 1378.08 710.08 1377.99 709.91 1378.06 709.71 1378.22 709.62L1390.3 703.1 1390.29 703.69 1378.37 696.87C1378.21 696.78 1378.16 696.58 1378.25 696.42 1378.34 696.26 1378.55 696.2 1378.7 696.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="1178.5" y="791.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1197.5" y="854.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1243.5" y="808.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1269.5" cy="830.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1390.5" y="792.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1413.5" y="851.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1435.5" cy="874.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1459.5" y="805.52">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1317.5,853.52" data-target-out="1,0.01" data-target-pt="1390.14,854.41" id=auto>
+            <path class="connector-shaft" d="M1317.5 853.18 1389.46 854.07 1389.45 854.73 1317.5 853.85ZM1377.7 847.3 1390.14 854.41 1377.53 861.21C1377.37 861.3 1377.17 861.24 1377.08 861.08 1376.99 860.92 1377.06 860.71 1377.22 860.63L1389.3 854.11 1389.29 854.69 1377.37 847.88C1377.21 847.78 1377.16 847.58 1377.25 847.42 1377.34 847.26 1377.55 847.21 1377.7 847.3Z" fill="#C00000" id=auto>
+      <g class="text-wrapper" data-string="MOVES - REGULAR_JUMP (:MoveSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="750.35" y="1024"> "MOVES"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="816.49" y="1024"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="827.16" y="1024"> "REGULAR_JUMP (:MoveSpec)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="439.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="847" x="750.5" y="1033.52">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="167" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="786.5" y="1079.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="894.5" y="1091.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="848.5" y="1137.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="856.5,1176.52 872.5,1148.52 888.5,1176.52" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="802.5" y="1183.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="825" cy="1206.03" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="952.5,1163.02" data-target-out="1,-0.01" data-target-pt="988.94,1162.53" id=auto>
+            <path class="connector-shaft" d="M952.5,1163.35 L988.26,1162.87 L988.25,1162.2 L952.5,1162.69 Z M976.51,1169.66 L988.94,1162.53 L976.32,1155.74 C976.16,1155.65 975.96,1155.71 975.87,1155.87 C975.78,1156.04 975.84,1156.24 976,1156.33 L988.1,1162.83 L988.09,1162.25 L976.18,1169.08 C976.02,1169.17 975.96,1169.37 976.05,1169.53 C976.14,1169.69 976.35,1169.75 976.51,1169.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="988.5" y="1079.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1096.5" y="1091.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1118" cy="1113.02" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1050.5" y="1137.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1004.5" y="1183.52">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="787.5" y="1267.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="802.5" y="1283.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="848.5" y="1329.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="855.5,1363.53 871.5,1335.53 887.5,1363.53" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="893.5" y="1375.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <ellipse class="boundary-shape" cx="916.5" cy="1398.03" fill="#262626" fill-rule="evenodd" id=auto rx="15.5" ry="16">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="167" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="989.5" y="1266.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1001.5" y="1279.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1023" cy="1301.03" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1046.5" y="1325.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1092.5" y="1371.53">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="953.5,1351.02" data-target-out="1,-0.01" data-target-pt="989.94,1350.53" id=auto>
+            <path class="connector-shaft" d="M953.5,1351.35 L989.26,1350.87 L989.25,1350.2 L953.5,1350.69 Z M977.51,1357.66 L989.94,1350.53 L977.32,1343.74 C977.16,1343.65 976.96,1343.71 976.87,1343.87 C976.78,1344.04 976.84,1344.24 977,1344.33 L989.1,1350.83 L989.09,1350.25 L977.18,1357.08 C977.02,1357.17 976.96,1357.37 977.05,1357.53 C977.14,1357.69 977.35,1357.75 977.51,1357.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1187.5" y="1078.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1295.5" y="1090.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1320.5" cy="1112.52" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1249.5" y="1136.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1257,1172.02 1273.5,1144.02 1290,1172.02">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1203.5" y="1181.52">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1353.5,1161.02" data-target-out="1,-0.01" data-target-pt="1389.94,1160.53" id=auto>
+            <path class="connector-shaft" d="M1353.5,1161.35 L1389.26,1160.87 L1389.25,1160.2 L1353.5,1160.69 Z M1377.51,1167.66 L1389.94,1160.53 L1377.32,1153.74 C1377.16,1153.65 1376.96,1153.71 1376.87,1153.87 C1376.78,1154.04 1376.84,1154.24 1377.01,1154.33 L1389.1,1160.83 L1389.09,1160.25 L1377.18,1167.08 C1377.02,1167.17 1376.96,1167.37 1377.05,1167.53 C1377.15,1167.69 1377.35,1167.75 1377.51,1167.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1389.5" y="1077.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1497.5" y="1089.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1451.5" y="1135.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1405.5" y="1181.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <ellipse class="boundary-shape" cx="1426.5" cy="1205.53" fill="#F2F2F2" fill-rule="evenodd" id=auto rx="16" ry="16.01" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1188.5" y="1265.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1203.5" y="1282.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1225.5" cy="1306.53" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1248.5" y="1328.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1256,1366.03 1272.5,1338.03 1289,1366.03">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1294.5" y="1373.53">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1390.5" y="1265.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1401.5" y="1278.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1447.5" y="1323.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1493.5" y="1369.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="1515.5" cy="1392.53" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1354.5,1349.02" data-target-out="1,-0.01" data-target-pt="1390.94,1348.53" id=auto>
+            <path class="connector-shaft" d="M1354.5,1349.35 L1390.26,1348.87 L1390.25,1348.2 L1354.5,1348.69 Z M1378.51,1355.66 L1390.94,1348.53 L1378.32,1341.74 C1378.16,1341.65 1377.96,1341.71 1377.87,1341.87 C1377.78,1342.04 1377.84,1342.24 1378.01,1342.33 L1390.1,1348.83 L1390.09,1348.25 L1378.18,1355.08 C1378.02,1355.17 1377.96,1355.37 1378.05,1355.53 C1378.15,1355.69 1378.35,1355.75 1378.51,1355.66 Z" fill="#C00000" id=auto>
+      <g class="text-wrapper" data-string="TRANSFORMS (:TransformSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="182.96" y="1324"> "TRANSFORMS (:TransformSpec)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="319.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="340" x="181.5" y="1329.53">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="107" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="107" x="207.5" y="1354.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="none" height="58" id=auto stroke="#FF0000" stroke-miterlimit="8" stroke-width="3" width="60" x="232.5" y="1378.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="262" cy="1408.03" fill="#262626" fill-rule="evenodd" id=auto r="16">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="314.5,1408.53" data-target-out="1,0.01" data-target-pt="377.72,1408.86" id=auto>
+            <path class="connector-shaft" d="M314.5 1408.2 377.04 1408.52 377.03 1409.19 314.5 1408.86ZM365.23 1401.83 377.72 1408.86 365.16 1415.75C365 1415.84 364.8 1415.78 364.71 1415.62 364.62 1415.46 364.68 1415.25 364.84 1415.17L376.87 1408.56 376.87 1409.14 364.9 1402.41C364.74 1402.32 364.69 1402.12 364.78 1401.96 364.87 1401.8 365.07 1401.74 365.23 1401.83Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="107" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="106" x="377.5" y="1355.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="404,1412.53 409.02,1409.82 405.45,1405.45 411.15,1404.82 409.56,1399.45 415.08,1400.99 415.73,1395.44 420.22,1398.92 423,1394.03 425.78,1398.92 430.27,1395.44 430.92,1400.99 436.44,1399.45 434.85,1404.82 440.55,1405.45 436.98,1409.82 442,1412.53 436.98,1415.24 440.55,1419.61 434.85,1420.24 436.44,1425.61 430.92,1424.07 430.27,1429.62 425.78,1426.14 423,1431.03 420.22,1426.14 415.73,1429.62 415.08,1424.07 409.56,1425.61 411.15,1420.24 405.45,1419.61 409.02,1415.24">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="108" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="107" x="207.5" y="1499.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="none" height="58" id=auto stroke="#00C000" stroke-miterlimit="8" stroke-width="3" width="60" x="232.5" y="1523.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <circle class="boundary-shape" cx="262.5" cy="1553.53" fill="#F2F2F2" fill-rule="evenodd" id=auto r="16" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="314.5,1553.54" data-target-out="1,0.01" data-target-pt="377.72,1553.86" id=auto>
+            <path class="connector-shaft" d="M314.5 1553.2 377.04 1553.52 377.03 1554.19 314.5 1553.87ZM365.23 1546.84 377.72 1553.86 365.16 1560.75C365 1560.84 364.8 1560.78 364.71 1560.62 364.62 1560.46 364.68 1560.26 364.84 1560.17L376.87 1553.56 376.87 1554.15 364.9 1547.42C364.74 1547.33 364.69 1547.12 364.78 1546.96 364.87 1546.8 365.07 1546.74 365.23 1546.84Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="107" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="107" x="377.5" y="1500.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="407.5,1550.03 412.66,1547.18 408.98,1542.57 414.84,1541.91 413.21,1536.24 418.88,1537.87 419.54,1532.02 424.15,1535.69 427,1530.53 429.85,1535.69 434.46,1532.02 435.13,1537.87 440.79,1536.24 439.16,1541.91 445.02,1542.57 441.34,1547.18 446.5,1550.03 441.34,1552.89 445.02,1557.49 439.16,1558.16 440.79,1563.82 435.13,1562.19 434.46,1568.05 429.85,1564.38 427,1569.53 424.15,1564.38 419.54,1568.05 418.88,1562.19 413.21,1563.82 414.84,1558.16 408.98,1557.49 412.66,1552.89" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                <g class="shape-interior">
+      <g class="text-wrapper is-multiline" data-string="Game board and initial state\n• All shapes in INITIAL are copied from BOARD, so we can use BOARD\nexamples to detect what shape is what.\n• Initial state defines the positions of pieces. Ideally, we would obtain\na two - dimensional 8x8 array with “Regular 1” or “Regular 2” or null\nin each of the positions.\n• The red/green boxes mark some of the board positions. Ideally, we\nwould also get an array of coordinates included in those regions.\n• BOARD defines types of pieces – Regular appear on the INITIAL\nboard and King appear in the MOVES. I also added Any as a special\nplaceholder, to be used in MOVES definitions when we want to say\nthat jumping can be over either King or Regular piece. (The logic of\nthat would be handled outside of the SVG.)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="103.03" y="174"> "Game board and initial state"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="103.03" y="206"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="206"> "All shapes in INITIAL are copied from BOARD, so we can use BOARD"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="230"> "examples to detect what shape is what."
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="103.03" y="262"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="262"> "Initial state defines the positions of pieces. Ideally, we would obtain"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="286"> "a two"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="162.55" y="286"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="168.72" y="286"> "dimensional 8x8 array with “Regular 1” or “Regular 2” or null"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="310"> "in each of the positions."
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="103.03" y="342"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="342"> "The red/green boxes mark some of the board positions. Ideally, we"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="366"> "would also get an array of coordinates included in those regions."
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="103.03" y="398"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="398"> "BOARD defines types of pieces"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="369.86" y="398"> "–"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="384.36" y="398"> "Regular appear on the INITIAL"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="422"> "board and King appear in the MOVES. I also added Any as a special"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="446"> "placeholder, to be used in MOVES definitions when we want to say"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="470"> "that jumping can be over either King or Regular piece. (The logic of"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="494"> "that would be handled outside of the SVG.)"
+      <g class="text-wrapper is-multiline" data-string="TO COMPILE THE DIAGRAM:\nRun in the JS Console:\nsend({vtable: 'BoardGameNotation'}, 'fromDocument');\nsend({vtable: 'BoardGameNotation'}, 'exportJSForApp');" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1050" y="50"> "TO COMPILE THE DIAGRAM:"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1050" y="80"> "Run in the JS Console:"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1070" y="110"> "send({vtable: 'BoardGameNotation'}, 'fromDocument');"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1070" y="140"> "send({vtable: 'BoardGameNotation'}, 'exportJSForApp');"
+      <g class="text-wrapper is-multiline" data-string="Definitions of possible moves\n• We will need some processing outside of the SVG notation, for example to know that there can be\nmultiple jumps in a single round, but only one regular move in each round (and also that jumps must\nbe preferred if both regular and jump are available), but SVG notation can define possible moves\nand group them into categories.\n• Ideally, each “MOVES” box would be parsed as array of before/after pairs where each step of the\nmove is represented as either 2D array or as some kind of coordinate. For example, for the first\nmove, we could get: [ (0,0,null); (1,1,”Regular 1”) ] => [ (0,0,”Regular 1”); (1,1,null) ]\n• Some of the arrows that define moves are labelled – this identifies the move and it is used in the\nbonus feature discussed below (to specify valid sequences of moves in a single round)\n• Alternatively, we could draw the moves with arrows pointing from the piece to possible target\nlocations. But this is harder, because it does not specify what other pieces must/must not be on the\nboard (when one diagram represents multiple possible moves). I think we do not want that." id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="748.1" y="175"> "Definitions of possible moves"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="748.1" y="207"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="207"> "We will need some processing outside of the SVG notation, for example to know that there can be"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="231"> "multiple jumps in a single round, but only one regular move in each round (and also that jumps must"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="255"> "be preferred if both regular and jump are available), but SVG notation can define possible moves"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="279"> "and group them into categories."
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="748.1" y="311"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="311"> "Ideally, each “MOVES” box would be parsed as array of before/after pairs where each step of the"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="335"> "move is represented as either 2D array or as some kind of coordinate. For example, for the first"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="359"> "move, we could get: [ (0,0,null); (1,1,”Regular 1”) ] => [ (0,0,”Regular 1”); (1,1,null) ]"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="748.1" y="391"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="391"> "Some of the arrows that define moves are labelled"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1176.54" y="391"> "–"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1191.05" y="391"> "this identifies the move and it is used in the"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="762.3" y="415"> "bonus feature discussed below (to specify valid sequences of moves in a single round)"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="748.1" y="447"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-style="italic" font-weight="400" x="762.3" y="447"> "Alternatively, we could draw the moves with arrows pointing from the piece to possible target"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-style="italic" font-weight="400" x="762.3" y="471"> "locations. But this is harder, because it does not specify what other pieces must/must not be on the"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-style="italic" font-weight="400" x="762.3" y="495"> "board (when one diagram represents multiple possible moves). I think we do not want that."
+      <g class="text-wrapper is-multiline" data-string="Pieces turning into kings\n• When a regular piece is in a special\narea defined in INITIAL board state,\nit becomes a different kind of piece\nas defined in TRANSFORMS." id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="191.45" y="1694"> "Pieces turning into kings"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="191.45" y="1726"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1726"> "When a regular piece is in a special"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1750"> "area defined in INITIAL board state,"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1774"> "it becomes a different kind of piece"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1798"> "as defined in TRANSFORMS."
+      <g class="text-wrapper" data-string="CHECKERS" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="32.51" font-weight="700" x="105.96" y="122"> "CHECKERS"
+      <g class="text-wrapper" data-string="MOVES - KING (:MoveSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1659.49" y="177"> "MOVES"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1725.63" y="177"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1736.3" y="177"> "KING (:MoveSpec)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="681.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="845" x="1659.5" y="186.5">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="125" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="1689.5" y="235.5">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1708.5" y="252.5">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1754.5" y="298.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1758,321.51 1762.89,318.8 1759.41,314.43 1764.96,313.8 1763.42,308.43 1768.79,309.97 1769.42,304.42 1773.79,307.9 1776.5,303.01 1779.21,307.9 1783.58,304.42 1784.21,309.97 1789.58,308.43 1788.04,313.8 1793.59,314.43 1790.11,318.8 1795,321.51 1790.11,324.21 1793.59,328.59 1788.04,329.21 1789.58,334.59 1784.21,333.04 1783.58,338.6 1779.21,335.12 1776.5,340.01 1773.79,335.12 1769.42,338.6 1768.79,333.04 1763.42,334.59 1764.96,329.21 1759.41,328.59 1762.89,324.21">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1901.5" y="236.5">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1920.5" y="253.5">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1923,276.51 1927.89,273.8 1924.41,269.43 1929.96,268.8 1928.42,263.42 1933.79,264.97 1934.42,259.41 1938.79,262.9 1941.5,258 1944.21,262.9 1948.58,259.41 1949.21,264.97 1954.58,263.42 1953.04,268.8 1958.59,269.43 1955.11,273.8 1960,276.51 1955.11,279.21 1958.59,283.59 1953.04,284.21 1954.58,289.59 1949.21,288.04 1948.58,293.6 1944.21,290.12 1941.5,295.01 1938.79,290.12 1934.42,293.6 1933.79,288.04 1928.42,289.59 1929.96,284.21 1924.41,283.59 1927.89,279.21">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1966.5" y="299.51">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1828.5,297.51" data-target-out="1,0.01" data-target-pt="1901.14,298.4" id=auto>
+            <path class="connector-shaft" d="M1828.5 297.17 1900.46 298.06 1900.45 298.72 1828.5 297.84ZM1888.7 291.29 1901.14 298.4 1888.53 305.2C1888.37 305.29 1888.17 305.23 1888.08 305.07 1887.99 304.9 1888.06 304.7 1888.22 304.62L1900.3 298.1 1900.29 298.68 1888.37 291.86C1888.21 291.77 1888.16 291.57 1888.25 291.41 1888.34 291.25 1888.55 291.19 1888.7 291.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1688.5" y="387.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1708.5" y="449.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1714,470.51 1718.89,467.8 1715.41,463.43 1720.96,462.8 1719.42,457.43 1724.79,458.97 1725.42,453.42 1729.79,456.9 1732.5,452.01 1735.21,456.9 1739.58,453.42 1740.21,458.97 1745.58,457.43 1744.04,462.8 1749.59,463.43 1746.11,467.8 1751,470.51 1746.11,473.22 1749.59,477.59 1744.04,478.22 1745.58,483.59 1740.21,482.05 1739.58,487.6 1735.21,484.12 1732.5,489.01 1729.79,484.12 1725.42,487.6 1724.79,482.05 1719.42,483.59 1720.96,478.22 1715.41,477.59 1718.89,473.22">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1754.5" y="403.51">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="125" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="1901.5" y="387.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1923.5" y="446.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1969.5" y="400.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1975,423.51 1979.89,420.8 1976.41,416.43 1981.96,415.8 1980.42,410.43 1985.79,411.97 1986.42,406.42 1990.79,409.9 1993.5,405.01 1996.21,409.9 2000.58,406.42 2001.21,411.97 2006.58,410.43 2005.04,415.8 2010.59,416.43 2007.11,420.8 2012,423.51 2007.11,426.22 2010.59,430.59 2005.04,431.22 2006.58,436.59 2001.21,435.05 2000.58,440.6 1996.21,437.12 1993.5,442.01 1990.79,437.12 1986.42,440.6 1985.79,435.05 1980.42,436.59 1981.96,431.22 1976.41,430.59 1979.89,426.22">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1828.5,449.51" data-target-out="1,0.01" data-target-pt="1901.14,450.4" id=auto>
+            <path class="connector-shaft" d="M1828.5 449.18 1900.46 450.06 1900.45 450.73 1828.5 449.84ZM1888.7 443.29 1901.14 450.4 1888.53 457.2C1888.37 457.29 1888.17 457.23 1888.08 457.07 1887.99 456.91 1888.06 456.71 1888.22 456.62L1900.3 450.1 1900.29 450.68 1888.37 443.87C1888.21 443.78 1888.16 443.57 1888.25 443.41 1888.34 443.25 1888.55 443.2 1888.7 443.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="2089.5" y="236.5">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2109.5" y="253.5">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2112,275.51 2117.02,272.8 2113.45,268.43 2119.15,267.8 2117.56,262.42 2123.08,263.97 2123.73,258.41 2128.22,261.9 2131,257 2133.78,261.9 2138.27,258.41 2138.92,263.97 2144.44,262.42 2142.85,267.8 2148.55,268.43 2144.98,272.8 2150,275.51 2144.98,278.21 2148.55,282.58 2142.85,283.21 2144.44,288.59 2138.92,287.04 2138.27,292.6 2133.78,289.12 2131,294.01 2128.22,289.12 2123.73,292.6 2123.08,287.04 2117.56,288.59 2119.15,283.21 2113.45,282.58 2117.02,278.21">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2155.5" y="298.51">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="2302.5" y="237.5">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2321.5" y="253.5">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2367.5" y="299.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2371,322.51 2375.89,319.8 2372.41,315.43 2377.96,314.8 2376.42,309.43 2381.79,310.97 2382.42,305.42 2386.79,308.9 2389.5,304.01 2392.21,308.9 2396.58,305.42 2397.21,310.97 2402.58,309.43 2401.04,314.8 2406.59,315.43 2403.11,319.8 2408,322.51 2403.11,325.21 2406.59,329.59 2401.04,330.21 2402.58,335.59 2397.21,334.04 2396.58,339.6 2392.21,336.12 2389.5,341.01 2386.79,336.12 2382.42,339.6 2381.79,334.04 2376.42,335.59 2377.96,330.21 2372.41,329.59 2375.89,325.21">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="2229.5,298.51" data-target-out="1,0.01" data-target-pt="2302.14,299.4" id=auto>
+            <path class="connector-shaft" d="M2229.5 298.17 2301.46 299.06 2301.45 299.72 2229.5 298.84ZM2289.7 292.29 2302.14 299.4 2289.53 306.2C2289.37 306.29 2289.17 306.23 2289.08 306.07 2289 305.9 2289.06 305.7 2289.22 305.62L2301.3 299.1 2301.29 299.68 2289.37 292.86C2289.21 292.77 2289.16 292.57 2289.25 292.41 2289.34 292.25 2289.54 292.19 2289.7 292.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="2089.5" y="387.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2109.5" y="450.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2155.5" y="403.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2160,427.51 2164.89,424.8 2161.41,420.43 2166.96,419.8 2165.42,414.43 2170.79,415.97 2171.42,410.42 2175.79,413.9 2178.5,409.01 2181.21,413.9 2185.58,410.42 2186.21,415.97 2191.58,414.43 2190.04,419.8 2195.59,420.43 2192.11,424.8 2197,427.51 2192.11,430.22 2195.59,434.59 2190.04,435.22 2191.58,440.59 2186.21,439.05 2185.58,444.6 2181.21,441.12 2178.5,446.01 2175.79,441.12 2171.42,444.6 2170.79,439.05 2165.42,440.59 2166.96,435.22 2161.41,434.59 2164.89,430.22">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="2301.5" y="388.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2324.5" y="447.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2328,470.51 2332.89,467.8 2329.41,463.43 2334.96,462.8 2333.42,457.43 2338.79,458.97 2339.42,453.42 2343.79,456.9 2346.5,452.01 2349.21,456.9 2353.58,453.42 2354.21,458.97 2359.58,457.43 2358.04,462.8 2363.59,463.43 2360.11,467.8 2365,470.51 2360.11,473.22 2363.59,477.59 2358.04,478.22 2359.58,483.59 2354.21,482.05 2353.58,487.6 2349.21,484.12 2346.5,489.01 2343.79,484.12 2339.42,487.6 2338.79,482.05 2333.42,483.59 2334.96,478.22 2329.41,477.59 2332.89,473.22">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2370.5" y="400.51">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="2229.5,449.51" data-target-out="1,0.01" data-target-pt="2302.14,450.4" id=auto>
+            <path class="connector-shaft" d="M2229.5 449.18 2301.46 450.06 2301.45 450.73 2229.5 449.84ZM2289.7 443.29 2302.14 450.4 2289.53 457.2C2289.37 457.29 2289.17 457.23 2289.08 457.07 2289 456.91 2289.06 456.71 2289.22 456.62L2301.3 450.1 2301.29 450.68 2289.37 443.87C2289.21 443.78 2289.16 443.57 2289.25 443.41 2289.34 443.25 2289.54 443.2 2289.7 443.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="125" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1690.5" y="544.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1709.5" y="561.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1755.5" y="607.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1758.5,630.01 1763.66,627.16 1759.98,622.55 1765.84,621.89 1764.21,616.22 1769.87,617.85 1770.54,612 1775.15,615.67 1778,610.51 1780.85,615.67 1785.46,612 1786.13,617.85 1791.79,616.22 1790.16,621.89 1796.02,622.55 1792.34,627.16 1797.5,630.01 1792.34,632.87 1796.02,637.48 1790.16,638.14 1791.79,643.8 1786.13,642.17 1785.46,648.03 1780.85,644.36 1778,649.51 1775.15,644.36 1770.54,648.03 1769.87,642.17 1764.21,643.8 1765.84,638.14 1759.98,637.48 1763.66,632.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1902.5" y="545.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1922.5" y="562.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1925.5,586.01 1930.66,583.16 1926.98,578.55 1932.84,577.89 1931.21,572.22 1936.87,573.85 1937.54,568 1942.15,571.67 1945,566.51 1947.85,571.67 1952.46,568 1953.13,573.85 1958.79,572.22 1957.16,577.89 1963.02,578.55 1959.34,583.16 1964.5,586.01 1959.34,588.87 1963.02,593.48 1957.16,594.14 1958.79,599.8 1953.13,598.17 1952.46,604.03 1947.85,600.36 1945,605.51 1942.15,600.36 1937.54,604.03 1936.87,598.17 1931.21,599.8 1932.84,594.14 1926.98,593.48 1930.66,588.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1967.5" y="608.51">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1830.5,606.51" data-target-out="1,0.01" data-target-pt="1903.14,607.4" id=auto>
+            <path class="connector-shaft" d="M1830.5 606.18 1902.46 607.06 1902.45 607.73 1830.5 606.85ZM1890.7 600.29 1903.14 607.4 1890.53 614.21C1890.37 614.3 1890.17 614.24 1890.08 614.07 1889.99 613.91 1890.06 613.71 1890.22 613.62L1902.3 607.1 1902.29 607.68 1890.37 600.87C1890.21 600.78 1890.16 600.58 1890.25 600.41 1890.34 600.26 1890.55 600.2 1890.7 600.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="125" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="1690.5" y="695.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1709.5" y="758.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1714.5,782.02 1719.66,779.16 1715.98,774.55 1721.84,773.89 1720.21,768.23 1725.87,769.86 1726.54,764 1731.15,767.67 1734,762.52 1736.85,767.67 1741.46,764 1742.13,769.86 1747.79,768.23 1746.16,773.89 1752.02,774.55 1748.34,779.16 1753.5,782.02 1748.34,784.87 1752.02,789.48 1746.16,790.14 1747.79,795.8 1742.13,794.18 1741.46,800.03 1736.85,796.36 1734,801.52 1731.15,796.36 1726.54,800.03 1725.87,794.18 1720.21,795.8 1721.84,790.14 1715.98,789.48 1719.66,784.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1755.5" y="712.51">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="125" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="1902.5" y="696.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1925.5" y="755.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1971.5" y="709.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1974.5,733.01 1979.66,730.16 1975.98,725.55 1981.84,724.89 1980.21,719.23 1985.87,720.86 1986.54,715 1991.15,718.67 1994,713.51 1996.85,718.67 2001.46,715 2002.13,720.86 2007.79,719.23 2006.16,724.89 2012.02,725.55 2008.34,730.16 2013.5,733.01 2008.34,735.87 2012.02,740.48 2006.16,741.14 2007.79,746.8 2002.13,745.18 2001.46,751.03 1996.85,747.36 1994,752.52 1991.15,747.36 1986.54,751.03 1985.87,745.18 1980.21,746.8 1981.84,741.14 1975.98,740.48 1979.66,735.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="1829.5,758.51" data-target-out="1,0.01" data-target-pt="1902.14,759.41" id=auto>
+            <path class="connector-shaft" d="M1829.5 758.18 1901.46 759.07 1901.45 759.73 1829.5 758.85ZM1889.7 752.29 1902.14 759.41 1889.53 766.21C1889.37 766.3 1889.17 766.24 1889.08 766.08 1888.99 765.91 1889.06 765.71 1889.22 765.63L1901.3 759.11 1901.29 759.69 1889.37 752.87C1889.21 752.78 1889.16 752.58 1889.25 752.42 1889.34 752.26 1889.55 752.2 1889.7 752.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="2091.5" y="545.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2110.5" y="561.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2114.5,586.01 2119.66,583.16 2115.98,578.55 2121.84,577.89 2120.21,572.22 2125.87,573.85 2126.54,568 2131.15,571.67 2134,566.51 2136.85,571.67 2141.46,568 2142.13,573.85 2147.79,572.22 2146.16,577.89 2152.02,578.55 2148.34,583.16 2153.5,586.01 2148.34,588.87 2152.02,593.48 2146.16,594.14 2147.79,599.8 2142.13,598.17 2141.46,604.03 2136.85,600.36 2134,605.51 2131.15,600.36 2126.54,604.03 2125.87,598.17 2120.21,599.8 2121.84,594.14 2115.98,593.48 2119.66,588.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2156.5" y="607.51">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="140" x="2303.5" y="546.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2322.5" y="562.51">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2368.5" y="608.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2372.5,632.01 2377.66,629.16 2373.98,624.55 2379.84,623.89 2378.21,618.22 2383.87,619.85 2384.54,614 2389.15,617.67 2392,612.51 2394.85,617.67 2399.46,614 2400.13,619.85 2405.79,618.22 2404.16,623.89 2410.02,624.55 2406.34,629.16 2411.5,632.01 2406.34,634.87 2410.02,639.48 2404.16,640.14 2405.79,645.8 2400.13,644.17 2399.46,650.03 2394.85,646.36 2392,651.51 2389.15,646.36 2384.54,650.03 2383.87,644.17 2378.21,645.8 2379.84,640.14 2373.98,639.48 2377.66,634.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="2231.5,607.51" data-target-out="1,0.01" data-target-pt="2304.14,608.4" id=auto>
+            <path class="connector-shaft" d="M2231.5 607.18 2303.46 608.06 2303.45 608.73 2231.5 607.85ZM2291.7 601.29 2304.14 608.4 2291.53 615.21C2291.37 615.3 2291.17 615.24 2291.08 615.07 2291 614.91 2291.06 614.71 2291.22 614.62L2303.3 608.1 2303.29 608.68 2291.37 601.87C2291.21 601.78 2291.16 601.58 2291.25 601.42 2291.34 601.26 2291.54 601.2 2291.7 601.29Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="2091.5" y="696.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2110.5" y="759.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2156.5" y="712.51">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2160.5,736.52 2165.66,733.74 2161.98,729.24 2167.84,728.6 2166.21,723.08 2171.87,724.67 2172.54,718.96 2177.15,722.54 2180,717.51 2182.85,722.54 2187.46,718.96 2188.13,724.67 2193.79,723.08 2192.16,728.6 2198.02,729.24 2194.34,733.74 2199.5,736.52 2194.34,739.3 2198.02,743.79 2192.16,744.43 2193.79,749.95 2188.13,748.36 2187.46,754.07 2182.85,750.49 2180,755.52 2177.15,750.49 2172.54,754.07 2171.87,748.36 2166.21,749.95 2167.84,744.43 2161.98,743.79 2165.66,739.3" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="124" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="139" x="2303.5" y="697.51">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2326.5" y="756.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2329.5,779.02 2334.66,776.16 2330.98,771.55 2336.84,770.89 2335.21,765.23 2340.87,766.86 2341.54,761 2346.15,764.67 2349,759.52 2351.85,764.67 2356.46,761 2357.13,766.86 2362.79,765.23 2361.16,770.89 2367.02,771.55 2363.34,776.16 2368.5,779.02 2363.34,781.87 2367.02,786.48 2361.16,787.14 2362.79,792.8 2357.13,791.18 2356.46,797.03 2351.85,793.36 2349,798.52 2346.15,793.36 2341.54,797.03 2340.87,791.18 2335.21,792.8 2336.84,787.14 2330.98,786.48 2334.66,781.87" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2371.5" y="709.51">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,-0.01" data-origin-pt="2230.5,758.51" data-target-out="1,0.01" data-target-pt="2303.14,759.41" id=auto>
+            <path class="connector-shaft" d="M2230.5 758.18 2302.46 759.07 2302.45 759.73 2230.5 758.85ZM2290.7 752.29 2303.14 759.41 2290.53 766.21C2290.37 766.3 2290.17 766.24 2290.08 766.08 2290 765.91 2290.06 765.71 2290.22 765.63L2302.3 759.11 2302.29 759.69 2290.37 752.87C2290.21 752.78 2290.16 752.58 2290.25 752.42 2290.34 752.26 2290.54 752.2 2290.7 752.29Z" fill="#C00000" id=auto>
+          <g class="text-wrapper" data-string="LU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1851.21" y="291"> "LU"
+          <g class="text-wrapper" data-string="RU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1853.73" y="441"> "RU"
+          <g class="text-wrapper" data-string="RD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2251.26" y="290"> "RD"
+          <g class="text-wrapper" data-string="LD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2252.7" y="442"> "LD"
+          <g class="text-wrapper" data-string="LU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1854.81" y="603"> "LU"
+          <g class="text-wrapper" data-string="RU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1857.33" y="752"> "RU"
+          <g class="text-wrapper" data-string="RD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2254.86" y="601"> "RD"
+          <g class="text-wrapper" data-string="LD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2256.3" y="754"> "LD"
+      <g class="text-wrapper" data-string="MOVES - KING_JUMP (:MoveSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1661.32" y="939"> "MOVES"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1727.46" y="939"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1738.13" y="939"> "KING_JUMP (:MoveSpec)"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="844.02" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="859" x="1661.5" y="948.52">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1709.5" y="990.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1817.5" y="1002.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1771.5" y="1048.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1779.5,1086.52 1795.5,1059.52 1811.5,1086.52" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1725.5" y="1094.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1730,1117.52 1734.89,1114.82 1731.41,1110.44 1736.96,1109.81…(501 chars, sha1 e711c5f8f4)">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1875.5,1074.01" data-target-out="1,-0.01" data-target-pt="1911.94,1073.52" id=auto>
+            <path class="connector-shaft" d="M1875.5,1074.34 L1911.26,1073.86 L1911.25,1073.19 L1875.5,1073.68 Z M1899.51,1080.65 L1911.94,1073.52 L1899.32,1066.73 C1899.16,1066.64 1898.96,1066.7 1898.87,1066.86 C1898.78,1067.03 1898.84,1067.23 1899.01,1067.32 L1911.1,1073.82 L1911.09,1073.24 L1899.18,1080.07 C1899.02,1080.16 1898.96,1080.36 1899.05,1080.52 C1899.15,1080.68 1899.35,1080.74 1899.51,1080.65 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1911.5" y="990.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2019.5" y="1002.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2023,1026.52 2028.02,1023.81 2024.45,1019.44 2030.15,1018.81 2028.56,1013.44 2034.08,1014.98 2034.73,1009.43 2039.22,1012.91 2042,1008.02 2044.78,1012.91 2049.27,1009.43 2049.92,1014.98 2055.44,1013.44 2053.85,1018.81 2059.55,1019.44 2055.98,1023.81 2061,1026.52 2055.98,1029.23 2059.55,1033.6 2053.85,1034.23 2055.44,1039.6 2049.92,1038.06 2049.27,1043.61 2044.78,1040.13 2042,1045.02 2039.22,1040.13 2034.73,1043.61 2034.08,1038.06 2028.56,1039.6 2030.15,1034.23 2024.45,1033.6 2028.02,1029.23">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1973.5" y="1048.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1927.5" y="1093.52">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1710.5" y="1178.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1725.5" y="1194.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1730,1218.03 1735.02,1215.25 1731.45,1210.75 1737.15,1210.11 1735.56,1204.59 1741.08,1206.18 1741.73,1200.47 1746.22,1204.05 1749,1199.03 1751.78,1204.05 1756.27,1200.47 1756.92,1206.18 1762.44,1204.59 1760.85,1210.11 1766.55,1210.75 1762.98,1215.25 1768,1218.03 1762.98,1220.81 1766.55,1225.3 1760.85,1225.94 1762.44,1231.46 1756.92,1229.87 1756.27,1235.58 1751.78,1232 1749,1237.03 1746.22,1232 1741.73,1235.58 1741.08,1229.87 1735.56,1231.46 1737.15,1225.94 1731.45,1225.3 1735.02,1220.81">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1771.5" y="1240.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1778.5,1274.53 1794.5,1246.53 1810.5,1274.53" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1816.5" y="1286.53">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="167" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1912.5" y="1177.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1923.5" y="1190.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1969.5" y="1236.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2015.5" y="1282.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2022,1307.53 2026.89,1304.82 2023.41,1300.45 2028.96,1299.82…(503 chars, sha1 ab2b95f383)">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1876.5,1261.02" data-target-out="1,-0.01" data-target-pt="1912.94,1260.53" id=auto>
+            <path class="connector-shaft" d="M1876.5,1261.35 L1912.26,1260.87 L1912.25,1260.2 L1876.5,1260.69 Z M1900.51,1267.66 L1912.94,1260.53 L1900.32,1253.74 C1900.16,1253.65 1899.96,1253.71 1899.87,1253.87 C1899.78,1254.04 1899.84,1254.24 1900.01,1254.33 L1912.1,1260.83 L1912.09,1260.25 L1900.18,1267.08 C1900.02,1267.17 1899.96,1267.37 1900.05,1267.53 C1900.15,1267.69 1900.35,1267.75 1900.51,1267.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="2110.5" y="989.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2218.5" y="1001.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2172.5" y="1046.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2180,1083.02 2196.5,1055.02 2213,1083.02">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2126.5" y="1092.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2129.5,1117.02 2134.52,1114.17 2130.95,1109.56 2136.65,1108.…(505 chars, sha1 aee281d131)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="2276.5,1072.01" data-target-out="1,-0.01" data-target-pt="2312.94,1071.52" id=auto>
+            <path class="connector-shaft" d="M2276.5,1072.34 L2312.26,1071.86 L2312.25,1071.19 L2276.5,1071.68 Z M2300.51,1078.65 L2312.94,1071.52 L2300.32,1064.73 C2300.16,1064.64 2299.96,1064.7 2299.87,1064.86 C2299.78,1065.03 2299.84,1065.23 2300.01,1065.32 L2312.1,1071.82 L2312.09,1071.24 L2300.18,1078.07 C2300.02,1078.16 2299.96,1078.36 2300.05,1078.52 C2300.15,1078.68 2300.35,1078.74 2300.51,1078.65 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="2312.5" y="988.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2419.5" y="1000.52">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2423.5,1024.02 2428.66,1021.17 2424.98,1016.56 2430.84,1015.…(501 chars, sha1 89b73c5180)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2374.5" y="1046.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2328.5" y="1092.52">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="2111.5" y="1176.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2126.5" y="1193.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2130.5,1214.03 2135.66,1211.17 2131.98,1206.56 2137.84,1205.…(501 chars, sha1 a4e28ca7f6)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2171.5" y="1238.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2179,1277.03 2195.5,1249.03 2212,1277.03">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2217.5" y="1284.53">
+                <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="2313.5" y="1176.52">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2324.5" y="1188.52">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2370.5" y="1234.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2416.5" y="1280.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2419.5,1304.53 2424.66,1301.75 2420.98,1297.26 2426.84,1296.61 2425.21,1291.09 2430.87,1292.68 2431.54,1286.97 2436.15,1290.55 2439,1285.53 2441.85,1290.55 2446.46,1286.97 2447.13,1292.68 2452.79,1291.09 2451.16,1296.61 2457.02,1297.26 2453.34,1301.75 2458.5,1304.53 2453.34,1307.31 2457.02,1311.8 2451.16,1312.44 2452.79,1317.96 2447.13,1316.38 2446.46,1322.08 2441.85,1318.5 2439,1323.53 2436.15,1318.5 2431.54,1322.08 2430.87,1316.38 2425.21,1317.96 2426.84,1312.44 2420.98,1311.8 2424.66,1307.31" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="2277.5,1260.02" data-target-out="1,-0.01" data-target-pt="2313.94,1259.53" id=auto>
+            <path class="connector-shaft" d="M2277.5,1260.35 L2313.26,1259.87 L2313.25,1259.2 L2277.5,1259.69 Z M2301.51,1266.66 L2313.94,1259.53 L2301.32,1252.74 C2301.16,1252.65 2300.96,1252.71 2300.87,1252.87 C2300.78,1253.04 2300.84,1253.24 2301.01,1253.33 L2313.1,1259.83 L2313.09,1259.25 L2301.18,1266.08 C2301.02,1266.17 2300.96,1266.37 2301.05,1266.53 C2301.15,1266.69 2301.35,1266.75 2301.51,1266.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="166" x="1707.5" y="1387.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1814.5" y="1399.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1820,1422.03 1824.89,1419.25 1821.41,1414.76 1826.96,1414.11…(501 chars, sha1 7fff135a52)">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1769.5" y="1445.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1777.5,1483.53 1793.5,1455.53 1809.5,1483.53" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1723.5" y="1491.53">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1873.5,1471.02" data-target-out="1,-0.01" data-target-pt="1909.94,1470.53" id=auto>
+            <path class="connector-shaft" d="M1873.5,1471.35 L1909.26,1470.87 L1909.25,1470.2 L1873.5,1470.69 Z M1897.51,1477.66 L1909.94,1470.53 L1897.32,1463.74 C1897.16,1463.65 1896.96,1463.71 1896.87,1463.87 C1896.78,1464.04 1896.84,1464.24 1897.01,1464.33 L1909.1,1470.83 L1909.09,1470.25 L1897.18,1477.08 C1897.02,1477.17 1896.96,1477.37 1897.05,1477.53 C1897.15,1477.69 1897.35,1477.75 1897.51,1477.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="167" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="1909.5" y="1386.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2016.5" y="1399.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1970.5" y="1444.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="1925.5" y="1490.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1928,1513.53 1932.89,1510.82 1929.41,1506.45 1934.96,1505.82…(503 chars, sha1 fc194fb846)">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="1708.5" y="1575.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1722.5" y="1591.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1768.5" y="1637.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="1775.5,1671.54 1792,1643.53 1808.5,1671.54" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1814.5" y="1683.54">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1818,1706.54 1823.02,1703.83 1819.45,1699.46 1825.15,1698.83 1823.56,1693.45 1829.08,1695 1829.73,1689.44 1834.22,1692.93 1837,1688.04 1839.78,1692.93 1844.27,1689.44 1844.92,1695 1850.44,1693.45 1848.85,1698.83 1854.55,1699.46 1850.98,1703.83 1856,1706.54 1850.98,1709.24 1854.55,1713.62 1848.85,1714.24 1850.44,1719.62 1844.92,1718.07 1844.27,1723.63 1839.78,1720.14 1837,1725.04 1834.22,1720.14 1829.73,1723.63 1829.08,1718.07 1823.56,1719.62 1825.15,1714.24 1819.45,1713.62 1823.02,1709.24">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="1910.5" y="1574.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1921.5" y="1587.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="1923,1611.53 1927.89,1608.83 1924.41,1604.45 1929.96,1603.83 1928.42,1598.45 1933.79,1600 1934.42,1594.44 1938.79,1597.93 1941.5,1593.03 1944.21,1597.93 1948.58,1594.44 1949.21,1600 1954.58,1598.45 1953.04,1603.83 1958.59,1604.45 1955.11,1608.83 1960,1611.53 1955.11,1614.24 1958.59,1618.61 1953.04,1619.24 1954.58,1624.62 1949.21,1623.07 1948.58,1628.63 1944.21,1625.14 1941.5,1630.03 1938.79,1625.14 1934.42,1628.63 1933.79,1623.07 1928.42,1624.62 1929.96,1619.24 1924.41,1618.61 1927.89,1614.24">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="1967.5" y="1633.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2013.5" y="1679.54">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="1873.5,1658.03" data-target-out="1,-0.01" data-target-pt="1909.94,1657.54" id=auto>
+            <path class="connector-shaft" d="M1873.5,1658.36 L1909.26,1657.88 L1909.25,1657.21 L1873.5,1657.7 Z M1897.51,1664.67 L1909.94,1657.54 L1897.32,1650.75 C1897.16,1650.66 1896.96,1650.72 1896.87,1650.88 C1896.78,1651.05 1896.84,1651.25 1897.01,1651.34 L1909.1,1657.84 L1909.09,1657.26 L1897.18,1664.09 C1897.02,1664.18 1896.96,1664.38 1897.05,1664.54 C1897.15,1664.7 1897.35,1664.76 1897.51,1664.67 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="2108.5" y="1385.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2215.5" y="1397.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2218.5,1421.03 2223.66,1418.18 2219.98,1413.57 2225.84,1412.…(501 chars, sha1 30d41d65ca)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2169.5" y="1443.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2178,1480.03 2194,1452.03 2210,1480.03">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="45" x="2124.5" y="1489.53">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="2273.5,1469.02" data-target-out="1,-0.01" data-target-pt="2309.94,1468.53" id=auto>
+            <path class="connector-shaft" d="M2273.5,1469.35 L2309.26,1468.87 L2309.25,1468.2 L2273.5,1468.69 Z M2297.51,1475.66 L2309.94,1468.53 L2297.32,1461.74 C2297.16,1461.65 2296.96,1461.71 2296.87,1461.87 C2296.78,1462.04 2296.84,1462.24 2297.01,1462.33 L2309.1,1468.83 L2309.09,1468.25 L2297.18,1475.08 C2297.02,1475.17 2296.96,1475.37 2297.05,1475.53 C2297.15,1475.69 2297.35,1475.75 2297.51,1475.66 Z" fill="#C00000" id=auto>
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="2310.5" y="1385.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2417.5" y="1397.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2371.5" y="1443.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="45" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2325.5" y="1489.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2329.5,1512.03 2334.66,1509.18 2330.98,1504.57 2336.84,1503.…(503 chars, sha1 b8c911c11a)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="166" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="2109.5" y="1573.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2123.5" y="1589.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2169.5" y="1635.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#262626" fill-rule="evenodd" id=auto points="2177,1674.04 2193,1646.03 2209,1674.04">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2215.5" y="1681.54">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2218.5,1704.54 2223.66,1701.76 2219.98,1697.26 2225.84,1696.…(501 chars, sha1 f7d4040b55)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="167" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="165" x="2311.5" y="1572.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2322.5" y="1585.53">
+                <g class="shape-interior">
+                  <g class="boundary-wrapper">
+                    <polygon class="boundary-shape" fill="#F2F2F2" fill-rule="evenodd" id=auto points="2325.5,1609.03 2330.52,1606.18 2326.95,1601.57 2332.65,1600.…(505 chars, sha1 119ca113d3)" stroke="#262626" stroke-miterlimit="8" stroke-width="1.33">
+                    <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2368.5" y="1631.53">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <rect class="boundary-shape" fill="#7F6000" height="46" id=auto stroke="#7F6000" stroke-miterlimit="8" stroke-width="1.33" width="46" x="2414.5" y="1677.54">
+                <g class="shape-interior">
+          <g class="connector-wrapper" data-origin-out="-1,0.01" data-origin-pt="2274.5,1657.03" data-target-out="1,-0.01" data-target-pt="2310.94,1656.54" id=auto>
+            <path class="connector-shaft" d="M2274.5,1657.36 L2310.26,1656.88 L2310.25,1656.21 L2274.5,1656.7 Z M2298.51,1663.67 L2310.94,1656.54 L2298.32,1649.75 C2298.16,1649.66 2297.96,1649.72 2297.87,1649.88 C2297.78,1650.05 2297.84,1650.25 2298.01,1650.34 L2310.1,1656.84 L2310.09,1656.26 L2298.18,1663.09 C2298.02,1663.18 2297.96,1663.38 2298.05,1663.54 C2298.15,1663.7 2298.35,1663.76 2298.51,1663.67 Z" fill="#C00000" id=auto>
+          <g class="text-wrapper" data-string="RU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1884.66" y="1059"> "RU"
+          <g class="text-wrapper" data-string="RD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1885.02" y="1246"> "RD"
+          <g class="text-wrapper" data-string="LD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1880.52" y="1452"> "LD"
+          <g class="text-wrapper" data-string="LU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="1881.42" y="1642"> "LU"
+          <g class="text-wrapper" data-string="RU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2285.25" y="1063"> "RU"
+          <g class="text-wrapper" data-string="RD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2285.61" y="1251"> "RD"
+          <g class="text-wrapper" data-string="LD" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2281.11" y="1457"> "LD"
+          <g class="text-wrapper" data-string="LU" id=auto>
+            <text fill="#C00000" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="15" font-weight="400" x="2282.01" y="1647"> "LU"
+      <g class="text-wrapper is-multiline" data-string="Definitions of possible combinations of moves [OPTIONAL]\n• Depending on the variation of the game, different moves can happen in a single round. It can be\nsingle REGULAR move, a sequence of any number REGULAR_JUMP moves, sequence of any number\nof single particular KING moves (they can go arbitrary distance but not change direction). We can\nlabel the arrows to distinguish what exactly moves are legal.\n• For example, in some variants, kings can land only immediately after piece they jump over. This\nmeans that the valid sequence is – using a regex - like notation:\n((KING[RU]* KING_JUMP[RU]) | (KING[RD]* KING_JUMP[RD]) | …)*\n• In other variants, king can land at any later piece, i.e.:\n((KING[RU]* KING_JUMP[RU] KING[RU]*) | … )*\n• We can define this using a state machine that defines the possible moves as in COMBINATIONS\n(this is bonus, but I suspect this will already work : - ))" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1661.04" y="1885"> "Definitions of possible combinations of moves [OPTIONAL]"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="1661.04" y="1917"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="1917"> "Depending on the variation of the game, different moves can happen in a single round. It can be"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="1941"> "single REGULAR move, a sequence of any number REGULAR_JUMP moves, sequence of any number"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="1965"> "of single particular KING moves (they can go arbitrary distance but not change direction). We can"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="1989"> "label the arrows to distinguish what exactly moves are legal."
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="1661.04" y="2021"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2021"> "For example, in some variants, kings can land only immediately after piece they jump over. This"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2045"> "means that the valid sequence is"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1944.79" y="2045"> "–"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1959.29" y="2045"> "using a regex"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="2064.91" y="2045"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="2071.08" y="2045"> "like notation:"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2069"> "((KING[RU]* KING_JUMP[RU]) | (KING[RD]* KING_JUMP[RD]) | …)*"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="1661.04" y="2101"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2101"> "In other variants, king can land at any later piece, i.e.:"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2125"> "((KING[RU]* KING_JUMP[RU] KING[RU]*) | … )*"
+        <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="1661.04" y="2157"> "•"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2157"> "We"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1706.84" y="2157"> "can"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1739.68" y="2157"> "define"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1795.85" y="2157"> "this"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1830.02" y="2157"> "using a state machine that defines the possible moves as in COMBINATIONS"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1675.24" y="2181"> "(this is bonus, but I suspect this will already work :"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="2081.84" y="2181"> "-"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="2088" y="2181"> "))"
+      <g class="boundary-wrapper">
+        <rect class="boundary-shape" fill="none" height="570.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="845" x="744.5" y="1584.53">
+        <g class="shape-interior">
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="322.01" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="552" x="788.5" y="1634.53">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="880" cy="1797.54" fill="#385723" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+              <g class="text-wrapper" data-string="KING[RU]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="908.32" y="1720"> "KING[RU]*"
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="999" cy="1729.54" fill="#70AD47" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="1140" cy="1729.54" fill="#70AD47" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+                <g class="shape-interior">
+              <g class="connector-wrapper" data-origin-out="0,1" data-origin-pt="871,1788.71" data-target-out="1,0" data-target-pt="986.2,1729.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="870.17,1788.71 870.17,1728.2 974.2,1728.2 974.2,1729.87 871,1729.87 871.83,1729.04 871.83,1788.71">
+                <polygon class="connector-head" fill="#385723" id=auto points="972.87,1725.04 986.2,1729.04 972.87,1733.04">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1011,1729.04" data-target-out="1,0" data-target-pt="1127.48,1729.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1011,1728.2 1070.07,1728.2 1070.07,1729.04 1069.24,1728.2 1115.48,1728.2 1115.48,1729.87 1068.41,1729.87 1068.41,1729.04 1069.24,1729.87 1011,1729.87">
+                <polygon class="connector-head" fill="#385723" id=auto points="1114.15,1725.04 1127.48,1729.04 1114.15,1733.04">
+              <g class="text-wrapper" data-string="KING_JUMP[RU]" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1020.95" y="1720"> "KING_JUMP[RU]"
+              <g class="text-wrapper" data-string="KING[RU]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1168.04" y="1718"> "KING[RU]*"
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1152.19,1729.04" data-target-out="1,0" data-target-pt="868,1797.36" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1152.19,1729.87 1233.82,1729.87 1233.82,1695.2 843.17,1695.2 843.17,1798.19 856,1798.19 856,1796.52 844,1796.52 844.84,1797.36 844.84,1696.03 844,1696.87 1232.99,1696.87 1232.15,1696.03 1232.15,1729.04 1232.99,1728.21 1152.19,1728.21">
+                <polygon class="connector-head" fill="#385723" id=auto points="854.67,1801.36 868,1797.36 854.67,1793.36">
+              <g class="text-wrapper" data-string="KING[RD]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="909.55" y="1763"> "KING[RD]*"
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="1000" cy="1773.04" fill="#70AD47" fill-rule="evenodd" id=auto r="12">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="1141" cy="1773.04" fill="#70AD47" fill-rule="evenodd" id=auto r="12">
+                <g class="shape-interior">
+              <g class="connector-wrapper" data-origin-out="0,1" data-origin-pt="889,1789.01" data-target-out="1,0" data-target-pt="988.14,1773.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="888.17,1789.01 888.17,1772.2 976.14,1772.2 976.14,1773.87 889,1773.87 889.83,1773.04 889.83,1789.01">
+                <polygon class="connector-head" fill="#385723" id=auto points="974.8,1769.04 988.14,1773.04 974.8,1777.04">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1012,1773.04" data-target-out="1,0" data-target-pt="1128.48,1773.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1012,1772.2 1071.07,1772.2 1071.07,1773.04 1070.24,1772.2 1116.48,1772.2 1116.48,1773.87 1069.41,1773.87 1069.41,1773.04 1070.24,1773.87 1012,1773.87">
+                <polygon class="connector-head" fill="#385723" id=auto points="1115.15,1769.04 1128.48,1773.04 1115.15,1777.04">
+              <g class="text-wrapper" data-string="KING_JUMP[RD]" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1022.18" y="1763"> "KING_JUMP[RD]"
+              <g class="text-wrapper" data-string="KING[RD]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1195.42" y="1767"> "KING[RD]*"
+              <g class="text-wrapper" data-string="KING[LU]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="907.7" y="1810"> "KING[LU]*"
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="998" cy="1820.04" fill="#70AD47" fill-rule="evenodd" id=auto r="12">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="1139" cy="1820.04" fill="#70AD47" fill-rule="evenodd" id=auto r="12">
+                <g class="shape-interior">
+              <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="889,1806.04" data-target-out="1,0" data-target-pt="986.29,1819.55" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="888.17,1806.04 888.17,1820.38 974.29,1820.38 974.29,1818.72 889,1818.72 889.83,1819.55 889.83,1806.04">
+                <polygon class="connector-head" fill="#385723" id=auto points="972.96,1823.55 986.29,1819.55 972.96,1815.55">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1010,1820.04" data-target-out="1,0" data-target-pt="1126.48,1820.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1010,1819.2 1069.07,1819.2 1069.07,1820.04 1068.24,1819.2 1114.48,1819.2 1114.48,1820.87 1067.41,1820.87 1067.41,1820.04 1068.24,1820.87 1010,1820.87">
+                <polygon class="connector-head" fill="#385723" id=auto points="1113.15,1816.04 1126.48,1820.04 1113.15,1824.04">
+              <g class="text-wrapper" data-string="KING_JUMP[LU]" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1020.33" y="1810"> "KING_JUMP[LU]"
+              <g class="text-wrapper" data-string="KING[LU]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1199.88" y="1813"> "KING[LU]*"
+              <g class="text-wrapper" data-string="KING[LD]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="908.93" y="1854"> "KING[LD]*"
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="999.5" cy="1863.54" fill="#70AD47" fill-rule="evenodd" id=auto r="12.5">
+                <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <circle class="boundary-shape" cx="1140.5" cy="1863.54" fill="#70AD47" fill-rule="evenodd" id=auto r="12.5">
+                <g class="shape-interior">
+              <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="871,1806.04" data-target-out="1,0" data-target-pt="986.82,1863.25" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="870.17,1806.04 870.17,1864.08 974.82,1864.08 974.82,1862.41 871,1862.41 871.83,1863.25 871.83,1806.04">
+                <polygon class="connector-head" fill="#385723" id=auto points="973.48,1867.25 986.82,1863.25 973.48,1859.25">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1012,1864.04" data-target-out="1,0" data-target-pt="1128.48,1864.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1012,1863.21 1071.07,1863.21 1071.07,1864.04 1070.24,1863.21 1116.48,1863.21 1116.48,1864.87 1069.41,1864.87 1069.41,1864.04 1070.24,1864.87 1012,1864.87">
+                <polygon class="connector-head" fill="#385723" id=auto points="1115.15,1860.04 1128.48,1864.04 1115.15,1868.04">
+              <g class="text-wrapper" data-string="KING_JUMP[LD]" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1021.56" y="1854"> "KING_JUMP[LD]"
+              <g class="text-wrapper" data-string="KING[LD]*" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1166.41" y="1883"> "KING[LD]*"
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1153.42,1773.04" data-target-out="1,0" data-target-pt="868,1797.66" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1153.42,1773.87 1294.55,1773.87 1294.55,1675.43 830.55,1675.43 830.55,1798.49 856,1798.49 856,1796.83 831.38,1796.83 832.21,1797.66 832.21,1676.26 831.38,1677.1 1293.72,1677.1 1292.89,1676.26 1292.89,1773.04 1293.72,1772.21 1153.42,1772.21">
+                <polygon class="connector-head" fill="#385723" id=auto points="854.67,1801.66 868,1797.66 854.67,1793.66">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1151.57,1820.19" data-target-out="1,0" data-target-pt="868,1798.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1151.57,1819.36 1298.11,1819.36 1298.11,1925.36 830.99,1925.36 830.99,1797.2 856,1797.2 856,1798.87 831.83,1798.87 832.66,1798.04 832.66,1924.53 831.83,1923.7 1297.28,1923.7 1296.45,1924.53 1296.45,1820.2 1297.28,1821.03 1151.57,1821.03">
+                <polygon class="connector-head" fill="#385723" id=auto points="854.66,1794.04 868,1798.04 854.66,1802.04">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1152.8,1863.89" data-target-out="1,0" data-target-pt="868,1798.04" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1152.8,1863.06 1230.83,1863.06 1230.83,1898.51 843.16,1898.51 843.16,1797.2 856,1797.2 856,1798.87 844,1798.87 844.83,1798.04 844.83,1897.68 844,1896.85 1229.99,1896.85 1229.16,1897.68 1229.16,1863.89 1229.99,1864.73 1152.8,1864.73">
+                <polygon class="connector-head" fill="#385723" id=auto points="854.66,1794.04 868,1798.04 854.66,1802.04">
+          <g class="boundary-wrapper">
+            <ellipse class="boundary-shape" cx="1405.5" cy="1673.04" fill="#385723" fill-rule="evenodd" id=auto rx="12.5" ry="12.01">
+          <g class="text-wrapper" data-string="Initial / final state" id=auto>
+            <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1424.83" y="1678"> "Initial / final state"
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="99" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="216" x="786.5" y="2001.54">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="846" cy="2051.54" fill="#385723" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="945" cy="2051.54" fill="#70AD47" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+                <g class="shape-interior">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="858,2052.05" data-target-out="1,0" data-target-pt="932.49,2052.11" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="858,2051.21 896.08,2051.21 896.08,2052.11 895.25,2051.28 920.49,2051.28 920.49,2052.95 894.41,2052.95 894.41,2052.04 895.25,2052.88 858,2052.88">
+                <polygon class="connector-head" fill="#385723" id=auto points="919.16,2048.11 932.49,2052.11 919.16,2056.11">
+              <g class="text-wrapper" data-string="REGULAR" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="869.31" y="2032"> "REGULAR"
+          <g class="boundary-wrapper">
+            <rect class="boundary-shape" fill="none" height="109" id=auto stroke="#172C51" stroke-miterlimit="8" stroke-width="1.33" width="291" x="1050.5" y="2004.54">
+            <g class="shape-interior">
+              <g class="boundary-wrapper">
+                <ellipse class="boundary-shape" cx="1111" cy="2047.54" fill="#385723" fill-rule="evenodd" id=auto rx="12" ry="12.5">
+              <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="1123.46,2048.04" data-target-out="1,0" data-target-pt="1099,2049.37" id=auto>
+                <polygon class="connector-shaft" fill="#385723" id=auto points="1123.46,2048.87 1287.2,2048.87 1286.37,2048.04 1286.37,2084.27 1287.2,2083.44 1075,2083.44 1075.83,2084.27 1075.83,2049.37 1075,2050.21 1087,2050.21 1087,2048.54 1074.16,2048.54 1074.16,2085.1 1288.03,2085.1 1288.03,2047.21 1123.46,2047.21">
+                <polygon class="connector-head" fill="#385723" id=auto points="1085.66,2053.37 1099,2049.37 1085.66,2045.37">
+              <g class="text-wrapper" data-string="REGULAR_JUMP" id=auto>
+                <text fill="#385723" font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="13.34" font-weight="400" x="1144.18" y="2040"> "REGULAR_JUMP"
+      <g class="text-wrapper" data-string="COMBINATIONS (:CombosSpec)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="748.67" y="1569"> "COMBINATIONS (:CombosSpec)"
+  <g id="nil">

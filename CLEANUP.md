@@ -185,6 +185,7 @@ One quick call per file:
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
 | `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. The first road also claims markers of both colours, leaving the second with none **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
 | `g encloses:` and the ID-box target use `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
+| The Mathcha and Affinity importers delete "useless empty `<g>`s", including the `<g id="nil">` placeholder `init()` has just created; PowerPoint keeps it **[confirmed]** | create the placeholder after the importer runs, or exempt it | high |
 | `learnEditor` falls back to MathchaVocab for unknown documents, so `init()` on a page with no drawing (empty-console) throws **[confirmed]** | fail with a clear message, or do nothing, when no editor is recognised | high |
 
 ### 16. Misleading comments
@@ -224,9 +225,9 @@ Each step is one small commit (or a few) on its own branch. You read the summary
    - `boxGraph-example.svg`: BoxGraphOM. This should expose the fire 4 names bug.
 
    Results are serialised with DOM references replaced by ids.
-3. **Normalisation snapshots**: the serialised DOM after `init()`, one fixture per editor (Mathcha, Affinity, PowerPoint). Caches are excluded or sorted until fire 3 is decided.
-4. **Generated-file check**: `compile-jstalk` output matches the committed `.js`. I checked this by hand; the harness makes it permanent.
-5. One command, e.g. `./run-tests`, written into AGENTS.md "Testing".
+3. **Normalisation snapshots** (**done**; `specs/normalisation.spec.js`): the serialised DOM after `init()`, one fixture per editor (Mathcha, Affinity, PowerPoint). Until fire 3 is decided, caches stay in, but auto-ids are blanked, attributes sorted and long decimals rounded, so diffs stay about meaning.
+4. **Generated-file check** (**done**; `specs/generated.spec.js`): every `.jstalk.js` is listed in `compile-jstalk`, and its committed `.js` matches the transpiler's output.
+5. One command (**done**): `cd tests && npm test`, documented in AGENTS.md "Testing".
 
 **Phase 2: your decisions, hottest first.** Fires 1–5, then 6–8, one per sitting. For each, I'd draft two or three concrete options with consequences, so you only have to choose. Each choice is recorded under "Decisions" in PRINCIPLES.md.
 

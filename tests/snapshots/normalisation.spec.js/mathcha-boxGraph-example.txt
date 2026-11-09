@@ -1,0 +1,86 @@
+## canonical forms
+  boundary-shape: 4
+  boundary-wrapper: 4
+  connector-shaft: 3
+  connector-wrapper: 3
+  is-multiline: 1
+  shape-interior: 4
+  text-wrapper: 8
+
+## elements by tag
+  g: 41
+  line: 3
+  path: 3
+  rect: 4
+  script: 6
+  svg: 1
+  text: 9
+
+## tree
+<svg data-normalized="true" height="301.33" style="         width:300px;         height:300px;         background: #FFF;         fill: none; " width="678.33" x="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" y="0">
+  <script href="./utils.js">
+  <script href="./bracket-hole-carving.js">
+  <script href="./lang-sweettalk.js">
+  <script href="./lang-descartes.js">
+  <script href="./main-engine.js">
+  <script href="./omnimeta.js">
+  <g class="shapes-region" style="stroke: black; fill: none;">
+    <g class="boundary-wrapper">
+      <rect class="boundary-shape" height="80" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="90" x="30" y="40">
+      <g class="shape-interior">
+        <g class="text-wrapper" data-string="foo" id=auto>
+          <g>
+            <g>
+              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="81.67" y="69.83"> "foo"
+    <g class="boundary-wrapper">
+      <rect class="boundary-shape" height="80" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="90" x="170" y="40">
+      <g class="shape-interior">
+        <g class="text-wrapper" data-string="baz" id=auto>
+          <g>
+            <g>
+              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="193.67" y="89.83"> "baz"
+    <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="110,78" data-target-out="1,0" data-target-pt="170,78" id=auto>
+      <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="110" x2="168" y1="78" y2="78">
+      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1,1.22e-16,-1.22e-16,-1,170,78)">
+        <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
+    <g class="boundary-wrapper">
+      <rect class="boundary-shape" height="80" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="90" x="30" y="170">
+      <g class="shape-interior">
+        <g class="is-multiline text-wrapper" data-string="sample\ntext" id=auto>
+          <g>
+            <g>
+              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="51.67" y="190.83"> "sample"
+          <g>
+            <g>
+              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="51.67" y="211.83"> "text"
+    <g class="boundary-wrapper">
+      <rect class="boundary-shape" height="80" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="90" x="170" y="170">
+      <g class="shape-interior">
+    <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="50,110" data-target-out="0,1" data-target-pt="50,170" id=auto>
+      <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="50" x2="50" y1="110" y2="168">
+      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,50,170)">
+        <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
+    <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="230,100" data-target-out="0,1" data-target-pt="230,170" id=auto>
+      <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="230" x2="230" y1="100" y2="168">
+      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,230,170)">
+        <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
+  <g class="text-wrapper" data-string="bar" id=auto>
+    <g>
+      <g>
+        <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="56.67" y="129.83"> "bar"
+  <g class="text-wrapper" data-string="A" id=auto>
+    <g>
+      <g>
+        <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="31.67" y="21.83"> "A"
+  <g class="text-wrapper" data-string="B" id=auto>
+    <g>
+      <g>
+        <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="171.67" y="21.83"> "B"
+  <g class="text-wrapper" data-string="C" id=auto>
+    <g>
+      <g>
+        <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="101.67" y="151.83"> "C"
+  <g class="text-wrapper" data-string="D" id=auto>
+    <g>
+      <g>
+        <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="247.67" y="151.83"> "D"
