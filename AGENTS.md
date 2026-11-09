@@ -8,6 +8,7 @@ Augmented Diagrams / Vector Vision Engine (VVE): SVG diagrams drawn in ordinary 
 - For anything non-trivial, propose a plan first and wait for approval. Flag any plan step that touches a hard requirement (below) or changes architecture.
 - Keep ARCHITECTURE.md current as part of every change that alters structure. It is how future sessions (and Joel) recover the map.
 - Run the regression suite before declaring a task done (see Testing). There is none yet; until there is, say so when reporting, and list exactly what Joel should check by hand in Firefox.
+- Commit only when Joel asks. Agents' commits are authored by Claude: `git commit --author="Claude <noreply@anthropic.com>"`. Joel stays the committer, so GitHub shows "Claude authored and Joel committed".
 - Prose: concise, British spelling. Code: American spelling.
 - Text docs (Markdown, notes): never hard-wrap lines. Joel reads in variable-width windows, so each paragraph or list item is one long line that the viewer soft-wraps. Line breaks are only for structure (headings, list items, table rows, blank lines between paragraphs) and inside code blocks, where formatting matters.
 
