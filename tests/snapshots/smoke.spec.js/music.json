@@ -1,0 +1,17 @@
+{
+  "file": "music.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./general-containment.js",
+      "exists": false
+    }
+  ],
+  "init": {
+    "defined": false
+  },
+  "events": []
+}

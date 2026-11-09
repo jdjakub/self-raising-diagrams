@@ -1,0 +1,42 @@
+{
+  "file": "empty-console.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./bracket-hole-carving.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-sweettalk.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-descartes.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    },
+    {
+      "href": "./omnimeta.js",
+      "exists": true
+    },
+    {
+      "href": "./probe.js",
+      "exists": false
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": false,
+    "threw": {
+      "error": "TypeError",
+      "message": "can't access property \"nextElementSibling\", diagramSvg is null"
+    }
+  },
+  "events": []
+}

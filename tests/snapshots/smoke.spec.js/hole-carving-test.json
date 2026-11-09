@@ -1,0 +1,42 @@
+{
+  "file": "hole-carving-test.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./bracket-hole-carving.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-sweettalk.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-descartes.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": false,
+    "threw": [
+      "[object]",
+      " didn't understand: ",
+      [
+        "init"
+      ],
+      [
+        [
+          "init"
+        ]
+      ]
+    ]
+  },
+  "events": []
+}

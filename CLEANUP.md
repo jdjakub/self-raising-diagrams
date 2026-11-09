@@ -1,6 +1,6 @@
 # CLEANUP.md
 
-Inventory of fires: stale claims, legacy/new conflicts, broken files and dead code. These come from a static read of the code at `a12ce7e`. Nothing has been run in Firefox, so the first job of the test harness is to confirm or refute every **[inferred]** item. Section numbers (§) refer to ARCHITECTURE.md.
+Inventory of fires: stale claims, legacy/new conflicts, broken files and dead code. These come from a static read of the code at `a12ce7e`, checked against the harness's smoke test (stage 1; results in `tests/snapshots/smoke.spec.js/`). Items marked **[confirmed]** or **[refuted]** were checked that way; **[inferred]** items are still unverified. Section numbers (§) refer to ARCHITECTURE.md.
 
 ## How the list is ranked
 Hottest first. A fire is hotter when:
@@ -20,7 +20,7 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 
 ### 1. Magic-red boxes live only in the classic layer, and they're broken
 - **What**: ID boxes (`#name`) and code boxes are steps 6–7 of `init()`, built on classic `EdgeDrivenGraphNotation`/`CodeExecutionNotation`. They look for `.is-paragraph` and `.connection`, which no editor vocabulary produces any more (§4).
-- **Consequence**: `init()` should crash on every diagram with a magic-red box (magic-red-id-test, containment-stress-test, notational-dispatch, solid-physics-test-2) **[inferred, high]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
+- **Consequence**: `init()` crashes in the ID-box step on notational-dispatch (`querySelector(...) is null`) **[confirmed]**. The other three magic-red demos (magic-red-id-test, containment-stress-test, solid-physics-test-2) crash *earlier*, on fire 12, so this one is masked there and will surface once fire 12 is fixed **[inferred]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
 - **Hard requirement 2**: `removeDone()` *deletes* the used boxes from the document. Saving after `init()` therefore loses diagram content.
 - **Questions for you**:
   - Keep swap-on-clash for ids?
@@ -29,7 +29,7 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - Is the red arrow that picks the compiler (`JS`, `Sucrose`) still the syntax you want?
 - **Prediction**: re-express both box kinds as an OmniMeta notation that `init()` runs, keeping the current semantics. Used boxes get hidden, not removed. The `compileRegion:` compilers stay as they are, but read `text-wrapper`.
 - **Confidence**: medium (that direction); low (the details).
-- **Decision**: JOEL. **Blocks**: 2, 12, retirement of the classic layer, and every Mathcha demo.
+- **Decision**: JOEL. **Blocks**: 2, 13, retirement of the classic layer, and every Mathcha demo.
 
 ### 2. No single way for a diagram to name its notation and start itself
 - **What**: there are five conflicting mechanisms:
@@ -126,7 +126,7 @@ One quick call per file:
 | `id-vanilla.svg` + commented-out ID object model at the end of main-engine | archive the SVG; delete the commented code | low (may be a live idea) |
 | `music.svg` (idea sketch; loads missing `general-containment.js`) | keep as notes, strip scripts | low |
 | `tmp.svg` | delete | medium |
-| `hole-carving-test.svg`, `labelGraph-example.svg` | keep, fix scripts (fire 12), add to harness | medium |
+| `hole-carving-test.svg`, `labelGraph-example.svg` | keep, fix scripts (fire 13), add to harness | medium |
 | `empty-console.svg` | keep, drop the `probe.js` tag | high |
 | notes-only SVGs (`solid-physics-test-2-theory`, `rect-controls-wiring-diagram`, Camille `Extra ideas`) | keep as is | high |
 
@@ -148,9 +148,16 @@ One quick call per file:
 
 ## Smouldering: agent can do it once you approve
 
-### 12. Broken or inconsistent script lists
+### 12. Mathcha arrows with zero or two heads crash normalisation
+- **What**: found by the smoke test, and it's on the OmniMeta side we're keeping. MathchaVocab's `init` asks `MathchaArrow` for each connector's outward `tangents`. That rule demands exactly one arrowhead, while the `endpoints` rule next to it already handles zero and two. A plain line or a double-headed arrow therefore makes `match` return null, and `init()` throws `match(...) is null` **[confirmed]**: magic-red-id-test and containment-stress-test (a double-headed arrow), solid-physics-test-2 (a headless red probe line).
+- **Why it's high in this section**: any Mathcha diagram with a plain line or a double arrow can't be normalised at all. That hides fire 1's own crash, and it keeps those demos out of the harness.
+- **Prediction**: give `tangents` the same three cases as `endpoints`. For zero or two heads, take the outward tangents from the shaft's ends in path order. The canonical form records undirectedness by the absence of a `.connector-head` (one-headed arrows already have one). A small decision is involved: is "origin = first point in the path" acceptable for undirected lines?
+- **Confidence**: high (the fix); medium (the undirected encoding).
+- **Decision**: agent, with a one-line confirmation from you on the encoding.
+
+### 13. Broken or inconsistent script lists
 - **What**:
-  - `labelGraph-example`, `id-vanilla`, `hole-carving-test` and `solid-physics-test` don't load `omnimeta.js`, so `init()` cannot run.
+  - `labelGraph-example`, `id-vanilla`, `hole-carving-test` and `solid-physics-test` (plus `boxGraph-bootstrap`) don't load `omnimeta.js`, so `init()` throws `didn't understand: init` **[confirmed]**.
   - `music`/`svgEdit` load the missing `general-containment.js`.
   - `empty-console` loads the deleted `probe.js`.
   - `prepare` doesn't add the HTML wrapper that issues.txt says is required.
@@ -158,13 +165,13 @@ One quick call per file:
 - **Confidence**: high.
 - **After**: fire 9 (don't fix files that are about to be archived).
 
-### 13. Hard requirement 1 gap: elements without a vtable crash
-- **What**: `send` on `<svg>`, `<defs>`, etc. throws a TypeError, not `doesNotUnderstand:` (§2).
+### 14. Hard requirement 1 gap: elements without a vtable crash
+- **What**: `send` on `<svg>`, `<defs>`, etc. throws a TypeError, not `doesNotUnderstand:` (§2). The smoke test doesn't exercise this, so it's still **[inferred]** (from code, high).
 - **Prediction**: elements with no `byTag` entry fall back to `vtables.domNode`.
 - **Confidence**: high.
 - **Note**: this touches a hard requirement, so it gets a plan first.
 
-### 14. Dead or broken code
+### 15. Dead or broken code
 
 | Item | Prediction | Conf. |
 |---|---|---|
@@ -175,8 +182,10 @@ One quick call per file:
 | `VertexGrammar` (unused) | keep: issues.txt plans rect recognition with it | medium |
 | `ActiveButton`, `TextGraph asJS`, `BoxGraph asJSOG` (classic) | port or drop with the retirement | medium |
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
+| `g encloses:` and the ID-box target use `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
+| `learnEditor` falls back to MathchaVocab for unknown documents, so `init()` on a page with no drawing (empty-console) throws **[confirmed]** | fail with a clear message, or do nothing, when no editor is recognised | high |
 
-### 15. Misleading comments
+### 16. Misleading comments
 - `EditorVocab`: "in every notation's `_parent` chain". It isn't in any.
 - `utils.js`: "CCW" means shoelace-positive, which is clockwise on screen. "Mathcha polygons may need reversing" is wrong (§9).
 - `clip_poly_by_half_plane`: "HACK" on a sign flip that is actually correct.
@@ -185,12 +194,12 @@ One quick call per file:
 
 **Prediction**: correct them all. **Confidence**: high.
 
-### 16. `legible()` convention not followed in old code
+### 17. `legible()` convention not followed in old code
 - **Where**: `drawLLL:to:`, `createControls`, `line vertexAt:put:` and others.
 - **Prediction**: fix whatever survives the retirement. Most of it disappears with the classic layer.
 - **Confidence**: high. Lowest priority.
 
-### 17. issues.txt mixes settled history with live issues
+### 18. issues.txt mixes settled history with live issues
 - **What**: for example, the "annotations on the `<g>` or the shape?" question, which canonical forms have since answered.
 - **Prediction**: leave it; it's your log. At most you mark entries as settled.
 - **Decision**: JOEL, whenever.
@@ -204,7 +213,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 0. *Your approval needed.* Node + Playwright as a **dev-only** dependency in `tests/`. Runtime stays dependency-free, so requirement 5 is unaffected. Caveats:
    - Playwright drives its own patched Firefox build, not your Firefox, so your hand testing stays the ground truth.
    - Installing it needs network access (`npm`, Playwright's browser download), which the sandbox may block.
-1. **Smoke test** every SVG over `file://`. Record script-load errors, whether `init()` throws, and console errors. This turns every [inferred] item here into confirmed or refuted. Broken fixtures are recorded as *known-failing*, so fixing one shows up as a visible change.
+1. **Smoke test** every SVG over `file://` (**done**). Record script-load errors, whether `init()` throws, and console errors. This turns every [inferred] item here into confirmed or refuted. Broken fixtures are recorded as *known-failing*, so fixing one shows up as a visible change.
 2. **Semantic tests for the working OmniMeta notations**:
    - `checkers.svg`: the `testCheckers` assertions, plus a snapshot of `exportJSForApp`.
    - `checkers-turkish.svg`, and both `-normalized` files.
@@ -219,7 +228,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 
 **Phase 2: your decisions, hottest first.** Fires 1–5, then 6–8, one per sitting. For each, I'd draft two or three concrete options with consequences, so you only have to choose. Each choice is recorded under "Decisions" in PRINCIPLES.md.
 
-**Phase 3: safe mechanical cleanup**, harness green after each step: fires 14, 15, 13 (after its plan), 12 (after fire 9's triage), 16.
+**Phase 3: safe mechanical cleanup**, harness green after each step: fires 12, 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17.
 
 **Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
 

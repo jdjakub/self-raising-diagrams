@@ -1,0 +1,34 @@
+{
+  "file": "boxGraph-bootstrap.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./boxGraph-bootstrap.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": false,
+    "threw": [
+      "[object]",
+      " didn't understand: ",
+      [
+        "init"
+      ],
+      [
+        [
+          "init"
+        ]
+      ]
+    ]
+  },
+  "events": []
+}

@@ -1,0 +1,26 @@
+{
+  "file": "containment-stress-test.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    },
+    {
+      "href": "./omnimeta.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": false,
+    "threw": {
+      "error": "TypeError",
+      "message": "can't access property Symbol.iterator, match(...) is null"
+    }
+  },
+  "events": []
+}

@@ -1,0 +1,38 @@
+{
+  "file": "solid-physics-test-2.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./bracket-hole-carving.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-sweettalk.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-descartes.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    },
+    {
+      "href": "./omnimeta.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": false,
+    "threw": {
+      "error": "TypeError",
+      "message": "can't access property Symbol.iterator, match(...) is null"
+    }
+  },
+  "events": []
+}

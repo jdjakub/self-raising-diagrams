@@ -1,0 +1,12 @@
+{
+  "name": "vve-regression-tests",
+  "private": true,
+  "description": "Regression harness for VVE diagrams. Dev-only: nothing at runtime depends on this.",
+  "scripts": {
+    "test": "playwright test",
+    "update-snapshots": "playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}

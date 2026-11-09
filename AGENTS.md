@@ -46,4 +46,10 @@ Augmented Diagrams / Vector Vision Engine (VVE): SVG diagrams drawn in ordinary 
 - `issues.txt`: Joel's own issue/idea log. `README.md` is stale (describes `old-approaches`); don't trust it as current.
 
 ## Testing
-TODO: headless snapshot harness (Playwright + Firefox over `file://`): load each example SVG, run its pipeline, serialise the resulting document, diff against committed snapshots. Firefox rendering is the ground truth; screenshots can supplement snapshot diffs for visual cases.
+Regression harness in `tests/` (Playwright + Firefox over `file://`; dev-only, nothing at runtime depends on it). Web standards are the ground truth, not a particular browser (PRINCIPLES.md Decisions 2).
+- Run: `cd tests && npm test`. It compares each fixture's results with the snapshots committed in `tests/snapshots/`.
+- After an intended change: `npm run update-snapshots`, then show Joel the snapshot diff in behavioural terms and let him approve it before committing. Never update snapshots just to make a failure go away.
+- Fixtures are listed in `tests/fixtures.js`. A snapshot records what currently happens, including known failures, so fixing a broken fixture shows up as a snapshot change.
+- Needs Node 20 or newer, installed via nvm. The system Node (18) is too old. If `node --version` shows 18 in your shell, prefix commands with `. ~/.nvm/nvm.sh && nvm use default &&`.
+- First-time setup needs network access, which the agent sandbox lacks, so Joel runs it in an ordinary terminal: `cd tests && npm install && npx playwright install firefox`.
+- Stages: smoke (every SVG loads; does `init()` run?), then notation results, then normalised-DOM snapshots (in progress; see CLEANUP.md "Order of work").

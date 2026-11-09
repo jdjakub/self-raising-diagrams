@@ -64,7 +64,9 @@ The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It
 
 Other PRINCIPLES.md entries: **connector attachment** = `path connections` (writes `data-connects`/`-connectors`), `GraphNotation-Edge connections`, OmniMeta `GraphObject connectionsOf:`/`elementAt:matching:`. **Arrowhead direction** = `HeadShaftArrow` + `AbstractArrowShaft orientWith:` (the shaft end nearer the head tip is the target). **Stringification** = vocab `init` (`data-string`). **Magic red** = steps 6–7.
 
-**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). Steps 6–7, `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS`/`Sucrose` compilers still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. `idSetterBoxes` calls `.querySelector('.is-paragraph').dataset` on every magic-red rect, so `init()` should throw a TypeError on any diagram with one (magic-red-id-test, containment-stress-test, notational-dispatch, solid-physics-test-2) **[inferred, high confidence]**. The classic `isDirected` is always false for the same reason. OmniMeta notations are unaffected.
+**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). Steps 6–7, `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS`/`Sucrose` compilers still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. `idSetterBoxes` calls `.querySelector('.is-paragraph').dataset` on every magic-red rect, so `init()` throws a TypeError on a diagram with one (confirmed on notational-dispatch by the smoke test). The classic `isDirected` is always false for the same reason. The OmniMeta notations are unaffected by this.
+
+**Step 3 also has a bug on the OmniMeta side**: MathchaVocab asks `MathchaArrow` for `tangents`, which only handles one-headed arrows. A plain line or double-headed arrow makes `init()` throw `match(...) is null` (confirmed: magic-red-id-test, containment-stress-test, solid-physics-test-2). CLEANUP.md fire 12.
 
 ## 5. Two notation layers
 **Decision (Joel):** the classic layer is being retired in favour of OmniMeta, and canonical forms are to be used everywhere. Until it is gone, both exist:
@@ -157,3 +159,11 @@ All three are `NotationGrammar` subclasses, loaded as the last `<script>` of the
 
 ## 11. Document vs JS state (hard requirement 2)
 The DOM mixes, unmarked: geometry-derivable caches (`data-origin-pt` etc., `data-string`, `data-connects`/`-connectors`/`origin`/`target`, auto ids, LLL lines); meaningful state (ids set by `#` boxes); and pipeline progress (`data-normalized`). JS-only properties on elements: `pieceName`, `zone`, `js_func`, `_connections`, and the animation's `animState`/`timerId`/ `activeAnim`. The last three change what the user sees but are never written back, so a reload resets the animation **[inferred]**.
+
+## 12. Regression harness (`tests/`)
+Playwright driving its own Firefox build over `file://`. It is dev-only: no SVG loads anything from `tests/`, and runtime stays dependency-free. Commands and the snapshot-approval rule are in AGENTS.md "Testing".
+- `fixtures.js`: every tracked SVG outside `old-approaches/`, each with a note on what it is or why it fails.
+- `lib.js`: shared helpers (open a fixture, record errors, turn page values into JSON, scrub machine paths).
+- `specs/smoke.spec.js` (stage 1): for every fixture, records its `<script href>` references and whether each file exists, any page or console errors, and whether `init()` exists and what it returned or threw.
+- `snapshots/<spec>/<fixture>.json`: committed results. A failing fixture's snapshot records the failure, so a fix shows up as a snapshot diff.
+- Stages 2 (notation results) and 3 (normalised DOM) are still to come (CLEANUP.md "Order of work").

@@ -1,0 +1,21 @@
+{
+  "file": "svgEdit.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./general-containment.js",
+      "exists": false
+    },
+    {
+      "href": "./svgEdit.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": false
+  },
+  "events": []
+}

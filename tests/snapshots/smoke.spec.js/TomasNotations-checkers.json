@@ -1,0 +1,39 @@
+{
+  "file": "TomasNotations/checkers.svg",
+  "scripts": [
+    {
+      "href": "../utils.js",
+      "exists": true
+    },
+    {
+      "href": "../bracket-hole-carving.js",
+      "exists": true
+    },
+    {
+      "href": "../lang-sweettalk.js",
+      "exists": true
+    },
+    {
+      "href": "../lang-descartes.js",
+      "exists": true
+    },
+    {
+      "href": "../main-engine.js",
+      "exists": true
+    },
+    {
+      "href": "../omnimeta.js",
+      "exists": true
+    },
+    {
+      "href": "./board-game-notation.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": true,
+    "returned": 457
+  },
+  "events": []
+}

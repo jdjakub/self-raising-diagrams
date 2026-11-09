@@ -43,6 +43,7 @@ Every object, including raw DOM elements, can be sent Smalltalk-style messages f
 Resolutions of conflicts between competing implementations. Newest last.
 
 1. **Retire the classic notation layer in favour of OmniMeta; use the canonical forms everywhere.** The classic notations in `main-engine` (GraphNotation, Labeller, BoxGraph, TextGraph, DefaultMetaNotation, CodeExecutionNotation and friends) are superseded by OmniMeta grammars. All code reads and writes the canonical DOM forms (`boundary-wrapper`, `connector-wrapper`, `text-wrapper`) rather than any editor's own encoding or the older classes (`is-paragraph`, `arrow-line`, `composite-shape`, `connection`).
+2. **Web standards, not a particular browser, are the ground truth.** Firefox is the main browser for hand testing and for the regression harness (Playwright's Firefox). If results differ between browsers or browser versions, the project is relying on something it shouldn't: non-standard behaviour (fix it to follow the standard), the installed fonts, or exact values from geometry functions that standards let vary (compare with tolerance instead). Each such difference is a fire to fix, never a reason to pin a browser.
 
 ## Long-term direction
 Distil chunks of the engine itself into diagrammatic rewrite rules and compile those back down, so that the system is increasingly expressed in its own notations. Architecture comes first; this is a direction, not a current task.
