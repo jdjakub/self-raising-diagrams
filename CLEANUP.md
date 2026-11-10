@@ -21,15 +21,10 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 ### 1. Magic-red boxes live only in the classic layer, and they're broken
 - **What**: ID boxes (`#name`) and code boxes are steps 6–7 of `init()`, built on classic `EdgeDrivenGraphNotation`/`CodeExecutionNotation`. They look for `.is-paragraph` and `.connection`, which no editor vocabulary produces any more (§4).
 - **Consequence**: `init()` crashes in the ID-box step on notational-dispatch (`querySelector(...) is null`) **[confirmed]**. The other three magic-red demos (magic-red-id-test, containment-stress-test, solid-physics-test-2) crash *earlier*, on fire 12, so this one is masked there and will surface once fire 12 is fixed **[inferred]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
-- **Hard requirement 2**: `removeDone()` *deletes* the used boxes from the document. Saving after `init()` therefore loses diagram content.
-- **Questions for you**:
-  - Keep swap-on-clash for ids?
-  - Keep "ID boxes run before code boxes"?
-  - Should used boxes be removed, or kept and hidden?
-  - Is the red arrow that picks the compiler (`JS`, `Sucrose`) still the syntax you want?
-- **Prediction**: re-express both box kinds as an OmniMeta notation that `init()` runs, keeping the current semantics. Used boxes get hidden, not removed. The `compileRegion:` compilers stay as they are, but read `text-wrapper`.
-- **Confidence**: medium (that direction); low (the details).
-- **Decision**: JOEL. **Blocks**: 2, 13, retirement of the classic layer, and every Mathcha demo.
+- **Current behaviour that differs from the decision**: `removeDone()` deletes used ID boxes, but runs before the code boxes, so code boxes are marked `.done` and never removed. Ids clash by swapping, so two boxes claiming one name resolve silently by document order. Code boxes run in document order and pick a compiler by a red arrow to a language name.
+- **Decided** (PRINCIPLES.md Decision 3): re-express both box kinds in OmniMeta. Containment or a red probe line names the target (probe wins); ambiguous or missing targets and clashing boxes are reported errors; a drawn name beats any undrawn id; code boxes always go through Sucrose (no shebang = plain JS) in reading order; both kinds are deleted after running, as setup scaffolding.
+- **Next**: fire 12 first, so the three masked demos reach the red boxes and the harness records fire 1's real crash. Then a plan (architecture change, needs approval) for an OmniMeta notation that `init()` runs.
+- **Decision**: made. **Blocks**: 2, 13, retirement of the classic layer, and every Mathcha demo.
 
 ### 2. No single way for a diagram to name its notation and start itself
 - **What**: there are five conflicting mechanisms:
@@ -50,7 +45,7 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 - **What**:
   - Derivable caches (`data-origin-pt`, `data-string`, `data-connects`, auto ids, the magenta labelling lines) sit in the DOM unmarked, next to meaning (ids set by `#` boxes).
   - Caches go stale: `vupd` and the drag handles move geometry without updating `data-*-pt`.
-  - `init()` deletes content (fire 1). `exposeGeometryControls` rewraps elements in a `<g>` (its own comment warns "will break lots of stuff").
+  - `init()` deletes the used red boxes; that is now deliberate (Decision 3: red boxes are setup scaffolding, scoped exception to requirement 2). `exposeGeometryControls` rewraps elements in a `<g>` (its own comment warns "will break lots of stuff").
   - Animation state (`animState` etc.) changes what you see but lives only in JS (§11).
 - **Why it's hot**: the harness must choose what to snapshot. If a serialised DOM is full of caches, every harmless change shows up as noise.
 - **Prediction**:
