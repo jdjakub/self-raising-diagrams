@@ -1015,8 +1015,20 @@ vtables.NotationGrammar = {
   // and its target against `to` by endpoint hit-test. Endpoints are REFERENCED,
   // not claimed: several edges may share a vertex, and `to` is typically
   // unscannable. Returns [{ edge, from, to }].
+  // Only DIRECTED connectors can be `via` edges: a symmetric one (no heads, or
+  // two) has no origin or target, so it doesn't match and is left for other
+  // rules (PRINCIPLES Decision 4). A self-claiming `via` thunk must check this
+  // itself. (The wrapper loses `via`'s Sel pre-filter; the rule still runs it.)
   ['BiGraphFrom:via:to:']: (self, fromRule, viaRule, toRule) => {
-    const edges = ⟦self many: () => ⟦self applyClaiming: viaRule⟧⟧;
+    const directedVia = (m) => {
+      const v = ⟦m applyRule: viaRule⟧;
+      ⟦m pred: !m.cursor.dict.matches('.connector-wrapper.is-symmetric')⟧;
+      return v;
+    };
+    const claimVia = (typeof viaRule === 'function')
+      ? () => viaRule(self)
+      : () => ⟦self claimMatching: directedVia⟧;
+    const edges = ⟦self many: claimVia⟧;
     return edges.map(e => {
       const [op, tp] = ⟦e endpoints⟧;
       return { edge: e,
@@ -1220,6 +1232,29 @@ vtables.HeadShaftArrow = {
     ⟦s orientWith: h⟧;
     return [ ⟦s outwardTangentAtOrigin⟧, ⟦s outwardTangentAtTarget⟧ ];
   },
+
+  // arrow heads = head*   => every arrowhead, in no meaningful order
+  ['heads']: (self) => ⟦self many: () => ⟦self apply: 'head'⟧⟧,
+
+  // The two ends of a connector with nothing to break its symmetry (PRINCIPLES
+  // Decision 4). The order of the pair is meaningless; never treat the first as
+  // an origin.
+  // arrow symmetricEnds = head:h1 head:h2 ~head  => ends at the tips, outs along the heads
+  //                     | ~head shaft:s          => the shaft's own two ends
+  ['symmetricEnds']: (self) => ⟦self or: [
+    () => {
+      const h1 = ⟦self apply: 'head'⟧;
+      const h2 = ⟦self apply: 'head'⟧;
+      ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+      return { ends: [h1.tip, h2.tip], outs: [vnormed(h1.fwd), vnormed(h2.fwd)] };
+    },
+    () => {
+      ⟦self not: () => ⟦self apply: 'head'⟧⟧;
+      const s = ⟦self apply: 'shaft'⟧;
+      return { ends: [⟦s endpointAt: 0⟧, ⟦s endpointAt: 1⟧],
+               outs: [⟦s outwardTangentAt: 0⟧, ⟦s outwardTangentAt: 1⟧] };
+    },
+  ]⟧,
 };
 
 // ── MathchaArrow: the adapter ────────────────────────────────────────────────
@@ -1471,17 +1506,23 @@ vtables.MathchaVocab = {
     all('g.arrow-line').forEach(g => {
       g.classList.remove('arrow-line');
       g.classList.add('connector-wrapper');
-      const [originPt, targetPt] = match(vtables.MathchaArrow, g, 'endpoints');
-      g.dataset.originPt = legible(...originPt);
-      g.dataset.targetPt = legible(...targetPt);
-      const [originTangent, targetTangent] = match(vtables.MathchaArrow, g, 'tangents');
-      g.dataset.originOut = legible(...originTangent);
-      g.dataset.targetOut = legible(...targetTangent);
-      const head = g.querySelector('g');
-      if (head) {
-        //⟦head bakeStyles⟧;
-        // TODO: connector-head
+      // Capture every query before mutating (hard requirement 3)
+      const heads = match(vtables.MathchaArrow, g, 'heads');
+      if (heads.length === 1) { // Directed: the head breaks the symmetry
+        const [originPt, targetPt] = match(vtables.MathchaArrow, g, 'endpoints');
+        const [originTangent, targetTangent] = match(vtables.MathchaArrow, g, 'tangents');
+        g.dataset.originPt = legible(...originPt);
+        g.dataset.targetPt = legible(...targetPt);
+        g.dataset.originOut = legible(...originTangent);
+        g.dataset.targetOut = legible(...targetTangent);
+      } else { // No heads, or two: symmetric (PRINCIPLES Decision 4)
+        const sym = match(vtables.MathchaArrow, g, 'symmetricEnds');
+        if (!sym) throw ['Unrecognised Mathcha connector ('+heads.length+' heads):', g];
+        g.classList.add('is-symmetric');
+        g.dataset.endPts  = sym.ends.map(p => legible(...p)).join(' ');
+        g.dataset.endOuts = sym.outs.map(v => legible(...v)).join(' ');
       }
+      heads.forEach(h => h.elt.classList.add('connector-head'));
     });
     all('.connection.real').forEach(e => {
       e.classList.remove('connection');

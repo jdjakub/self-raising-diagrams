@@ -718,7 +718,24 @@ vtables.byTag['g'] = {
   ['string']: (self) => self.dataset.string,
   ['boundaryShape']: (self) => self.querySelector('.boundary-shape'),
   ['interior']: (self) => self.querySelector('.shape-interior'),
-  ['endpoints']: (self) => props(self.dataset, 'originPt', 'targetPt').map(atov),
+  // [origin, target] of a directed connector (exactly one arrowhead).
+  // A symmetric connector (no heads, or two) has no origin or target, so this
+  // refuses rather than guessing (PRINCIPLES Decision 4); ask it for `ends`.
+  ['endpoints']: (self) => {
+    if (self.matches('.is-symmetric'))
+      throw ['Symmetric connector has no origin or target; use ends:', self];
+    return props(self.dataset, 'originPt', 'targetPt').map(atov);
+  },
+  // Is this a connector with nothing to break its symmetry (no heads, or two)?
+  ['isSymmetric']: (self) => self.matches('.connector-wrapper.is-symmetric'),
+  // Any connector's two ends. The order of the pair carries no meaning.
+  ['ends']: (self) => send(self, 'isSymmetric')
+    ? self.dataset.endPts.split(' ').map(atov)
+    : props(self.dataset, 'originPt', 'targetPt').map(atov),
+  // The outward direction at each end, in the same order as `ends`.
+  ['endOuts']: (self) => send(self, 'isSymmetric')
+    ? self.dataset.endOuts.split(' ').map(atov)
+    : props(self.dataset, 'originOut', 'targetOut').map(atov),
   ['lineSegments']: needsSuper((supr, self) => {
     if (self.matches('.connector-wrapper'))
       return send(self.querySelector('.connector-shaft'), 'lineSegments');
@@ -732,15 +749,10 @@ vtables.byTag['g'] = {
   },
   ['isIncidentOn:']: (self, other) => {
     if (!self.matches('.connector-wrapper')) throw 'Not a connector';
-    const [originPt, originT] = props(self.dataset, 'originPt', 'originOut').map(atov);
-    const [targetPt, targetT] = props(self.dataset, 'targetPt', 'targetOut').map(atov);
-    const closestToOrigin = send(other, 'closestPtToPt:', originPt);
-    const closestToTarget = send(other, 'closestPtToPt:', targetPt);
-    const relOrigin = vsub(closestToOrigin, originPt);
-    const relTarget = vsub(closestToTarget, targetPt);
-    const frontOfOrigin = vdot(relOrigin, originT);
-    const frontOfTarget = vdot(relTarget, targetT);
-    return frontOfOrigin > 0 || frontOfTarget > 0;
+    // Symmetric in the two ends, so it works for both kinds of connector
+    const ends = send(self, 'ends');
+    const outs = send(self, 'endOuts');
+    return ends.some((pt, i) => vdot(vsub(send(other, 'closestPtToPt:', pt), pt), outs[i]) > 0);
   },
 }
 

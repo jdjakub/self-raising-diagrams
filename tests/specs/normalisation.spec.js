@@ -27,8 +27,19 @@ function formatValue(name, value) {
   return JSON.stringify(v);
 }
 
+// A symmetric connector's ends (and their outward directions, kept paired with them)
+// are written in no meaningful order (PRINCIPLES.md Decision 4), so sort them.
+function sortSymmetricEnds(attrs) {
+  const get = (k) => (attrs.find(([n]) => n === k) || [])[1];
+  const pts = get('data-end-pts'), outs = get('data-end-outs');
+  if (!pts || !outs) return attrs;
+  const pairs = pts.split(' ').map((p, i) => [p, outs.split(' ')[i]]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return attrs.map(([k, v]) => [k, k === 'data-end-pts' ? pairs.map((p) => p[0]).join(' ')
+    : k === 'data-end-outs' ? pairs.map((p) => p[1]).join(' ') : v]);
+}
+
 function formatTree(node, depth, out) {
-  const attrs = [...node.attrs].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  const attrs = sortSymmetricEnds([...node.attrs]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, v]) => k + '=' + formatValue(k, v)).join(' ');
   out.push('  '.repeat(depth) + '<' + node.tag + (attrs ? ' ' + attrs : '') + '>'
     + (node.text ? ' ' + JSON.stringify(node.text) : ''));
@@ -41,7 +52,7 @@ function summary(root) {
     tags[n.tag] = (tags[n.tag] || 0) + 1;
     const cls = (n.attrs.find(([k]) => k === 'class') || [, ''])[1].split(/\s+/);
     for (const c of ['boundary-wrapper', 'boundary-shape', 'shape-interior', 'connector-wrapper',
-      'connector-shaft', 'connector-head', 'text-wrapper', 'is-multiline'])
+      'connector-shaft', 'connector-head', 'is-symmetric', 'text-wrapper', 'is-multiline'])
       if (cls.includes(c)) forms[c] = (forms[c] || 0) + 1;
     n.kids.forEach(visit);
   };
@@ -50,15 +61,20 @@ function summary(root) {
   return ['## canonical forms', ...fmt(forms), '', '## elements by tag', ...fmt(tags)];
 }
 
+// magic-red-id-test exercises symmetric connectors (headless probe lines, a double-headed
+// arrow). Its init() still throws later, in the magic-red step (CLEANUP.md fire 1), so its
+// report records that error and the document as it stood when init() stopped.
 for (const [editor, file, snap] of [
   ['Mathcha', 'boxGraph-example.svg', 'mathcha-boxGraph-example.txt'],
+  ['Mathcha', 'magic-red-id-test.svg', 'mathcha-magic-red-id-test.txt'],
   ['Affinity', 'CamilleNotations/Example — animating a stack.svg', 'affinity-animating-a-stack.txt'],
   ['PowerPoint', 'TomasNotations/checkers.svg', 'powerpoint-checkers.txt'],
 ]) {
   test(`normalised DOM (${editor}): ${file}`, async ({ page }) => {
     await openFixture(page, file);
-    const root = await inPage(page, () => {
-      init();
+    const { root, error } = await inPage(page, () => {
+      let error = null;
+      try { init(); } catch (e) { error = (e instanceof Error) ? e.message : String(e); }
       const walk = (e) => ({
         tag: e.tagName,
         attrs: [...e.attributes].map((a) => [a.name, a.value]),
@@ -66,11 +82,12 @@ for (const [editor, file, snap] of [
           .map((n) => n.textContent).join('').trim(), // the element's own text, not its children's
         kids: [...e.children].map(walk),
       });
-      return walk(svg_parent);
+      return { root: walk(svg_parent), error };
     });
     const tree = [];
     formatTree(root, 0, tree);
-    const report = [...summary(root), '', '## tree', ...tree].join('\n');
+    const head = error ? ['## init() threw', '  ' + error, ''] : [];
+    const report = [...head, ...summary(root), '', '## tree', ...tree].join('\n');
     expect(scrub(report) + '\n').toMatchSnapshot(snap);
   });
 }

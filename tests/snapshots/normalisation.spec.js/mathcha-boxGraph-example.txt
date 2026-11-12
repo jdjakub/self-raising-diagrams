@@ -1,6 +1,7 @@
 ## canonical forms
   boundary-shape: 4
   boundary-wrapper: 4
+  connector-head: 3
   connector-shaft: 3
   connector-wrapper: 3
   is-multiline: 1
@@ -41,7 +42,7 @@
               <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="193.67" y="89.83"> "baz"
     <g class="connector-wrapper" data-origin-out="-1,0" data-origin-pt="110,78" data-target-out="1,0" data-target-pt="170,78" id=auto>
       <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="110" x2="168" y1="78" y2="78">
-      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1,1.22e-16,-1.22e-16,-1,170,78)">
+      <g class="connector-head" stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1,1.22e-16,-1.22e-16,-1,170,78)">
         <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
     <g class="boundary-wrapper">
       <rect class="boundary-shape" height="80" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="90" x="30" y="170">
@@ -58,11 +59,11 @@
       <g class="shape-interior">
     <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="50,110" data-target-out="0,1" data-target-pt="50,170" id=auto>
       <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="50" x2="50" y1="110" y2="168">
-      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,50,170)">
+      <g class="connector-head" stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,50,170)">
         <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
     <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="230,100" data-target-out="0,1" data-target-pt="230,170" id=auto>
       <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;" x1="230" x2="230" y1="100" y2="168">
-      <g stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,230,170)">
+      <g class="connector-head" stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,230,170)">
         <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
   <g class="text-wrapper" data-string="bar" id=auto>
     <g>

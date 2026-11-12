@@ -50,11 +50,13 @@ The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It
 2. If `svg[data-normalized]` is set, stop (the file was already normalised).
 3. **Vocab `init`** (omnimeta.js) rewrites the editor's XML into canonical forms:
    - Closed: `g.boundary-wrapper > (.boundary-shape, g.shape-interior)`
-   - Open: `g.connector-wrapper[data-origin-pt, data-target-pt, data-origin-out, data-target-out] > (.connector-shaft, .connector-head?)`
+   - Open, directed (exactly one arrowhead): `g.connector-wrapper[data-origin-pt, data-target-pt, data-origin-out, data-target-out] > (.connector-shaft, .connector-head)`
+   - Open, symmetric (no heads, or two; PRINCIPLES.md Decision 4): `g.connector-wrapper.is-symmetric[data-end-pts, data-end-outs] > (.connector-shaft, .connector-head{0,2})`. Each attribute holds two space-separated `x,y` values, paired by position; their order means nothing. Only Mathcha produces this form: the Affinity and PowerPoint importers recognise one-headed arrows only, and leave plain lines as ordinary shapes.
+   - Reading connectors (`g` vtable): `ends`/`endOuts` answer for either kind, in no meaningful order; `endpoints` (= [origin, target]) refuses on a symmetric connector with a clear error; `isSymmetric`; `isIncidentOn:` treats both ends alike. In OmniMeta, `BiGraphFrom:via:to:` only matches directed connectors as `via` edges, so symmetric ones are left for other rules.
    - Text: `g.text-wrapper[.is-multiline][data-string]`
 
    Per editor:
-   - Mathcha: merges the text sub-SVG and renames `composite-shape`/`arrow-line`/`.connection.real`. Arrow endpoints come from `MathchaArrow`. Text is g/g/g/text runs joined by line.
+   - Mathcha: merges the text sub-SVG and renames `composite-shape`/`arrow-line`/`.connection.real`. `MathchaArrow heads` counts the arrowheads (each marked `.connector-head`); one head gives the directed form via `endpoints`/`tangents`, none or two give the symmetric form via `symmetricEnds` (tips and head directions for two heads, the shaft's own ends for none). Text is g/g/g/text runs joined by line.
    - Affinity: pushes transforms down into the geometry, unwraps groups, and pairs head+shaft paths with `AffinityArrowPath`.
    - PowerPoint: bakes transforms, stitches split `<text>` runs back into paragraphs geometrically, and treats paths with `MAGIC_ARROW_COLORS` fills as arrows (`PowerpointArrowPath`).
 4. `seedElements` → specialise each element up to 10 times → give it an id → record it in global `everything`.
@@ -65,8 +67,6 @@ The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It
 Other PRINCIPLES.md entries: **connector attachment** = `path connections` (writes `data-connects`/`-connectors`), `GraphNotation-Edge connections`, OmniMeta `GraphObject connectionsOf:`/`elementAt:matching:`. **Arrowhead direction** = `HeadShaftArrow` + `AbstractArrowShaft orientWith:` (the shaft end nearer the head tip is the target). **Stringification** = vocab `init` (`data-string`). **Magic red** = steps 6–7.
 
 **[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). Steps 6–7, `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS`/`Sucrose` compilers still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. `idSetterBoxes` calls `.querySelector('.is-paragraph').dataset` on every magic-red rect, so `init()` throws a TypeError on a diagram with one (confirmed on notational-dispatch by the smoke test). The classic `isDirected` is always false for the same reason. The OmniMeta notations are unaffected by this.
-
-**Step 3 also has a bug on the OmniMeta side**: MathchaVocab asks `MathchaArrow` for `tangents`, which only handles one-headed arrows. A plain line or double-headed arrow makes `init()` throw `match(...) is null` (confirmed: magic-red-id-test, containment-stress-test, solid-physics-test-2). CLEANUP.md fire 12.
 
 ## 5. Two notation layers
 **Decision (Joel):** the classic layer is being retired in favour of OmniMeta, and canonical forms are to be used everywhere. Until it is gone, both exist:
@@ -166,6 +166,6 @@ Playwright driving its own Firefox build over `file://`. It is dev-only: no SVG 
 - `specs/smoke.spec.js` (stage 1): for every fixture, records its `<script href>` references and whether each file exists, any page or console errors, and whether `init()` exists and what it returned or threw.
 - `snapshots/<spec>/<fixture>.json`: committed results. A failing fixture's snapshot records the failure, so a fix shows up as a snapshot diff.
 - `specs/notations.spec.js` (stage 2): launches each collaborator notation as a person would in the console and records its result as a readable text report: checkers (all four files, plus the `testCheckers` port against `expected/tomas-checkers.json`), cars, both animation diagrams (with a simulated click-and-wait playback on a fake clock), and BoxGraphOM. Reports avoid auto-ids: elements are described by appearance (`rect @30,40 90x80 fill=...`), and any remaining ids become `#1`, `#2`, ... in order of appearance.
-- `specs/normalisation.spec.js` (stage 3): the whole `<svg>` tree after `init()`, one element per line, for one diagram per editor (Mathcha boxGraph-example, Affinity animating-a-stack, PowerPoint checkers), headed by counts of the canonical forms. Auto-ids show as `id=auto`, attributes are sorted, decimals rounded to 2 places, and values over 500 characters (except paragraph text) shortened to a fingerprint.
+- `specs/normalisation.spec.js` (stage 3): the whole `<svg>` tree after `init()`, one element per line, for one diagram per editor (Mathcha boxGraph-example, Affinity animating-a-stack, PowerPoint checkers), plus Mathcha magic-red-id-test for symmetric connectors (its `init()` still throws at fire 1, so its report starts with that error and shows the document as it stood), headed by counts of the canonical forms. A symmetric connector's ends are sorted, since their written order means nothing. Auto-ids show as `id=auto`, attributes are sorted, decimals rounded to 2 places, and values over 500 characters (except paragraph text) shortened to a fingerprint.
 - `specs/generated.spec.js`: every `.jstalk.js` is listed in `compile-jstalk` and its committed `.js` is exactly the transpiler's output. Runs Perl, no browser.
 - `expected/`: hand-written or extracted expectations, as opposed to generated snapshots (currently Tomas's `testCheckers` strings).

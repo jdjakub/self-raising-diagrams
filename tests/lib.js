@@ -80,6 +80,8 @@ const IN_PAGE_HELPERS = IN_PAGE_DESCRIBE + `
   globalThis.__el = (e) => {
     if (!(e instanceof Element)) return String(e);
     if (e.matches('g.text-wrapper')) return 'text ' + JSON.stringify(e.dataset.string);
+    if (e.matches('g.connector-wrapper.is-symmetric')) // ends in sorted order: their written order means nothing
+      return 'connector ' + (e.dataset.endPts || '?').split(' ').sort().join(' -- ') + ' (symmetric)';
     if (e.matches('g.connector-wrapper'))
       return 'connector ' + (e.dataset.originPt || '?') + ' -> ' + (e.dataset.targetPt || '?');
     const r = Math.round;

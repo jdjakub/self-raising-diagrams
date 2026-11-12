@@ -19,7 +19,7 @@
     "ok": false,
     "threw": {
       "error": "TypeError",
-      "message": "can't access property Symbol.iterator, match(...) is null"
+      "message": "can't access property \"dataset\", send(...).querySelector(...) is null"
     }
   },
   "events": []

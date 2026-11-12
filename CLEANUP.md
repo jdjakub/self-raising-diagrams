@@ -20,10 +20,10 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 
 ### 1. Magic-red boxes live only in the classic layer, and they're broken
 - **What**: ID boxes (`#name`) and code boxes are steps 6–7 of `init()`, built on classic `EdgeDrivenGraphNotation`/`CodeExecutionNotation`. They look for `.is-paragraph` and `.connection`, which no editor vocabulary produces any more (§4).
-- **Consequence**: `init()` crashes in the ID-box step on notational-dispatch (`querySelector(...) is null`) **[confirmed]**. The other three magic-red demos (magic-red-id-test, containment-stress-test, solid-physics-test-2) crash *earlier*, on fire 12, so this one is masked there and will surface once fire 12 is fixed **[inferred]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
+- **Consequence**: `init()` crashes in the ID-box step on notational-dispatch (`querySelector(...) is null`) **[confirmed]**. The other three magic-red demos (magic-red-id-test, containment-stress-test, solid-physics-test-2) crashed *earlier*, on fire 12; with that fixed they now reach the same crash **[confirmed]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
 - **Current behaviour that differs from the decision**: `removeDone()` deletes used ID boxes, but runs before the code boxes, so code boxes are marked `.done` and never removed. Ids clash by swapping, so two boxes claiming one name resolve silently by document order. Code boxes run in document order and pick a compiler by a red arrow to a language name.
 - **Decided** (PRINCIPLES.md Decision 3): re-express both box kinds in OmniMeta. Containment or a red probe line names the target (probe wins); ambiguous or missing targets and clashing boxes are reported errors; a drawn name beats any undrawn id; code boxes always go through Sucrose (no shebang = plain JS) in reading order; both kinds are deleted after running, as setup scaffolding.
-- **Next**: fire 12 first, so the three masked demos reach the red boxes and the harness records fire 1's real crash. Then a plan (architecture change, needs approval) for an OmniMeta notation that `init()` runs.
+- **Next**: fire 12 is done, so all four demos now reach the red boxes. Next is a plan (architecture change, needs approval) for an OmniMeta notation that `init()` runs.
 - **Decision**: made. **Blocks**: 2, 13, retirement of the classic layer, and every Mathcha demo.
 
 ### 2. No single way for a diagram to name its notation and start itself
@@ -145,12 +145,12 @@ One quick call per file:
 
 ## Smouldering: agent can do it once you approve
 
-### 12. Mathcha arrows with zero or two heads crash normalisation
+### 12. Mathcha arrows with zero or two heads crash normalisation (**done**)
 - **What**: found by the smoke test, and it's on the OmniMeta side we're keeping. MathchaVocab's `init` asks `MathchaArrow` for each connector's outward `tangents`. That rule demands exactly one arrowhead, while the `endpoints` rule next to it already handles zero and two. A plain line or a double-headed arrow therefore makes `match` return null, and `init()` throws `match(...) is null` **[confirmed]**: magic-red-id-test and containment-stress-test (a double-headed arrow), solid-physics-test-2 (a headless red probe line).
 - **Why it's high in this section**: any Mathcha diagram with a plain line or a double arrow can't be normalised at all. That hides fire 1's own crash, and it keeps those demos out of the harness.
-- **Prediction**: give `tangents` the same three cases as `endpoints`. For zero or two heads, take the outward tangents from the shaft's ends in path order. The canonical form records undirectedness by the absence of a `.connector-head` (one-headed arrows already have one). A small decision is involved: is "origin = first point in the path" acceptable for undirected lines?
-- **Confidence**: high (the fix); medium (the undirected encoding).
-- **Decision**: agent, with a one-line confirmation from you on the encoding.
+- **Also found**: MathchaVocab never marks a Mathcha arrowhead `.connector-head` (a TODO), so after normalisation a one-headed Mathcha arrow can't be told from a plain line. Affinity and PowerPoint only recognise one-headed arrows; their plain lines aren't connectors at all (out of scope for now).
+- **Decided** (PRINCIPLES.md Decision 4): one-headed arrows keep origin/target unchanged. Connectors with no heads or two get a separate symmetric form, `g.connector-wrapper.is-symmetric` with `data-end-pts` and `data-end-outs`, whose written order is meaningless. Asking a symmetric connector for origin/target fails: a grammar rule that needs a directed arrow doesn't match it, and code outside a parse gets a clear error. Mathcha heads get marked `.connector-head`. The rejected alternative was "origin = first point in the path", a direction invented from hidden file order.
+- **Done**: implemented as decided. The three demos now get past normalisation and stop at fire 1; magic-red-id-test is in the normalisation snapshots (3 headless probe lines and a double-headed arrow come out symmetric).
 
 ### 13. Broken or inconsistent script lists
 - **What**:
@@ -226,7 +226,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 
 **Phase 2: your decisions, hottest first.** Fires 1–5, then 6–8, one per sitting. For each, I'd draft two or three concrete options with consequences, so you only have to choose. Each choice is recorded under "Decisions" in PRINCIPLES.md.
 
-**Phase 3: safe mechanical cleanup**, harness green after each step: fires 12, 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17.
+**Phase 3: safe mechanical cleanup**, harness green after each step: fires 12 (done), 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17.
 
 **Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
 

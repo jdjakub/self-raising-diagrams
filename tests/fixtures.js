@@ -13,11 +13,11 @@ module.exports = [
   { file: 'CamilleNotations/Description of the notation.svg', note: 'Affinity; documentation that loads the engine' },
   { file: 'boxGraph-example.svg', note: 'Mathcha; BoxGraphOM: names never found, connections crash (fire 4)' },
 
-  // Classic-layer demos (currently broken; fires 1, 12, 13)
-  { file: 'magic-red-id-test.svg', note: 'init() throws normalising a double-headed arrow (fire 12); then fire 1' },
-  { file: 'containment-stress-test.svg', note: 'init() throws normalising a double-headed arrow (fire 12); then fire 1' },
+  // Classic-layer demos (currently broken; fires 1, 13)
+  { file: 'magic-red-id-test.svg', note: 'init() throws in the magic-red ID step (fire 1); symmetric connectors (Decision 4)' },
+  { file: 'containment-stress-test.svg', note: 'init() throws in the magic-red ID step (fire 1)' },
   { file: 'notational-dispatch.svg', note: 'init() throws in the magic-red ID step (fire 1); blue meta-notation (fire 2)' },
-  { file: 'solid-physics-test-2.svg', note: 'init() throws normalising a headless line (fire 12); then fires 1, 6' },
+  { file: 'solid-physics-test-2.svg', note: 'init() throws in the magic-red ID step (fire 1); then fire 6' },
   { file: 'solid-physics-test.svg', note: 'no omnimeta.js (fire 13)' },
   { file: 'hole-carving-test.svg', note: 'no omnimeta.js (fire 13)' },
   { file: 'labelGraph-example.svg', note: 'no omnimeta.js (fire 13)' },
