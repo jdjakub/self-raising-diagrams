@@ -18,13 +18,16 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 
 ## Burning: needs your judgement
 
-### 1. Magic-red boxes live only in the classic layer, and they're broken
-- **What**: ID boxes (`#name`) and code boxes are steps 6–7 of `init()`, built on classic `EdgeDrivenGraphNotation`/`CodeExecutionNotation`. They look for `.is-paragraph` and `.connection`, which no editor vocabulary produces any more (§4).
-- **Consequence**: `init()` crashes in the ID-box step on notational-dispatch (`querySelector(...) is null`) **[confirmed]**. The other three magic-red demos (magic-red-id-test, containment-stress-test, solid-physics-test-2) crashed *earlier*, on fire 12; with that fixed they now reach the same crash **[confirmed]**. This is the backdoor described in `principles/6`, and the classic layer can't be retired until it has an OmniMeta replacement.
-- **Current behaviour that differs from the decision**: `removeDone()` deletes used ID boxes, but runs before the code boxes, so code boxes are marked `.done` and never removed. Ids clash by swapping, so two boxes claiming one name resolve silently by document order. Code boxes run in document order and pick a compiler by a red arrow to a language name.
-- **Decided** (PRINCIPLES.md Decision 3): re-express both box kinds in OmniMeta. Containment or a red probe line names the target (probe wins); ambiguous or missing targets and clashing boxes are reported errors; a drawn name beats any undrawn id; code boxes always go through Sucrose (no shebang = plain JS) in reading order; both kinds are deleted after running, as setup scaffolding.
-- **Next**: fire 12 is done, so all four demos now reach the red boxes. Next is a plan (architecture change, needs approval) for an OmniMeta notation that `init()` runs.
-- **Decision**: made. **Blocks**: 2, 13, retirement of the classic layer, and every Mathcha demo.
+### 1. Magic-red boxes live only in the classic layer, and they're broken (**done**)
+- **What**: ID boxes (`#name`) and code boxes were steps 6–7 of `init()`, built on classic `EdgeDrivenGraphNotation`/`CodeExecutionNotation`. They looked for `.is-paragraph` and `.connection`, which no editor vocabulary produces any more (§4), so `init()` crashed on all four magic-red demos.
+- **Decided** (PRINCIPLES.md Decision 3): re-express both box kinds in OmniMeta. Containment or a red probe line names the target (probe wins); ambiguous or missing targets and clashing boxes are reported errors; a drawn name beats any undrawn id; code boxes always go through Sucrose (no shebang = plain JS) in reading order; both kinds are deleted after running, as setup scaffolding. A connector's name lands on the whole connector (`g.connector-wrapper`), not its shaft.
+- **Done**: `MagicRedNotation` (omnimeta.js) replaces the classic code, which is deleted. All four demos now finish `init()`; `tests/specs/magic-red.spec.js` reports the names, errors and code-box outcomes for each. A code box with no `//!` line runs as plain JS without calling Sucrose, so a diagram needn't load the Sucrose scripts unless its code uses them.
+- **Remaining**: the demos' own code still assumes names sit on arrow shafts: magic-red-id-test's code boxes (`a.parentElement`, `#bidi-arrow connections`) and solid-physics-test-2's top box (`#vec-delta targetPt`, `#bar endpoints`; fire 6). They need redrawing in Mathcha once fire 6 settles how code reads arrows; containment-stress-test's class boxes then move into a code box. A `magic-red-errors.svg` fixture covering each error case is still to be drawn. See also fires 19 and 20.
+
+### 20. Some red boxes should stay visible
+- **What**: Decision 3 treats every magic-red box as setup scaffolding and deletes it after `init()`. But in solid-physics-test-2 the physics code is worth keeping on screen while debugging, in space that is otherwise wasted. So some red boxes are meant to disappear and others to stay.
+- **Question**: how does a diagram say which? For example a second magic colour, a marker in the box, or a per-diagram setting. Hard requirement 2 applies: a box that stays is part of the document, so whatever it did must still be reproducible on reload.
+- **Decision**: JOEL, later.
 
 ### 2. No single way for a diagram to name its notation and start itself
 - **What**: there are five conflicting mechanisms:
@@ -172,14 +175,13 @@ One quick call per file:
 
 | Item | Prediction | Conf. |
 |---|---|---|
-| `JS{[SweetTalk]}` calls undefined `HOLE_DELIMS`/`compile_nested_holes` | delete (Sucrose covers it) | high |
 | `BoardGameNotation` `findIndex` guards never fire | fix (`i < 0`) | high |
 | `BoxGraphOM Box` "TEMP black only" | resolve with fire 4 | medium |
 | `VertexGrammar` (unused) | keep: issues.txt plans rect recognition with it | medium |
 | `ActiveButton`, `TextGraph asJS`, `BoxGraph asJSOG` (classic) | port or drop with the retirement | medium |
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
 | `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. Roads now measure distance along the curve (not its bounding box), so they claim the markers along them, but where the two routes run within 2px the first road also claims the other road's markers **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
-| `g encloses:` and the ID-box target use `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
+| `g encloses:` uses `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
 | The Mathcha and Affinity importers delete "useless empty `<g>`s", including the `<g id="nil">` placeholder `init()` has just created; PowerPoint keeps it **[confirmed]** | create the placeholder after the importer runs, or exempt it | high |
 | `learnEditor` falls back to MathchaVocab for unknown documents, so `init()` on a page with no drawing (empty-console) throws **[confirmed]** | fail with a clear message, or do nothing, when no editor is recognised | high |
 
@@ -201,6 +203,11 @@ One quick call per file:
 - **What**: for example, the "annotations on the `<g>` or the shape?" question, which canonical forms have since answered.
 - **Prediction**: leave it; it's your log. At most you mark entries as settled.
 - **Decision**: JOEL, whenever.
+
+### 19. A Mathcha polygon is never normalised
+- **What**: in magic-red-id-test and containment-stress-test, the big pentagon stays as Mathcha drew it (`g.shape > polygon.real`), not in Closed Canonical Form, so containment never sees it **[confirmed]**. The `#p1` ID box inside it therefore has no container and is reported as an error.
+- **Prediction**: MathchaVocab's `init` misses this encoding of a closed polygon; teach it, and `#p1` names the pentagon.
+- **Confidence**: medium (cause not yet traced).
 
 ---
 
@@ -228,7 +235,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 
 **Phase 3: safe mechanical cleanup**, harness green after each step: fires 12 (done), 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17.
 
-**Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
+**Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1, done), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
 
 **Phase 5: delete.** Remove the classic layer from main-engine and archive the legacy demos (9). Update ARCHITECTURE.md.
 

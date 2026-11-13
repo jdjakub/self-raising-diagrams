@@ -29,16 +29,16 @@ geometric                              OmniMeta
    │  └─ ellipse ─ circle              │        DOMMeta ─ MathchaHeadShaftRules, PowerpointArrow
    ├─ byTag.text ─ tspan               ├─ ChildSetSubstrate ─ HeadShaftArrow ─ MathchaArrow
    └─ byTag.g                          └─ RegionSubstrate ─ NotationGrammar
-Polygon (computed, no DOM)                  ├─ RegionDispatchNotation, BoxGraphOM
+Polygon (computed, no DOM)                  ├─ RegionDispatchNotation, BoxGraphOM, MagicRedNotation
                                             ├─ BoardGameNotation, CarsNotation
 "Classic" notations (main-engine)           └─ AnimationNotation
 GraphNotation ─ EdgeDrivenGraphNotation  Runtime objects: GraphObject, GraphNode,
-GraphNotation-Common ─ -Node, -Edge        GraphEdge, NamedThing, AnimationController,
+GraphNotation-Common ─ -Node, -Edge        GraphEdge, NamedThing, AnimationController, MagicRedSetup,
 Labeller                                   AbstractArrowShaft ─ MathchaArrowShaft,
 LabelledGraph ─ BoxGraph, TextGraph,       AbstractArrowhead ─ MathchaArrowhead
-   DefaultMetaNotation, CodeExecutionNotation
-LabelledGraph-Node ─ DefaultMetaNotation-Region, CodeExecutionNotation-Box
-LabelledGraph-Edge; ActiveButton; compilers JS, Sucrose, JS{[SweetTalk]}
+   DefaultMetaNotation
+LabelledGraph-Node ─ DefaultMetaNotation-Region
+LabelledGraph-Edge; ActiveButton; compiler JS (for ActiveButton)
 EditorVocab ─ (set by learnEditor) MathchaVocab | AffinityVocab | PowerpointVocab
 ```
 The tag chain is the "maximal specialisation" ladder: each `specialize` returns a replacement element with a more specific tag, or null. Examples: straight `path` → `polygon`/`polyline`; 4-point `polygon` → `rect` (axis-aligned, corners TL,TR,BR,BL, with a horizontal-flip retry for PowerPoint); 2-point `polyline` → `line`; curved `path` → `ellipse` → `circle`. A path with several sub-polygons becomes a `<g>` of polygons. A curved `<path>` that stays a path measures distances against its curve cut into 16 straight pieces per segment (`flattenPathToSegs` in utils.js, cached per element and `d`), not against its bounding box; arcs still fall back to the bounding box.
@@ -61,12 +61,15 @@ The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It
    - PowerPoint: bakes transforms, stitches split `<text>` runs back into paragraphs geometrically, and treats paths with `MAGIC_ARROW_COLORS` fills as arrows (`PowerpointArrowPath`).
 4. `seedElements` → specialise each element up to 10 times → give it an id → record it in global `everything`.
 5. **Containment** (`findTightestContainerIn:`): the tightest enclosing shape wins; one drawn above the current pick (`covers:`) also wins. Each element is then moved into its container's `.shape-interior` (`reroot`), and the temporary `data-contained-in`/`data-contains` are deleted.
-6. **Magic-red ID boxes**: a magic-red rect whose text starts with `#` renames its container, or the target of an undirected red probe line. If the new id is taken, the two ids swap. Used boxes are marked `.done` and removed.
-7. **Code boxes**: `CodeExecutionNotation` finds the red rects. A red arrow from a rect to a text names a compiler (default `JS`; also `Sucrose` = SweetTalk/Descartes holes via `compile_with_directive`). It then runs `compileRegion:` on the rect's interior and `eval`s the result.
+6. **Magic-red boxes** (PRINCIPLES.md Decision 3; `MagicRedNotation` and `MagicRedSetup` in omnimeta.js). A rect stroked exactly `MAGIC_RED` (`rgb(208, 2, 27)`) is setup scaffolding. The parse (`fromRegion:`, rule `Root`) reads and changes nothing (hard requirement 3); it claims every red box and lends its interior to collect its texts in reading order, then claims every red symmetric connector as a probe. It returns a `MagicRedSetup`, kept as the console global `magicRed` (`names`, `errors`, `warnings`, `codeBoxes`). Classification by the first text:
+   - `#name` alone: an **ID box**. If a probe has one end at the box (inside, or within 3px of its outline), the target is what the probe's other end touches: the one outline (shape, connector line or text box) within 3px, else the innermost shape containing it. Otherwise the target is the shape the box sits in. The id lands on `.boundary-shape`, `g.text-wrapper` or the whole `g.connector-wrapper`. Errors (reported with `console.error`; the box stays): no target, two or more outlines touched, two or more probes, a probe joining two ID boxes, a name drawn twice, an element named twice, an unusable name (empty, spaces, `nil`), extra text in the box. Red scaffolding is never a target.
+   - Text starting with `.`: a retired **class box**, reported as an error.
+   - Anything else: a **code box**.
+   Then `init()` sends three messages: `applyNames` (report errors; a drawn name beats any undrawn id, so its holder gets a fresh auto id; `everything` is re-keyed), `removeScaffolding` (deletes the ID boxes that worked, their probes, and every code box), and `runCode` (each code box in reading order, top edge then left edge, tops within 3px counting as level; Mathcha's ⩾ ⩽ ⟹ ≡ turned back into ASCII; with a first-line `//!` directive it's compiled by Sucrose (`compile_with_directive` with SweetTalk and Descartes), otherwise it's plain JS; run by indirect `eval`, i.e. at global scope; a failing box is reported and the rest still run). Red one-headed arrows mean nothing to it and stay as decoration.
 
-Other PRINCIPLES.md entries: **connector attachment** = `path connections` (writes `data-connects`/`-connectors`), `GraphNotation-Edge connections`, OmniMeta `GraphObject connectionsOf:`/`elementAt:matching:`. **Arrowhead direction** = `HeadShaftArrow` + `AbstractArrowShaft orientWith:` (the shaft end nearer the head tip is the target). **Stringification** = vocab `init` (`data-string`). **Magic red** = steps 6–7.
+Other PRINCIPLES.md entries: **connector attachment** = `path connections` (writes `data-connects`/`-connectors`), `GraphNotation-Edge connections`, OmniMeta `GraphObject connectionsOf:`/`elementAt:matching:`. **Arrowhead direction** = `HeadShaftArrow` + `AbstractArrowShaft orientWith:` (the shaft end nearer the head tip is the target). **Stringification** = vocab `init` (`data-string`). **Magic red** = step 6.
 
-**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). Steps 6–7, `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS`/`Sucrose` compilers still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. `idSetterBoxes` calls `.querySelector('.is-paragraph').dataset` on every magic-red rect, so `init()` throws a TypeError on a diagram with one (confirmed on notational-dispatch by the smoke test). The classic `isDirected` is always false for the same reason. The OmniMeta notations are unaffected by this.
+**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS` compiler still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. The classic `isDirected` is always false for the same reason. The OmniMeta notations, including the magic-red step, are unaffected by this.
 
 ## 5. Two notation layers
 **Decision (Joel):** the classic layer is being retired in favour of OmniMeta, and canonical forms are to be used everywhere. Until it is gone, both exist:
@@ -129,10 +132,10 @@ All three are `NotationGrammar` subclasses, loaded as the last `<script>` of the
 | principles/1–6 | Mathcha | documentation only (no scripts) | show the *old* encodings (`composite-shape`, `arrow-line`, `is-paragraph`, `data-connects`) |
 | boxGraph-example | Mathcha | vocab, containment, BoxGraph / BoxGraphOM (`match(vtables.BoxGraphOM, svg_parent, 'BoxGraph')`) | no red boxes, so `init()` should succeed |
 | labelGraph-example | Mathcha | TextGraph | no omnimeta.js → `init()` fails |
-| containment-stress-test, magic-red-id-test | Mathcha | containment, ID boxes, JS / SweetTalk code boxes, ID swaps | [stale] §4 |
-| notational-dispatch | Mathcha | DefaultMetaNotation → BoxGraph/TextGraph, Sucrose box, `asJSOG` | [stale] §4 |
+| containment-stress-test, magic-red-id-test | Mathcha | containment, magic-red ID boxes (container and probe), code boxes, retired class boxes, displaced ids | `#p1` errors: its pentagon isn't normalised (CLEANUP fire 19); demo code assumes names on shafts |
+| notational-dispatch | Mathcha | DefaultMetaNotation → BoxGraph/TextGraph, launched from a Sucrose code box, `asJSOG` | classic layer (§4 [stale]) |
 | hole-carving-test | Mathcha | SweetTalk holes, meta-dispatch, `asJS` | no omnimeta.js |
-| solid-physics-test(-2) | Mathcha | SweetTalk+Descartes, `Polygon intersectWith:`, `vupd` vector arrows | -1 has no omnimeta.js; -2 [stale] |
+| solid-physics-test(-2) | Mathcha | SweetTalk+Descartes, `Polygon intersectWith:`, `vupd` vector arrows, ID boxes naming connectors | -1 has no omnimeta.js; -2's top code box fails reading arrows (CLEANUP fire 6) |
 | id-vanilla | Mathcha | the ID object model (commented-out code at the end of main-engine) | no omnimeta.js |
 | boxGraph-bootstrap | Mathcha | legacy: loads boxGraph-bootstrap.js *and* main-engine.js; the second overwrites `vtables` | legacy |
 | music, svgEdit | Mathcha | load missing `general-containment.js` | broken |
@@ -157,7 +160,7 @@ All three are `NotationGrammar` subclasses, loaded as the last `<script>` of the
 - Contrast OmniMeta `Named:`: a claimed label lives only in the cursor's `consumed` Set, undone on backtrack and never written to the DOM.
 
 ## 11. Document vs JS state (hard requirement 2)
-The DOM mixes, unmarked: geometry-derivable caches (`data-origin-pt` etc., `data-string`, `data-connects`/`-connectors`/`origin`/`target`, auto ids, LLL lines); meaningful state (ids set by `#` boxes); and pipeline progress (`data-normalized`). JS-only properties on elements: `pieceName`, `zone`, `js_func`, `_connections`, and the animation's `animState`/`timerId`/ `activeAnim`. The last three change what the user sees but are never written back, so a reload resets the animation **[inferred]**.
+The DOM mixes, unmarked: geometry-derivable caches (`data-origin-pt` etc., `data-string`, `data-connects`/`-connectors`/`origin`/`target`, auto ids, LLL lines); meaningful state (ids set by `#` boxes, which are then deleted as scaffolding under Decision 3's scoped exception: the drawn names survive in the ids, but reloading the *original* file re-runs the boxes); and pipeline progress (`data-normalized`). JS-only properties on elements: `pieceName`, `zone`, `js_func`, `_connections`, and the animation's `animState`/`timerId`/ `activeAnim`. The last three change what the user sees but are never written back, so a reload resets the animation **[inferred]**.
 
 ## 12. Regression harness (`tests/`)
 Playwright driving its own Firefox build over `file://`. It is dev-only: no SVG loads anything from `tests/`, and runtime stays dependency-free. Commands and the snapshot-approval rule are in AGENTS.md "Testing".
@@ -166,6 +169,7 @@ Playwright driving its own Firefox build over `file://`. It is dev-only: no SVG 
 - `specs/smoke.spec.js` (stage 1): for every fixture, records its `<script href>` references and whether each file exists, any page or console errors, and whether `init()` exists and what it returned or threw.
 - `snapshots/<spec>/<fixture>.json`: committed results. A failing fixture's snapshot records the failure, so a fix shows up as a snapshot diff.
 - `specs/notations.spec.js` (stage 2): launches each collaborator notation as a person would in the console and records its result as a readable text report: checkers (all four files, plus the `testCheckers` port against `expected/tomas-checkers.json`), cars, both animation diagrams (with a simulated click-and-wait playback on a fake clock), and BoxGraphOM. Reports avoid auto-ids: elements are described by appearance (`rect @30,40 90x80 fill=...`), and any remaining ids become `#1`, `#2`, ... in order of appearance.
-- `specs/normalisation.spec.js` (stage 3): the whole `<svg>` tree after `init()`, one element per line, for one diagram per editor (Mathcha boxGraph-example, Affinity animating-a-stack, PowerPoint checkers), plus Mathcha magic-red-id-test for symmetric connectors (its `init()` still throws at fire 1, so its report starts with that error and shows the document as it stood), headed by counts of the canonical forms. A symmetric connector's ends are sorted, since their written order means nothing. Auto-ids show as `id=auto`, attributes are sorted, decimals rounded to 2 places, and values over 500 characters (except paragraph text) shortened to a fingerprint.
+- `specs/normalisation.spec.js` (stage 3): the whole `<svg>` tree after `init()`, one element per line, for one diagram per editor (Mathcha boxGraph-example, Affinity animating-a-stack, PowerPoint checkers), plus Mathcha magic-red-id-test for symmetric connectors and the magic-red step's effect on the tree, headed by counts of the canonical forms. A symmetric connector's ends are sorted, since their written order means nothing. Auto-ids show as `id=auto`, attributes are sorted, decimals rounded to 2 places, and values over 500 characters (except paragraph text) shortened to a fingerprint.
+- `specs/magic-red.spec.js`: for each magic-red demo, the names applied and where they landed (by appearance), the diagram errors, the code boxes in run order with each outcome, and the red elements left in the document.
 - `specs/generated.spec.js`: every `.jstalk.js` is listed in `compile-jstalk` and its committed `.js` is exactly the transpiler's output. Runs Perl, no browser.
 - `expected/`: hand-written or extracted expectations, as opposed to generated snapshots (currently Tomas's `testCheckers` strings).
