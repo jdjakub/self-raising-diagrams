@@ -41,7 +41,7 @@ LabelledGraph-Node ─ DefaultMetaNotation-Region, CodeExecutionNotation-Box
 LabelledGraph-Edge; ActiveButton; compilers JS, Sucrose, JS{[SweetTalk]}
 EditorVocab ─ (set by learnEditor) MathchaVocab | AffinityVocab | PowerpointVocab
 ```
-The tag chain is the "maximal specialisation" ladder: each `specialize` returns a replacement element with a more specific tag, or null. Examples: straight `path` → `polygon`/`polyline`; 4-point `polygon` → `rect` (axis-aligned, corners TL,TR,BR,BL, with a horizontal-flip retry for PowerPoint); 2-point `polyline` → `line`; curved `path` → `ellipse` → `circle`. A path with several sub-polygons becomes a `<g>` of polygons.
+The tag chain is the "maximal specialisation" ladder: each `specialize` returns a replacement element with a more specific tag, or null. Examples: straight `path` → `polygon`/`polyline`; 4-point `polygon` → `rect` (axis-aligned, corners TL,TR,BR,BL, with a horizontal-flip retry for PowerPoint); 2-point `polyline` → `line`; curved `path` → `ellipse` → `circle`. A path with several sub-polygons becomes a `<g>` of polygons. A curved `<path>` that stays a path measures distances against its curve cut into 16 straight pieces per segment (`flattenPathToSegs` in utils.js, cached per element and `d`), not against its bounding box; arcs still fall back to the bounding box.
 
 The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It doesn't: only `init()` uses it, via `{vtable: EditorVocab}`.
 

@@ -362,6 +362,48 @@ function explode_poly_segs(points, closed=true) {
   return segs;
 }
 
+// The outline drawn by path data `d`, as straight segments [[a,b], ...]. Each
+// curve is cut into `pieces` chords computed from its own Bézier formula: cheap
+// (pure arithmetic, no DOM calls) and, at 16 pieces, within about a pixel of
+// the drawn curve for diagram-sized shapes. Returns null if `d` uses commands
+// this doesn't handle (arcs, H/V), so callers can fall back to something coarser.
+flattenPathToSegs = function(d, pieces = 16) {
+  if (/[AaHhVv]/.test(d)) return null;
+  const segs = [];
+  let cur = [0, 0], start = [0, 0];
+  let lastCubicCtrl = null, lastQuadCtrl = null;
+  const reflect = (ctrl) => ctrl ? vsub(vmul(2, cur), ctrl) : cur;
+  const curve = (ctrls, end) => { // ctrls: 1 (quadratic) or 2 (cubic) absolute points
+    const p0 = cur;
+    let prev = p0;
+    for (let i = 1; i <= pieces; i++) {
+      const t = i / pieces, u = 1 - t;
+      const pt = ctrls.length === 2
+        ? [0, 1].map(k => u*u*u*p0[k] + 3*u*u*t*ctrls[0][k] + 3*u*t*t*ctrls[1][k] + t*t*t*end[k])
+        : [0, 1].map(k => u*u*p0[k] + 2*u*t*ctrls[0][k] + t*t*end[k]);
+      segs.push([prev, pt]);
+      prev = pt;
+    }
+  };
+  for (const [cmd, ...pts] of parsePath(d)) {
+    const rel = cmd !== cmd.toUpperCase();
+    const abs = pts.map(p => rel ? vadd(cur, p) : p);
+    let cubicCtrl = null, quadCtrl = null;
+    switch (cmd.toUpperCase()) {
+      case 'M': cur = start = abs[0]; break;
+      case 'L': segs.push([cur, abs[0]]); cur = abs[0]; break;
+      case 'C': curve([abs[0], abs[1]], abs[2]); cubicCtrl = abs[1]; cur = abs[2]; break;
+      case 'S': curve([reflect(lastCubicCtrl), abs[0]], abs[1]); cubicCtrl = abs[0]; cur = abs[1]; break;
+      case 'Q': curve([abs[0]], abs[1]); quadCtrl = abs[0]; cur = abs[1]; break;
+      case 'T': quadCtrl = reflect(lastQuadCtrl); curve([quadCtrl], abs[0]); cur = abs[0]; break;
+      case 'Z': if (cur[0] !== start[0] || cur[1] !== start[1]) segs.push([cur, start]); cur = start; break;
+    }
+    lastCubicCtrl = cubicCtrl;
+    lastQuadCtrl = quadCtrl;
+  }
+  return segs;
+}
+
 function normal_for_seg([p1,p2]) {
   const [vx,vy] = vnormed(vsub(p2,p1));
   return [-vy,vx];

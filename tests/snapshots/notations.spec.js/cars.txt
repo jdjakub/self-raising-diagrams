@@ -1,13 +1,34 @@
 ## cars
 
 ## road paths
-path @160,97 963x515 fill=none markers: 5
+path @160,97 963x515 fill=none markers: 16
+  polygon(10) @303,537 35x36 fill=#2E75B6
+  polygon(10) @214,533 36x36 fill=#D23636
+  polygon(10) @144,432 36x35 fill=#2E75B6
+  polygon(10) @144,392 36x36 fill=#D23636
+  polygon(10) @158,275 36x36 fill=#2E75B6
+  polygon(10) @259,147 36x36 fill=#2E75B6
+  polygon(10) @359,160 36x36 fill=#D23636
+  polygon(10) @448,200 36x36 fill=#2E75B6
+  polygon(10) @581,267 36x36 fill=#2E75B6
+  polygon(10) @748,166 36x36 fill=#2E75B6
+  polygon(10) @923,249 36x36 fill=#2E75B6
+  polygon(10) @905,389 36x36 fill=#2E75B6
   polygon(10) @1099,461 36x36 fill=#2E75B6
+  polygon(10) @699,528 36x36 fill=#2E75B6
   polygon(10) @853,82 36x36 fill=#D23636
+  polygon(10) @926,588 36x36 fill=#2E75B6
+path @153,100 968x550 fill=none markers: 10
+  polygon(10) @162,200 36x36 fill=#D23636
+  polygon(10) @497,311 36x36 fill=#D23636
+  polygon(10) @640,156 36x36 fill=#D23636
+  polygon(10) @997,189 36x36 fill=#D23636
+  polygon(10) @1048,375 36x36 fill=#D23636
+  polygon(10) @361,605 36x36 fill=#D23636
   polygon(10) @989,82 36x36 fill=#2E75B6
+  polygon(10) @1072,583 36x36 fill=#D23636
   polygon(10) @825,614 36x36 fill=#D23636
   polygon(10) @590,590 36x36 fill=#D23636
-path @153,100 968x550 fill=none markers: 0
 
 ## arrows
 connector 483.88,521 -> 411,521

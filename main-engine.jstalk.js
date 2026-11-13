@@ -265,6 +265,8 @@ vtables.domNode = {
   },
 };
 
+pathSegsCache = new WeakMap(); // element -> { d, segs }; see path lineSegments
+
 vtables.byTag['path'] = {
   _parent: vtables.domNode,
 
@@ -302,6 +304,23 @@ vtables.byTag['path'] = {
     return frac < 0.5 ? neg(tangent) : tangent;
   },
   ['closestPtToPt:']: (self, pt) => closestPointOnPath(self, pt),
+  // Straight segments following the drawn outline, used for distances. A curved
+  // path is cut into short chords along the curve itself (flattenPathToSegs),
+  // so "how far is this point from the curve?" follows the curve rather than its
+  // bounding box, at about the same cost. Cached per element and `d` (a pure
+  // cache: derivable from geometry, never stale if `d` changes). Falls back to
+  // the bounding box for paths it can't flatten (arcs). Subtags with no `d`
+  // (ellipse, circle, polygon, ...) keep their inherited behaviour.
+  ['lineSegments']: needsSuper((supr, self) => {
+    const d = attr(self, 'd');
+    if (!d || !⟦self isCurved⟧) return ⟦super lineSegments⟧;
+    const cached = pathSegsCache.get(self);
+    if (cached && cached.d === d) return cached.segs;
+    const segs = flattenPathToSegs(d);
+    if (!segs) return ⟦super lineSegments⟧;
+    pathSegsCache.set(self, { d, segs });
+    return segs;
+  }),
   ['containsPt:']: needsSuper((supr, self, pt) => {
     if (!⟦self isClosed⟧) {
       /*const {point, d2} = ⟦pt closestPointOn: self⟧;

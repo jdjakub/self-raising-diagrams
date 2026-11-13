@@ -178,7 +178,7 @@ One quick call per file:
 | `VertexGrammar` (unused) | keep: issues.txt plans rect recognition with it | medium |
 | `ActiveButton`, `TextGraph asJS`, `BoxGraph asJSOG` (classic) | port or drop with the retirement | medium |
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
-| `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. The first road also claims markers of both colours, leaving the second with none **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
+| `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. Roads now measure distance along the curve (not its bounding box), so they claim the markers along them, but where the two routes run within 2px the first road also claims the other road's markers **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
 | `g encloses:` and the ID-box target use `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
 | The Mathcha and Affinity importers delete "useless empty `<g>`s", including the `<g id="nil">` placeholder `init()` has just created; PowerPoint keeps it **[confirmed]** | create the placeholder after the importer runs, or exempt it | high |
 | `learnEditor` falls back to MathchaVocab for unknown documents, so `init()` on a page with no drawing (empty-console) throws **[confirmed]** | fail with a clear message, or do nothing, when no editor is recognised | high |
