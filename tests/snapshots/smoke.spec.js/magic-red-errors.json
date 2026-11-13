@@ -1,0 +1,88 @@
+{
+  "file": "magic-red-errors.svg",
+  "scripts": [
+    {
+      "href": "./utils.js",
+      "exists": true
+    },
+    {
+      "href": "./bracket-hole-carving.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-sweettalk.js",
+      "exists": true
+    },
+    {
+      "href": "./lang-descartes.js",
+      "exists": true
+    },
+    {
+      "href": "./main-engine.js",
+      "exists": true
+    },
+    {
+      "href": "./omnimeta.js",
+      "exists": true
+    }
+  ],
+  "init": {
+    "defined": true,
+    "ok": true,
+    "returned": 62
+  },
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: class boxes are retired; add classes from a code box instead JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: \"#nil\" can't be used as a name JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #floating is in no shape and has no probe line JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #left's probe line joins two ID boxes JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #right's probe line joins two ID boxes JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #dangling's probe line touches nothing at its far end JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #twoProbes has 2 probe lines; at most one is allowed JSHandle@node JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #onTwo's probe line touches more than one thing at its far end JSHandle@node JSHandle@node JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: one element is given 2 names: #first #second JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: one element is given 2 names: #first #second JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #twin is drawn 2 times JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #twin is drawn 2 times JSHandle@node JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red code box \"throw 'deliberate';\" at 160,410 failed: deliberate"
+    }
+  ]
+}

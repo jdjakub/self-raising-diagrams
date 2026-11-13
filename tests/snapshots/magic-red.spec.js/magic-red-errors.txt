@@ -1,0 +1,43 @@
+## names applied
+  #good -> rect @11,11 100x70 fill=rgb(255, 255, 255)  (container)
+  #r1 -> rect @131,11 80x70 fill=rgb(255, 255, 255)  (container)
+  #line -> connector 310,220 -> 410,220  (via probe)
+  #label -> text "hello"  (via probe)
+## diagram errors
+  class boxes are retired; add classes from a code box instead  [box ".cool"]
+  "#nil" can't be used as a name  [box "#nil"]
+  #floating is in no shape and has no probe line  [box "#floating"]
+  #left's probe line joins two ID boxes  [box "#left"]
+  #right's probe line joins two ID boxes  [box "#right"]
+  #dangling's probe line touches nothing at its far end  [box "#dangling"]
+  #twoProbes has 2 probe lines; at most one is allowed  [box "#twoProbes"]
+  #onTwo's probe line touches more than one thing at its far end  [box "#onTwo"]
+  one element is given 2 names: #first #second  [box "#first"]
+  one element is given 2 names: #first #second  [box "#second"]
+  #twin is drawn 2 times  [box "#twin"]
+  #twin is drawn 2 times  [box "#twin"]
+## warnings
+## code boxes, in run order
+  "order = ['A'];" -> ok
+  "order.push('B');" -> ok
+  "order.push('C1');" -> ok
+  "throw 'deliberate';" -> deliberate
+  "//! {[ SweetTalk ]}" -> ok
+## red elements left
+  rect @246,21 35x20 fill=rgb(255, 255, 255) "#first"
+  rect @241,51 60x20 fill=rgb(255, 255, 255) "#second"
+  rect @335,25 35x25 fill=rgb(255, 255, 255) "#nil"
+  rect @35,130 35x20 fill=rgb(255, 255, 255) "#twin"
+  rect @125,130 35x20 fill=rgb(255, 255, 255) "#twin"
+  rect @200,120 60x20 fill=rgb(255, 255, 255) "#floating"
+  rect @285,100 35x20 fill=rgb(255, 255, 255) "#left"
+  rect @380,100 40x20 fill=rgb(255, 255, 255) "#right"
+  connector 320,110 -- 380,110 (symmetric)
+  rect @285,140 65x20 fill=rgb(255, 255, 255) "#dangling"
+  connector 350,150 -- 410,160 (symmetric)
+  rect @15,230 75x20 fill=rgb(255, 255, 255) "#twoProbes"
+  connector 110,210 -- 80,230 (symmetric)
+  connector 110,280 -- 80,250 (symmetric)
+  rect @200,280 60x20 fill=rgb(255, 255, 255) "#onTwo"
+  connector 230,230 -- 230,280 (symmetric)
+  rect @370,390 40x20 fill=rgb(255, 255, 255) ".cool"

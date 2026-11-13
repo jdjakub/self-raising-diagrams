@@ -11,6 +11,7 @@ const DEMOS = [
   'containment-stress-test.svg',
   'solid-physics-test-2.svg',
   'notational-dispatch.svg',
+  'magic-red-errors.svg',
 ];
 
 for (const file of DEMOS) {
