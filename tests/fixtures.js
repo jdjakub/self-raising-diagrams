@@ -13,11 +13,11 @@ module.exports = [
   { file: 'CamilleNotations/Description of the notation.svg', note: 'Affinity; documentation that loads the engine' },
   { file: 'boxGraph-example.svg', note: 'Mathcha; BoxGraphOM: names never found, connections crash (fire 4)' },
 
-  // Classic-layer demos (currently broken; fires 1, 13)
-  { file: 'magic-red-id-test.svg', note: 'init() throws in the magic-red ID step (fire 1); symmetric connectors (Decision 4)' },
-  { file: 'containment-stress-test.svg', note: 'init() throws in the magic-red ID step (fire 1)' },
-  { file: 'notational-dispatch.svg', note: 'init() throws in the magic-red ID step (fire 1); blue meta-notation (fire 2)' },
-  { file: 'solid-physics-test-2.svg', note: 'init() throws in the magic-red ID step (fire 1); then fire 6' },
+  // Magic-red demos (MagicRedNotation; specs/magic-red.spec.js) and classic-layer demos (fire 13)
+  { file: 'magic-red-id-test.svg', note: 'magic-red boxes; #p1 sits in an un-normalised Mathcha pentagon; its SweetTalk box predates names on whole connectors' },
+  { file: 'containment-stress-test.svg', note: 'magic-red boxes, including retired class boxes (reported as errors)' },
+  { file: 'notational-dispatch.svg', note: 'magic-red code box drives the blue meta-notation (fire 2)' },
+  { file: 'solid-physics-test-2.svg', note: 'magic-red boxes; top code box fails reading arrows (fire 6)' },
   { file: 'solid-physics-test.svg', note: 'no omnimeta.js (fire 13)' },
   { file: 'hole-carving-test.svg', note: 'no omnimeta.js (fire 13)' },
   { file: 'labelGraph-example.svg', note: 'no omnimeta.js (fire 13)' },

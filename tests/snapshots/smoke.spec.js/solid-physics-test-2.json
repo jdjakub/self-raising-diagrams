@@ -28,11 +28,13 @@
   ],
   "init": {
     "defined": true,
-    "ok": false,
-    "threw": {
-      "error": "TypeError",
-      "message": "can't access property \"dataset\", send(...).querySelector(...) is null"
-    }
+    "ok": true,
+    "returned": 37
   },
-  "events": []
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Magic-red code box \"//! {[ SweetTalk ]} |[ Descartes ]|\" at 20,20 failed: Array"
+    }
+  ]
 }

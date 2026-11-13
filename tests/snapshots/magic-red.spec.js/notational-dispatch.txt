@@ -1,0 +1,7 @@
+## names applied
+## diagram errors
+## warnings
+## code boxes, in run order
+  "//! {[ SweetTalk ]}" -> ok
+## red elements left
+  connector 100,810 -> 140,850

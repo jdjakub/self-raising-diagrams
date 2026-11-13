@@ -1,0 +1,16 @@
+## names applied
+  #a -> polygon(4) @400,40 90x90 fill=rgb(255, 255, 255)  (container)
+  #b -> rect @530,50 70x70 fill=rgb(255, 255, 255)  (container)
+  #bar -> connector 440,160 -- 580,160 (symmetric)  (via probe)
+  #vec-delta -> connector 530,420 -> 463.79,420  (via probe)
+  #rxn-style -> connector 540,510 -> 490,510  (via probe)
+  #vec-e1 -> connector 420,270 -> 460,270  (via probe)
+  #vec-e2 -> connector 420,270 -> 420,230  (via probe)
+## diagram errors
+## warnings
+## code boxes, in run order
+  "//! {[ SweetTalk ]} |[ Descartes ]|" -> connector 530,420 -> 463.79,420  didn't understand:  targetPt targetPt
+  "//! {[ SweetTalk ]} |[ Descartes ]|" -> ok
+## red elements left
+  connector 340,540 -> 380,540
+  connector 450,650 -> 490,650

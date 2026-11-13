@@ -1,0 +1,21 @@
+## names applied
+  #r2 -> rect @40,20 100x100 fill=rgb(255, 255, 255)  (container)
+  #r1 -> rect @30,10 170x130 fill=rgb(255, 255, 255)  (container)
+  #c1 -> circle @60,40 70x70 fill=cyan  (via probe)
+  #c3 -> circle @260,70 50x50 fill=rgb(255, 255, 255)  (container)
+  #c2 -> circle @230,50 90x90 fill=rgb(255, 255, 255)  (container)
+  #r3 -> rect @220,20 170x130 fill=rgb(255, 255, 255)  (container)
+  #coolestArrow -> connector 190,120 -> 280,210  (via probe)
+## diagram errors
+  class boxes are retired; add classes from a code box instead  [box ".is-cool\n.is-nice"]
+  an ID box must hold one #name, with no spaces, and nothing else  [box "#r4 / .is-cool\n.is-nice"]
+  #p1 is in no shape and has no probe line  [box "#p1"]
+## warnings
+## code boxes, in run order
+  "byId('c1').style.fill = 'cyan';" -> ok
+## red elements left
+  rect @395,70 30x40 fill=rgb(255, 255, 255) "#r4 / .is-cool\n.is-nice"
+  rect @235,205 17x15 fill=rgb(255, 255, 255) "#p1"
+  rect @380,260 30x30 fill=rgb(255, 255, 255) ".is-cool\n.is-nice"
+  connector 250,262 -- 380,280 (symmetric)
+  connector 380,235 -- 390,260 (symmetric)

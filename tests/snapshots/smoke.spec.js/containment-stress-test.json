@@ -16,11 +16,21 @@
   ],
   "init": {
     "defined": true,
-    "ok": false,
-    "threw": {
-      "error": "TypeError",
-      "message": "can't access property \"dataset\", send(...).querySelector(...) is null"
-    }
+    "ok": true,
+    "returned": 43
   },
-  "events": []
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: class boxes are retired; add classes from a code box instead JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: an ID box must hold one #name, with no spaces, and nothing else JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #p1 is in no shape and has no probe line JSHandle@node"
+    }
+  ]
 }

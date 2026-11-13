@@ -1,28 +1,25 @@
-## init() threw
-  can't access property "dataset", send(...).querySelector(...) is null
-
 ## canonical forms
-  boundary-shape: 19
-  boundary-wrapper: 19
+  boundary-shape: 8
+  boundary-wrapper: 8
   connector-head: 6
-  connector-shaft: 8
-  connector-wrapper: 8
-  is-multiline: 6
-  is-symmetric: 4
-  shape-interior: 19
-  text-wrapper: 18
+  connector-shaft: 5
+  connector-wrapper: 5
+  is-multiline: 4
+  is-symmetric: 1
+  shape-interior: 8
+  text-wrapper: 7
 
 ## elements by tag
   circle: 3
-  g: 155
-  line: 3
-  path: 8
+  g: 78
+  line: 1
+  path: 7
   polygon: 1
   polyline: 3
-  rect: 16
+  rect: 5
   script: 6
   svg: 1
-  text: 44
+  text: 21
 
 ## tree
 <svg data-normalized="true" height="407.1" style="         width:678.33px;         height:407.1px;         background: #FFF;         fill: none; " width="678.33" x="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" y="0">
@@ -32,19 +29,12 @@
   <script href="./lang-descartes.js">
   <script href="./main-engine.js">
   <script href="./omnimeta.js">
-  <g class="shapes-region" style="stroke: black; fill: none;">
+  <g class="shapes-region" style="stroke: green; fill: none;">
     <g class="shape">
       <polygon class="real" points=" 440,10 440,120 300,230 20,230 220,10" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: rgb(255, 255, 255); fill-opacity: 1;">
     <g class="boundary-wrapper">
       <rect class="boundary-shape" height="130" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="100" x="330" y="60">
       <g class="shape-interior">
-        <g class="boundary-wrapper">
-          <rect class="boundary-shape" height="20.49" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="25" x="395" y="69.51">
-          <g class="shape-interior">
-            <g class="text-wrapper" data-string="#r4" id=auto>
-              <g>
-                <g>
-                  <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="402.67" y="75.92"> "#r4"
         <g class="is-multiline text-wrapper" data-string="cccc\ncccc\ncccc" id=auto>
           <g>
             <g>
@@ -59,38 +49,15 @@
       <rect class="boundary-shape" height="130" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="170" x="30" y="10">
       <g class="shape-interior">
         <g class="boundary-wrapper">
-          <rect class="boundary-shape" height="100" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="100" x="40" y="20">
+          <rect class="boundary-shape is-cool" height="100" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="100" x="40" y="20">
           <g class="shape-interior">
             <g class="boundary-wrapper">
-              <circle class="boundary-shape" cx="95" cy="75" id=auto r="35" style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;">
+              <circle class="boundary-shape" cx="95" cy="75" id=auto r="35" style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: cyan; fill-opacity: 1;">
               <g class="shape-interior">
                 <g class="text-wrapper" data-string="aaa" id=auto>
                   <g>
                     <g>
                       <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:15px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="91.67" y="81.33"> "aaa"
-            <g class="boundary-wrapper">
-              <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="17" x="46.08" y="26.47">
-              <g class="shape-interior">
-                <g class="text-wrapper" data-string="#r2" id=auto>
-                  <g>
-                    <g>
-                      <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="49.67" y="29.88"> "#r2"
-        <g class="boundary-wrapper">
-          <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="16.5" x="174.58" y="15.47">
-          <g class="shape-interior">
-            <g class="text-wrapper" data-string="#r1" id=auto>
-              <g>
-                <g>
-                  <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="178.17" y="18.88"> "#r1"
-        <g class="boundary-wrapper">
-          <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="19" x="170" y="90">
-          <g class="shape-interior">
-            <g class="text-wrapper" data-string="#c1" id=auto>
-              <g>
-                <g>
-                  <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="173.58" y="93.42"> "#c1"
-        <g class="connector-wrapper is-symmetric" data-end-outs="-0.92,-0.4 0.92,0.4" data-end-pts="110,70 170,96" id=auto>
-          <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(208, 2, 27); stroke-opacity: 1; stroke-width: 1px; fill: none; fill-opacity: 1;" x1="170" x2="110" y1="96" y2="70">
     <g class="boundary-wrapper">
       <rect class="boundary-shape" height="130" id=auto style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" width="170" x="220" y="20">
       <g class="shape-interior">
@@ -100,27 +67,6 @@
             <g class="boundary-wrapper">
               <circle class="boundary-shape" cx="285" cy="95" id=auto r="25" style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;">
               <g class="shape-interior">
-                <g class="boundary-wrapper">
-                  <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="19" x="284" y="93">
-                  <g class="shape-interior">
-                    <g class="text-wrapper" data-string="#c3" id=auto>
-                      <g>
-                        <g>
-                          <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="287.58" y="96.42"> "#c3"
-            <g class="boundary-wrapper">
-              <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="19" x="236.08" y="77.01">
-              <g class="shape-interior">
-                <g class="text-wrapper" data-string="#c2" id=auto>
-                  <g>
-                    <g>
-                      <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="239.67" y="80.42"> "#c2"
-        <g class="boundary-wrapper">
-          <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="16.5" x="229.08" y="28.51">
-          <g class="shape-interior">
-            <g class="text-wrapper" data-string="#r3" id=auto>
-              <g>
-                <g>
-                  <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="232.67" y="31.92"> "#r3"
         <g class="is-multiline text-wrapper" data-string="dddd\ndddd\ndddd" id=auto>
           <g>
             <g>
@@ -146,80 +92,17 @@
           <g>
             <g>
               <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="237.25" y="207.92"> "#p1"
-    <g class="boundary-wrapper">
-      <rect class="boundary-shape" height="120" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="200" x="20" y="250">
-      <g class="shape-interior">
-        <g class="is-multiline text-wrapper" data-string="byId('c1').style.fill = 'cyan';\nbyId('r2').classList.add('is-cool');\nlet a=byId('coolest-arrow');\na.parentElement.style.stroke = 'green';\na.style.stroke = null;\nattr(a.nextSibling, 'stroke', '');\na.nextSibling.style.stroke = null;" id=auto>
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="257.35"> "byId('c1').style.fill = 'cyan';"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="272.05"> "byId('r2').classList.add('is-cool');"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="286.75"> "let a=byId('coolest-arrow');"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="301.45"> "a.parentElement.style.stroke = 'green';"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="316.15"> "a.style.stroke = null;"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="330.85"> "attr(a.nextSibling, 'stroke', '');"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="33.67" y="345.55"> "a.nextSibling.style.stroke = null;"
-    <g class="connector-wrapper is-symmetric" data-end-outs="-0.77,-0.64 0,-1" data-end-pts="290,190 410,170" id=auto>
+    <g class="connector-wrapper is-symmetric" data-end-outs="-0.77,-0.64 0,-1" data-end-pts="290,190 410,170" id="bidi-arrow">
       <polyline class="connector-shaft" id=auto points="410,172 410,230 350,240 291.54,191.28" stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;">
       <g class="connector-head" fill="#000" stroke="none" style="stroke: none; fill: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(0.77,0.64,-0.64,0.77,290,190)">
         <path d=" M12,-3 L0,0 L12,3 Z">
       <g class="connector-head" fill="#000" stroke="none" style="stroke: none; fill: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(6.12e-17,1,-1,6.12e-17,410,170)">
         <path d=" M12,-3 L0,0 L12,3 Z">
-    <g class="connector-wrapper" data-origin-out="-0.15,-0.99" data-origin-pt="190,120" data-target-out="0.13,-0.99" data-target-pt="280,210" id=auto>
+    <g class="connector-wrapper" data-origin-out="-0.15,-0.99" data-origin-pt="190,120" data-target-out="0.13,-0.99" data-target-pt="280,210" id="coolest-arrow">
       <path class="connector-shaft" d="  M190,120 C217.53,300.84 270.93,280.83 279.87,211.06" id=auto stroke-dasharray="" style="stroke: rgb(0, 0, 0); stroke-width: 1px; fill: none; fill-opacity: 1;">
       <g class="connector-head" stroke="#000" style="stroke: rgb(0, 0, 0); stroke-width: 1px;" transform="matrix(-0.12,0.99,-0.99,-0.12,280,210)">
         <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">
-    <g class="boundary-wrapper">
-      <rect class="boundary-shape" height="20" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="50" x="380" y="260">
-      <g class="shape-interior">
-        <g class="text-wrapper" data-string="#bidi-arrow" id=auto>
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="387.67" y="265.92"> "#bidi-arrow"
-    <g class="connector-wrapper is-symmetric" data-end-outs="-0.71,-0.71 -0.2,0.98" data-end-pts="273,240 310,270" id=auto>
-      <path class="connector-shaft" d="  M273,240 C290.67,257.83 317.07,235.43 310,270" id=auto stroke-dasharray="" style="stroke: rgb(208, 2, 27); stroke-opacity: 1; stroke-width: 1px; fill: none; fill-opacity: 1;">
-    <g class="connector-wrapper is-symmetric" data-end-outs="-0.37,-0.93 0.37,0.93" data-end-pts="380,235 390,260" id=auto>
-      <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(208, 2, 27); stroke-opacity: 1; stroke-width: 1px; fill: none; fill-opacity: 1;" x1="380" x2="390" y1="235" y2="260">
-    <g class="boundary-wrapper">
-      <rect class="boundary-shape" height="15" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="56.5" x="283.5" y="270">
-      <g class="shape-interior">
-        <g class="text-wrapper" data-string="#coolest-arrow" id=auto>
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:7.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="287.17" y="272.92"> "#coolest-arrow"
-    <g class="boundary-wrapper">
-      <rect class="boundary-shape" height="40" id=auto style="stroke-width: 1px; stroke: rgb(208, 2, 27); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1;" width="180" x="240" y="300">
-      <g class="shape-interior">
-        <g class="is-multiline text-wrapper" data-string="//! {[ SweetTalk ]}\nlog( {[ #bidi-arrow connections ]} );" id=auto>
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(65,117,5);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="246.67" y="308.35"> "//! {[ SweetTalk ]}"
-          <g>
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="246.67" y="323.05"> "log("
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(208,2,27);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="267.08" y="323.05"> "{["
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="273.5" y="323.05"> "#bidi-arrow"
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="328.33" y="323.05"> "connections"
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(208,2,27);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="390.17" y="323.05"> "]}"
-            <g>
-              <text style="white-space:pre;stroke:none;fill:rgb(0,0,0);fill-opacity:1;font-size:10.5px;font-family:Arial, Helvetica, sans-serif;font-weight:400;font-style:normal;dominant-baseline:text-before-edge;text-decoration:none;" x="396.58" y="323.05"> ");"
-    <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="270,340" data-target-out="0,1" data-target-pt="270,370" id=auto>
+    <g class="connector-wrapper" data-origin-out="0,-1" data-origin-pt="270,340" data-target-out="0,1" data-target-pt="270,370" id=auto stroke="">
       <line class="connector-shaft" id=auto stroke-dasharray="" style="stroke: rgb(208, 2, 27); stroke-opacity: 1; stroke-width: 1px; fill: none; fill-opacity: 1;" x1="270" x2="270" y1="340" y2="368">
       <g class="connector-head" stroke="rgb(208,2,27)" stroke-opacity="1" style="stroke: rgb(208, 2, 27); stroke-width: 1px;" transform="matrix(-1.84e-16,-1,1,-1.84e-16,270,370)">
         <path d=" M10.93,-3.29 Q4.96,-0.45 0,0 Q4.96,0.45 10.93,3.29">

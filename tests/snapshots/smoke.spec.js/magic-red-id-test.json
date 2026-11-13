@@ -28,11 +28,17 @@
   ],
   "init": {
     "defined": true,
-    "ok": false,
-    "threw": {
-      "error": "TypeError",
-      "message": "can't access property \"dataset\", send(...).querySelector(...) is null"
-    }
+    "ok": true,
+    "returned": 45
   },
-  "events": []
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Magic-red box: #p1 is in no shape and has no probe line JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Magic-red code box \"//! {[ SweetTalk ]}\" at 240,300 failed: Array"
+    }
+  ]
 }
