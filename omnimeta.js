@@ -1147,6 +1147,263 @@ vtables.BoxGraphOM = {
   },
 };
 
+// ── MagicRedNotation ─────────────────────────────────────────────────────────
+// Setup scaffolding (PRINCIPLES Decision 3), read as a notation. A rect stroked
+// exactly MAGIC_RED is a magic-red box:
+//   • ID box: its only text is `#name`. The name goes to the shape the box sits
+//     in, or, when a red probe line (no heads, or two) has one end at the box,
+//     to whatever the probe's other end touches.
+//   • Code box: any other text. Run as Sucrose once every name is applied; a
+//     first-line `//!` directive picks the languages, none means plain JS.
+//   • Class box (text starts with `.`): retired. Reported, never run.
+// init() runs it after containment. The parse reads and never mutates; the
+// three messages to the result are the only steps that change the document:
+//   magicRed = send({ vtable: 'MagicRedNotation' }, 'fromRegion:', svg_parent)
+//   send(magicRed, 'applyNames'); send(magicRed, 'removeScaffolding'); send(magicRed, 'runCode')
+// `magicRed` stays as a console global: its names, errors and codeBoxes.
+MAGIC_RED = 'rgb(208, 2, 27)';
+isMagicRed = e => !!e && !!e.style && e.style.stroke === MAGIC_RED;
+
+// Sort items top edge first (tops within eps count as level), then left edge.
+inReadingOrder = (items, eltOf = x => x, eps = 3) => {
+  const keyed = items.map(item => ({ item, b: eltOf(item).getBBox() }));
+  keyed.sort((p, q) => Math.abs(p.b.y - q.b.y) > eps ? p.b.y - q.b.y : p.b.x - q.b.x);
+  return keyed.map(k => k.item);
+};
+
+vtables.MagicRedNotation = {
+  _parent: vtables.NotationGrammar,
+
+  // How close a probe end must be to a box, or to an outline, to touch it.
+  ['touchEpsilon']: () => 3,
+
+  // Root = ScaffoldBox* Probe*
+  ['Root']: (self) => {
+    const boxes  = send(self, 'many:', () => send(self, 'apply:', 'ScaffoldBox'));
+    const probes = send(self, 'many:', () => send(self, 'claimMatching:', 'Probe'));
+    return send(self, 'setupForBoxes:', boxes, 'probes:', probes);
+  },
+
+  // ScaffoldBox = a red box and the texts inside it, in reading order.
+  ['ScaffoldBox']: (self) => {
+    const box = send(self, 'claimMatching:', 'RedBox');
+    const interior = send(box, 'interior');
+    const texts = interior ? send(self, 'lend:', self.vtable, 'input:', interior, 'rule:', 'Texts') : [];
+    return { box, texts: inReadingOrder(texts) };
+  },
+  ['Texts']: (self) => send(self, 'many:', () => send(self, 'claimMatching:', 'Label')),
+
+  ['RedBoxSel']: () => 'rect.boundary-shape',
+  ['RedBox']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'RedBoxSel')) && isMagicRed(elt));
+    return elt;
+  },
+
+  // Probe = a red connector with no heads or two (PRINCIPLES Decision 4).
+  // A red one-headed arrow is not a probe and means nothing here.
+  ['ProbeSel']: () => 'g.connector-wrapper.is-symmetric',
+  ['Probe']: (self) => {
+    const elt = self.cursor.dict;
+    send(self, 'pred:', elt.matches(send(self, 'ProbeSel')) && isMagicRed(elt.querySelector('.connector-shaft')));
+    return elt;
+  },
+
+  // Work out what every box means before anything changes (hard requirement 3).
+  // Returns a MagicRedSetup; see its vtable for the steps that act on it.
+  ['setupForBoxes:probes:']: (self, boxes, probes) => {
+    const scope = self.cursor.scope;
+    const eps = send(self, 'touchEpsilon');
+    const errors = [];
+    const report = (message, box, ...elements) => errors.push({ message, box, elements });
+
+    // Classify each box by its first text.
+    const idBoxes = [], codeBoxes = [];
+    for (const { box, texts } of boxes) {
+      if (texts.length === 0) continue; // an empty red box means nothing
+      const strings = texts.map(t => t.dataset.string);
+      const first = strings[0].trim();
+      if (first.startsWith('#'))
+        idBoxes.push({ box, text: strings.join('\n').trim(), probes: [], joins: null });
+      else if (first.startsWith('.'))
+        report('class boxes are retired; add classes from a code box instead', box);
+      else {
+        const source = strings.join('\n');
+        const bb = box.getBBox();
+        codeBoxes.push({ box, source, firstLine: source.split('\n')[0],
+                         at: [bb.x, bb.y].map(Math.round), outcome: null });
+      }
+    }
+
+    // A probe belongs to the ID box at one of its ends; the other end is the far one.
+    const isAt = (box, pt) => send(box, 'signedDistanceToPt:', pt) <= eps;
+    for (const probe of probes) {
+      const ends = send(probe, 'ends');
+      const at = ends.map(pt => idBoxes.filter(ib => isAt(ib.box, pt)));
+      if (at[0].length && at[1].length) {
+        at[0].concat(at[1]).forEach(ib => ib.joins = probe);
+        continue;
+      }
+      const far = at[0].length ? ends[1] : ends[0];
+      at[0].concat(at[1]).forEach(ib => ib.probes.push({ probe, far }));
+    }
+
+    // Red boxes and probes are never targets, nor is anything inside them.
+    const scaffoldRoots = new Set(boxes.map(b => send(b.box, 'localRoot')).concat(probes));
+    const isScaffolding = e => {
+      for (let a = e; a; a = a.parentElement) if (scaffoldRoots.has(a)) return true;
+      return false;
+    };
+    let touchables = null;
+    const allTouchables = () => touchables = touchables ||
+      Array.from(scope.querySelectorAll('.boundary-shape, g.connector-wrapper, g.text-wrapper'))
+        .filter(e => !isScaffolding(e) && !e.parentElement.closest('g.connector-wrapper'));
+
+    // What a probe's far end touches: an outline within eps (exactly one),
+    // else the innermost shape containing it.
+    const targetAt = (pt) => {
+      const near = allTouchables().filter(c => send(c, 'distanceTo:', pt) <= eps);
+      if (near.length > 1) return { error: 'touches more than one thing', elements: near };
+      if (near.length === 1) return { target: near[0] };
+      const inside = allTouchables().filter(c => c.matches('.boundary-shape') && send(c, 'containsPt:', pt));
+      if (inside.length === 0) return { error: 'touches nothing', elements: [] };
+      inside.sort((a, b) => depthOf(b) - depthOf(a));
+      return { target: inside[0] };
+    };
+
+    // Each ID box's name and target, or its error.
+    const named = [];
+    for (const ib of idBoxes) {
+      const { box } = ib;
+      const m = /^#(\S*)$/.exec(ib.text);
+      if (!m) { report('an ID box must hold one #name, with no spaces, and nothing else', box); continue; }
+      const name = m[1];
+      if (name === '' || name === 'nil') { report(`"#${name}" can't be used as a name`, box); continue; }
+      if (ib.joins) { report(`#${name}'s probe line joins two ID boxes`, box, ib.joins); continue; }
+      if (ib.probes.length > 1) {
+        report(`#${name} has ${ib.probes.length} probe lines; at most one is allowed`, box, ...ib.probes.map(p => p.probe));
+        continue;
+      }
+      let target;
+      if (ib.probes.length === 1) {
+        const { probe, far } = ib.probes[0];
+        const hit = targetAt(far);
+        if (hit.error) { report(`#${name}'s probe line ${hit.error} at its far end`, box, probe, ...hit.elements); continue; }
+        target = hit.target;
+      } else {
+        const container = send(box, 'localRoot').parentElement.closest('g.boundary-wrapper');
+        target = container && container.querySelector(':scope > .boundary-shape');
+        if (!target || isScaffolding(target)) { report(`#${name} is in no shape and has no probe line`, box); continue; }
+      }
+      named.push({ name, target, box, probe: ib.probes.length ? ib.probes[0].probe : null });
+    }
+
+    // A name drawn twice, or an element named twice, is an error for every box involved.
+    const groupBy = (key) => {
+      const m = new Map();
+      named.forEach(n => m.set(key(n), (m.get(key(n)) || []).concat([n])));
+      return m;
+    };
+    const sameName = groupBy(n => n.name), sameTarget = groupBy(n => n.target);
+    const names = [];
+    for (const n of named) {
+      const twins = sameName.get(n.name);
+      if (twins.length > 1) {
+        report(`#${n.name} is drawn ${twins.length} times`, n.box, ...twins.filter(t => t !== n).map(t => t.box));
+        continue;
+      }
+      const rivals = sameTarget.get(n.target);
+      if (rivals.length > 1) {
+        report(`one element is given ${rivals.length} names: ${rivals.map(r => '#' + r.name).join(' ')}`, n.box, n.target);
+        continue;
+      }
+      names.push(n);
+    }
+
+    // A drawn name beats any id nobody drew: whatever holds it now is displaced.
+    const targets = new Set(names.map(n => n.target));
+    const displaced = names.map(n => document.getElementById(n.name))
+                           .filter(e => e && !targets.has(e));
+    const warnings = [];
+    if (displaced.length) {
+      const refs = [];
+      for (const e of document.querySelectorAll('*'))
+        for (const a of e.attributes)
+          if (a.value.includes('url(#') || (a.localName === 'href' && a.value.startsWith('#')))
+            refs.push(a.value);
+      displaced.forEach(e => {
+        if (refs.some(v => v === '#' + e.id || v.includes('url(#' + e.id + ')')))
+          warnings.push({ message: `#${e.id} is drawn as a name, but something refers to the element that already had that id; the reference now points at the drawn one`, element: e });
+      });
+    }
+
+    const scaffolding = names.flatMap(n => n.probe ? [send(n.box, 'localRoot'), n.probe] : [send(n.box, 'localRoot')])
+      .concat(codeBoxes.map(cb => send(cb.box, 'localRoot')));
+
+    return { vtable: 'MagicRedSetup', names, errors, warnings, displaced, scaffolding,
+             codeBoxes: inReadingOrder(codeBoxes, cb => cb.box) };
+  },
+};
+
+// What a MagicRedNotation parse found, and the steps that act on it, sent in
+// this order by init(). Fields: names [{ name, target, box, probe }],
+// errors [{ message, box, elements }], warnings, codeBoxes [{ firstLine,
+// source, at, outcome }] in run order, and the scaffolding to remove.
+vtables.MagicRedSetup = {
+  // Report the diagram's errors, then give each name to its element. Elements
+  // displaced by a drawn name get a fresh auto id. `everything` is re-keyed.
+  ['applyNames']: (self) => {
+    self.errors.forEach(({ message, box, elements }) =>
+      console.error('Magic-red box: ' + message, box, ...elements));
+    self.warnings.forEach(({ message, element }) => console.warn('Magic-red box: ' + message, element));
+    const drawn = new Set(self.names.map(n => n.name));
+    const rename = (el, id) => {
+      const wasKnown = el.id && everything[el.id] === el;
+      if (wasKnown) delete everything[el.id];
+      el.id = id;
+      if (wasKnown) everything[id] = el;
+    };
+    self.displaced.forEach(el => {
+      let id;
+      do id = send(el, 'idPrefix') + (nextId++); while (drawn.has(id) || document.getElementById(id));
+      rename(el, id);
+    });
+    self.names.forEach(({ name, target }) => rename(target, name));
+  },
+
+  // Delete the ID boxes that worked (with their probes) and every code box.
+  // ID boxes with errors stay, to show where the problem is.
+  ['removeScaffolding']: (self) => {
+    self.scaffolding.forEach(root => {
+      for (const e of [root, ...root.querySelectorAll('[id]')])
+        if (e.id && everything[e.id] === e) delete everything[e.id];
+      root.remove();
+    });
+  },
+
+  // Run each code box at global scope, in reading order. A box that fails is
+  // reported and the rest still run. Without a `//!` directive the text is
+  // plain JS, so a diagram need only load the Sucrose scripts
+  // (bracket-hole-carving.js, lang-*.js) if its code boxes use them.
+  ['runCode']: (self) => {
+    self.codeBoxes.forEach(cb => {
+      try {
+        const sucrose = cb.source // Mathcha's automatic Unicode substitutions
+          .replaceAll('⩾','>=').replaceAll('⩽','<=').replaceAll('⟹','=>').replaceAll('≡','==');
+        const js = !cb.firstLine.trimStart().startsWith('//!') ? sucrose
+          : compile_with_directive(sucrose, {
+              SweetTalk: ST_with_holes_to_JS, Descartes: compile_descartes_with_holes });
+        console.debug('Magic-red code box compiled to:\n', js);
+        (0, eval)(js); // indirect eval: global scope
+        cb.outcome = 'ok';
+      } catch (e) {
+        cb.outcome = e;
+        console.error(`Magic-red code box "${cb.firstLine}" at ${cb.at} failed:`, e);
+      }
+    });
+  },
+};
+
 // ── HeadShaftArrow ────────────────────────────────────────────────────────────
 // Grammar for arrows with separate head/shaft elements, operating over a <g>'s
 // children-as-multiset. Leaves `head` and `shaft` abstract; concrete grammars

@@ -896,14 +896,17 @@ vtables.byTag['path']['targetPt'] = (self) =>
 
 // Update a named visual vector arrow, or init if applicable.
 // Mathcha-dependent
+// Drawn names land on the whole connector (g.connector-wrapper); an id on the
+// shaft alone (older documents) still works.
 vupd = (name, value, origin, prototypeId) => {
+  const wrapperOf = e => e.matches('g.connector-wrapper') ? e : e.parentElement;
   let arrow = byId('vec-'+name);
   if (!arrow) {
-    const prototype = byId(prototypeId).parentElement;
-    arrow = prototype.cloneNode(/*deep=*/true);
-    arrow.firstChild.id = 'vec-'+name;
+    arrow = wrapperOf(byId(prototypeId)).cloneNode(/*deep=*/true);
+    arrow.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    arrow.id = 'vec-'+name;
     svg_parent.appendChild(arrow);
-  } else arrow = arrow.parentElement;
+  } else arrow = wrapperOf(arrow);
   if (!origin) {
     origin = match(vtables.MathchaArrow, arrow, 'originPt');
   } else perform(vtables.MathchaArrow, arrow, 'originPt:', [origin]);
@@ -1576,78 +1579,8 @@ vtables['DefaultMetaNotation-Region'] = {
   },
 };
 
-MAGIC_RED = 'rgb(208, 2, 27)';
-// SMELL: much in common with DefaultMetaNotation, much duped
-isRedStroke = e => e.style && e.style.stroke === MAGIC_RED;
-redBoxes = scope => Array.from(scope.querySelectorAll('rect')).filter(isRedStroke);
-isInsideRedBox = (scope,e) => redBoxes(scope).some(box => box.parentElement.contains(e));
-
-vtables['CodeExecutionNotation'] = {
-  _parent: vtables['LabelledGraph'],
-
-  ['fromRegion:']: (self, scope) => {
-    // Pass 1: identify which paragraphs are syntax-name targets
-    // (those that red arrows terminate on). These become nodes in the
-    // graph alongside the red boxes.
-    const codeGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
-      'fromRegion:', scope,
-      'withDefs:', {
-        edgesFn: s => Array.from(s.querySelectorAll('path,polyline,line'))
-                          .filter(e => isRedStroke(e) && isMathchaConnector(e) && ⟦e isDirected⟧),
-        fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isRedStroke),
-        candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
-                                    .filter(l => !isInsideRedBox(s, l)),
-        endpointTolerance: 20,
-    });
-
-    return ⟦self
-      fromGraph: codeGraph
-      nodeNamer: n => null
-      edgeNamer: e => null
-    ⟧;
-  },
-  // Override wrapNode to add notation-specific accessors.
-  ['wrapNode:']: (self, gnNode) => ({ vtable: 'CodeExecutionNotation-Box', gnNode, lg: self }),
-  ['codeBoxes']: (self) => ⟦self nodes⟧.filter(n => n.gnNode.dom.tagName === 'rect'),
-
-  ['executeAll']: (self) => ⟦self codeBoxes⟧.forEach(box => ⟦box execute⟧),
-};
-
-vtables['CodeExecutionNotation-Box'] = {
-  _parent: vtables['LabelledGraph-Node'],
-
-  ['syntaxName']: (self) => {
-    const out = ⟦self outgoingEdges⟧;
-    if (out.length === 0) return null;
-    const target = ⟦out[0] target⟧;
-    // Expect a heavily wrapped g.is-paragraph
-    return target ? target.gnNode.dom.dataset.string : null;
-  },
-  ['innerScope']: (self) => {
-    if (self._innerScope) return self._innerScope;
-    self._innerScope = makeInnerScope(self.gnNode.dom);
-    return self._innerScope;
-  },
-  ['execute']: (self) => {
-    const syntaxName = ⟦self syntaxName⟧ || 'JS';
-    const vtable = vtables[syntaxName];
-    if (!vtable) {
-      console.warn('No vtable for syntax "'+syntaxName+'"; skipping code box.');
-      return;
-    }
-    // Assume vtable instances understand fromRegion: ...!
-    const domRegion = ⟦self innerScope⟧;
-    // Construct!
-    const js_func = send({ vtable: syntaxName }, 'compileRegion:', domRegion);
-    try {
-      js_func();
-      self.gnNode.dom.classList.add('done');
-    } catch (e) {
-      console.error(e);
-    }
-  },
-};
-
+// Code boxes need no classic vtable: MagicRedNotation (omnimeta.js) runs them.
+// vtables.JS remains for classic ActiveButton (DefaultMetaNotation; fire 2).
 vtables['JS'] = {
   ['compileRegion:']: (self, scope) => {
     const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
@@ -1656,34 +1589,6 @@ vtables['JS'] = {
     return () => eval(js_source); // >:D
   }
 };
-
-vtables['Sucrose'] = {
-  ['compileRegion:']: (self, scope) => {
-    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
-    const code_strings = code_paras.map(p => p.dataset.string);
-    const sucrose_source = code_strings.join('\n\n') // Mathcha Unicode autocompletes
-      .replaceAll('⩾','>=').replaceAll('⩽','<=').replaceAll('⟹','=>').replaceAll('≡','==');
-    const js_source = compile_with_directive(sucrose_source, {
-      SweetTalk: ST_with_holes_to_JS,
-      Descartes: compile_descartes_with_holes
-    });
-    console.debug('Compiled Sucrose to:\n', js_source);
-    return () => eval(js_source);
-  }
-};
-
-vtables['JS{[SweetTalk]}'] = {
-  ['compileRegion:']: (self, scope) => {
-    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
-    const code_strings = code_paras.map(p => p.dataset.string);
-    const jsst_source = code_strings.join('\n\n');
-    // Same as ST{[JS]}, just wrap in one big JS hole with empty ST outer layer
-    const stjs_source = HOLE_DELIMS[0]+' '+jsst_source+' '+HOLE_DELIMS[1];
-    const js_source = compile_nested_holes(stjs_source);
-    console.debug('Compiled SweetTalk{[JS]} to:\n', js_source);
-    return () => eval(js_source);
-  }
-}
 
 // ── Editor vocabulary ────────────────────────────────────────────────────────
 // EditorVocab is a placeholder in every notation's _parent chain; init() wires
@@ -1786,53 +1691,15 @@ function init() {
     delete e.dataset.contains;
   });
 
-  // Now, detect probe connectors for "magic red" ID / Code boxes
-  const magicRedStroke = e => e.style.stroke === MAGIC_RED;
-  const idSetterBoxes = scope => Array.from(scope.querySelectorAll('rect'))
-    .filter(magicRedStroke).filter(e =>
-      ⟦e localRoot⟧.querySelector('.is-paragraph').dataset.string.startsWith('#')
-    );
-  idSetterGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
-    'fromRegion:', document.documentElement,
-    'withDefs:', {
-      edgesFn: scope => Array.from(scope.querySelectorAll('.connection'))
-        .filter(magicRedStroke).filter(e => !⟦e isDirected⟧),
-      fixedNodesFn: idSetterBoxes,
-      candidateNodesFn: () => Object.values(everything),
-      endpointTolerance: 0
-  });
-  // Execute ID setter boxes
-  ⟦idSetterGraph nodes⟧.filter(n => magicRedStroke(n.dom)).forEach(n => {
-    const lroot = ⟦n.dom localRoot⟧;
-    const para_g = lroot.querySelector('.is-paragraph');
-    const str = para_g.dataset.string;
-    // By default, the target is the container of the ID setter box
-    let target = lroot.parentElement.firstChild; // SMELL boundary-shape
-    const neighbors = ⟦n neighbors⟧;
-    if (neighbors.length > 1) throw ['ID setter needs exactly 1 target:', n];
-    // If node is connected to another via an edge, that neighbor is the target
-    if (neighbors.length > 0) target = neighbors[0].dom;
-    if (target.id !== 'nil') {
-        const newId = str.substring(1);
-        const clash = byId(newId);
-        if (clash) clash.id = target.id; // if newId already taken, swap
-        target.id = newId;
-      }
-    para_g.classList.add('done');
-    ⟦n incidentEdges⟧.forEach(e => e.dom.classList.add('done'));
-  });
-
-  removeDone();
-
-  // Now, execute embedded JS or syntactic sugar layers
-  codeExec = send({ vtable: 'CodeExecutionNotation' }, 'fromRegion:', document.documentElement);
-  ⟦codeExec executeAll⟧;
+  // Now the magic-red setup scaffolding (PRINCIPLES Decision 3): read every
+  // red box first, then apply the drawn names, delete the scaffolding, and
+  // run the code boxes. See MagicRedNotation in omnimeta.js.
+  magicRed = send({ vtable: 'MagicRedNotation' }, 'fromRegion:', svg_parent);
+  ⟦magicRed applyNames⟧;
+  ⟦magicRed removeScaffolding⟧;
+  ⟦magicRed runCode⟧;
 
   return elems.length;
-}
-
-function removeDone() {
-  all('.done').forEach(e => e.parentElement.remove()); // WARNING: connections[*].connectors will be stale
 }
 
 // post-init entry point for diagrams in the default meta-notation
