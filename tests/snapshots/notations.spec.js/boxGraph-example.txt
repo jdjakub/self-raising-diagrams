@@ -1,10 +1,10 @@
 ## boxes
-(unnamed): rect @30,40 90x80 fill=rgb(255, 255, 255)
-(unnamed): rect @170,40 90x80 fill=rgb(255, 255, 255)
-(unnamed): rect @30,170 90x80 fill=rgb(255, 255, 255)
-(unnamed): rect @170,170 90x80 fill=rgb(255, 255, 255)
+(unnamed): rect @50,68 90x80 fill=rgb(255, 255, 255)
+(unnamed): rect @190,68 90x80 fill=rgb(255, 255, 255)
+(unnamed): rect @50,198 90x80 fill=rgb(255, 255, 255)
+(unnamed): rect @190,198 90x80 fill=rgb(255, 255, 255)
 
 ## arrows
-(unnamed): line @110,78 58x0 fill=none connects: ERROR can't access property "contains", elt.classList is undefined
-(unnamed): line @50,110 0x58 fill=none connects: ERROR can't access property "contains", elt.classList is undefined
-(unnamed): line @230,100 0x68 fill=none connects: ERROR can't access property "contains", elt.classList is undefined
+(unnamed): line @130,108 78x0 fill=none connects: ERROR can't access property "contains", elt.classList is undefined
+(unnamed): line @70,138 0x88 fill=none connects: ERROR can't access property "contains", elt.classList is undefined
+(unnamed): line @250,128 0x98 fill=none connects: ERROR can't access property "contains", elt.classList is undefined

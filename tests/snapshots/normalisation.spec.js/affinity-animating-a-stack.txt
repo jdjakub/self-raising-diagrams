@@ -28,8 +28,8 @@
   <script href="../main-engine.js">
   <script href="../omnimeta.js">
   <script href="./animation-notation.js">
-  <g class="text-wrapper" data-string="Example: animating a stack" id=auto>
-    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="32px" y="58.07px"> "Example: animating a stack"
+  <g class="text-wrapper" data-string="Example: animating a stack (:AnimationNotation)" id=auto>
+    <text style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;" x="32px" y="58.07px"> "Example: animating a stack (:AnimationNotation)"
   <g class="text-wrapper is-multiline" data-string="This example describes a step-by-step\nanimation of a stack data structure." id=auto>
     <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;" x="32px" y="98.14px"> "This example describes a step-by-step"
     <text style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;" x="32px" y="122.81px"> "animation of a stack data structur"

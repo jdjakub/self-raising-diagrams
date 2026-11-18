@@ -28,7 +28,7 @@ Augmented Diagrams / Vector Vision Engine (VVE): SVG diagrams drawn in ordinary 
 
 ## Conventions
 - Vtables: uppercase names; `_parent` chains for inheritance; DOM elements dispatch via `vtables.byTag[tagName]`. Instances are built by sending constructor messages to objects with explicit vtable fields.
-- Rule/selector names in Smalltalk keyword style (`Before:After:`). In OmniMeta notations, `Root` is the default start rule (`NotationGrammar`'s `fromRegion:` matches it). Not every notation has one yet: BoardGameNotation overrides `fromRegion:`, and BoxGraphOM's top rule is `BoxGraph`.
+- Rule/selector names in Smalltalk keyword style (`Before:After:`). In OmniMeta notations, `Root` is the default start rule (`NotationGrammar`'s `fromRegion:` matches it). Notations built on `DefaultMetaNotation` (e.g. BoardGameNotation) have none: its `fromRegion:` dispatches titled regions instead.
 - Return raw elements; add wrapper objects only when they add a message.
 - Wrap every number written to an SVG attribute in `legible()`.
 - `{[` / `]}` delimit JS holes in SweetTalk.

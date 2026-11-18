@@ -33,8 +33,8 @@
   "init": {
     "defined": true,
     "semantics": {
-      "vtable": "MetaNotationResults",
-      "keys": 0
+      "vtable": "AnimationController",
+      "keys": 5
     }
   },
   "events": []

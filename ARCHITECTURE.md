@@ -116,16 +116,16 @@ All three are `NotationGrammar` subclasses (BoardGameNotation via `DefaultMetaNo
 - Built on `DefaultMetaNotation` (§5): each box title `NAME (:Rule)` picks one of its rules for that box: `BoardLegend`, `BoardState`, `MoveSpec`, `TransformSpec`, `CombosSpec`. The page-sized white box the regions sit on is looked through. It overrides `orderRegions:` (legend first, then board state, then the rest in reading order; CLEANUP.md fire 21) and `parseRegion:` (installs the closures below, tags each result with `fromRule`).
 - Pieces are identified by `similarShapes` against the legend's examples; zones by a hardcoded `stroke-width` selector.
 - Side effect: installs `boardPieces`/`boardZones` closures on the shared vtable, breaking the stateless-grammar rule.
-- Launch: opening runs `init()`; until the diagram has a `(:BoardGameNotation)` page title (fire 2 step 5) it is parsed by `DefaultMetaNotation`, which reports its eight titles as unknown, so `send({vtable:'BoardGameNotation'}, 'fromDocument')` is still needed. Then `send(semantics, 'exportJSForApp')` (`BoardGameResults`) returns JS source, pasted by hand into `CheckersApp/index.html` (the Turkish rules are the active block now).
-- `*-normalized.svg` have `data-normalized`, so `init()` stops at step 2; they probably parse without it **[inferred]**.
+- Launch: the heading is the page title (`CHECKERS (:BoardGameNotation)`), so opening runs `init()` and parses into `semantics`. Then `send(semantics, 'exportJSForApp')` (`BoardGameResults`; the console instruction drawn on the diagram says so) returns JS source, pasted by hand into `CheckersApp/index.html` (the Turkish rules are the active block now).
+- `*-normalized.svg` have `data-normalized`, so `init()` skips to step 7 and parses them straight away; they give the same results as the raw files. They are regenerated from the raw files whenever the raw files change (last: fire 2 step 5, by serialising the document after `init()`).
 - `testCheckers` (Tomas's own assertions) now fails, because it hardcodes auto-ids that have shifted. The harness runs a port of it that compares ids by order of appearance; that passes on the raw and normalised files.
 
-**CarsNotation** (`cars-notation.jstalk.js`, PowerPoint `cars.svg`; unfinished: on cars.svg it currently finds no cars, see CLEANUP.md fire 15). `Root = Car* RoadPath* Arrow*`. `Car` = a 9-vertex polygon plus exactly 2 circles within 10px (`claimAll:near:within:`). `RoadPath` = a path with stroke-width `1.33333px` plus 10-vertex polygon markers within 2px. Launch: opening runs `init()`; then `send({vtable:'CarsNotation'}, 'fromDocument')` until it has a page title (fire 2 step 5). `CarsApp/` does **not** use it: `cars.html` reads hardcoded ids from the script-free `cars-spin.svg` in an iframe.
+**CarsNotation** (`cars-notation.jstalk.js`, PowerPoint `cars.svg`; unfinished: on cars.svg it currently finds no cars, see CLEANUP.md fire 15). `Root = Car* RoadPath* Arrow*`. `Car` = a 9-vertex polygon plus exactly 2 circles within 10px (`claimAll:near:within:`). `RoadPath` = a path with stroke-width `1.33333px` plus 10-vertex polygon markers within 2px. Launch: the page title `CARS (:CarsNotation)` (top left, white on the background) makes opening parse it into `semantics`. `CarsApp/` does **not** use it: `cars.html` reads hardcoded ids from the script-free `cars-spin.svg` in an iframe.
 
 **AnimationNotation** (`CamilleNotations/animation-notation.jstalk.js`; Affinity SVGs, except Mathcha `anim-test.svg`).
 - `Root`: a green (`rgb(45,184,10)`) arrow from a green label names its target element. Red (`rgb(184,10,10)`) boxes each hold a `SeqGraph = Graph(Text, Named(SeqArrow))`; texts can be vertices, so the name-vs-endpoint test is on.
 - Compiles to an `AnimationController` (`byEvent`, `cmdsByState`). Commands: `opacity stroke scale text wait anim`. Events: `click`, `click N`, `Ns`.
-- Launch: opening runs `init()`; `send({vtable:'AnimationNotation'}, 'fromDocument')` until it has a page title (fire 2 step 5); `send(semantics, 'start')` (= `beginSlideshow`); click.
+- Launch: the page title (`Example: animating a stack (:AnimationNotation)`; anim-test's is a bare `(:AnimationNotation)`) makes opening parse it into `semantics`. Then `send(semantics, 'start')` (= `beginSlideshow`); click.
 
 **Apps**: `CheckersApp/index.html` + `app.js` and `CarsApp/cars.html` + `cars.js` are standalone Elm-style HTML pages. They read their SVG through `iframe.contentDocument`. The comment says "works over http://". Firefox's default file:// policy gives each file its own origin, so this probably returns null over file://, against hard requirement 5 **[inferred]**.
 
@@ -133,10 +133,10 @@ All three are `NotationGrammar` subclasses (BoardGameNotation via `DefaultMetaNo
 | File | Editor | Exercises | Notes |
 |---|---|---|---|
 | principles/1–6 | Mathcha | documentation only (no scripts) | show the *old* encodings (`composite-shape`, `arrow-line`, `is-paragraph`, `data-connects`) |
-| boxGraph-example | Mathcha | vocab, containment, BoxGraph / BoxGraphOM (`match(vtables.BoxGraphOM, svg_parent, 'BoxGraph')`) | no red boxes, so `init()` should succeed |
+| boxGraph-example | Mathcha | vocab, containment, BoxGraph / BoxGraphOM (page title `(:BoxGraphOM)`, so opening parses it) | no red boxes; names never found and connections crash (CLEANUP fire 4) |
 | labelGraph-example | Mathcha | TextGraph | no omnimeta.js → `init()` fails |
 | containment-stress-test, magic-red-id-test | Mathcha | containment, magic-red ID boxes (container and probe), code boxes, retired class boxes, displaced ids | `#p1` errors: its pentagon isn't normalised (CLEANUP fire 19); demo code assumes names on shafts |
-| notational-dispatch | Mathcha | `DefaultMetaNotation`: boxes titled `(:BoxGraphOM)`, `(:TextGraph)`, `(:ActiveButton)` | every region reports an error, kept as reminders: BoxGraphOM has no `Root` yet (fire 2 step 5), the other two have no OmniMeta notation |
+| notational-dispatch | Mathcha | `DefaultMetaNotation`: boxes titled `(:BoxGraphOM)`, `(:TextGraph)`, `(:ActiveButton)` | the two BoxGraphOM boxes parse; the TextGraph and ActiveButton boxes report errors, kept as reminders: they have no OmniMeta notation |
 | hole-carving-test | Mathcha | SweetTalk holes, meta-dispatch, `asJS` | no omnimeta.js |
 | solid-physics-test(-2) | Mathcha | SweetTalk+Descartes, `Polygon intersectWith:`, `vupd` vector arrows, ID boxes naming connectors | -1 has no omnimeta.js; -2's top code box fails reading arrows (CLEANUP fire 6) |
 | id-vanilla | Mathcha | the ID object model (commented-out code at the end of main-engine) | no omnimeta.js |

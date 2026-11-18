@@ -19,7 +19,7 @@
   rect: 255
   script: 7
   svg: 1
-  text: 134
+  text: 133
 
 ## tree
 <svg data-normalized="true" height="2268" overflow="scroll" width="2646" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -681,11 +681,10 @@
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="446"> "placeholder, to be used in MOVES definitions when we want to say"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="470"> "that jumping can be over either King or Regular piece. (The logic of"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="117.23" y="494"> "that would be handled outside of the SVG.)"
-      <g class="text-wrapper is-multiline" data-string="TO COMPILE THE DIAGRAM:\nRun in the JS Console:\nsend({vtable: 'BoardGameNotation'}, 'fromDocument');\nsend({vtable: 'BoardGameNotation'}, 'exportJSForApp');" id=auto>
+      <g class="text-wrapper is-multiline" data-string="TO COMPILE THE DIAGRAM:\nRun in the JS Console:\nsend(semantics, 'exportJSForApp');" id=auto>
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1050" y="50"> "TO COMPILE THE DIAGRAM:"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1050" y="80"> "Run in the JS Console:"
-        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1070" y="110"> "send({vtable: 'BoardGameNotation'}, 'fromDocument');"
-        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1070" y="140"> "send({vtable: 'BoardGameNotation'}, 'exportJSForApp');"
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="1070" y="110"> "send(semantics, 'exportJSForApp');"
       <g class="text-wrapper is-multiline" data-string="Definitions of possible moves\n• We will need some processing outside of the SVG notation, for example to know that there can be\nmultiple jumps in a single round, but only one regular move in each round (and also that jumps must\nbe preferred if both regular and jump are available), but SVG notation can define possible moves\nand group them into categories.\n• Ideally, each “MOVES” box would be parsed as array of before/after pairs where each step of the\nmove is represented as either 2D array or as some kind of coordinate. For example, for the first\nmove, we could get: [ (0,0,null); (1,1,”Regular 1”) ] => [ (0,0,”Regular 1”); (1,1,null) ]\n• Some of the arrows that define moves are labelled – this identifies the move and it is used in the\nbonus feature discussed below (to specify valid sequences of moves in a single round)\n• Alternatively, we could draw the moves with arrows pointing from the piece to possible target\nlocations. But this is harder, because it does not specify what other pieces must/must not be on the\nboard (when one diagram represents multiple possible moves). I think we do not want that." id=auto>
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="748.1" y="175"> "Definitions of possible moves"
         <text font-family="Arial,Arial_MSFontService,sans-serif" font-size="20" font-weight="400" x="748.1" y="207"> "•"
@@ -713,8 +712,8 @@
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1750"> "area defined in INITIAL board state,"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1774"> "it becomes a different kind of piece"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="400" x="205.66" y="1798"> "as defined in TRANSFORMS."
-      <g class="text-wrapper" data-string="CHECKERS" id=auto>
-        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="32.51" font-weight="700" x="105.96" y="122"> "CHECKERS"
+      <g class="text-wrapper" data-string="CHECKERS (:BoardGameNotation)" id=auto>
+        <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="32.51" font-weight="700" x="105.96" y="122"> "CHECKERS (:BoardGameNotation)"
       <g class="text-wrapper" data-string="MOVES - KING (:MoveSpec)" id=auto>
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1659.49" y="177"> "MOVES"
         <text font-family="Calibri,Calibri_MSFontService,sans-serif" font-size="20" font-weight="700" x="1725.63" y="177"> "-"

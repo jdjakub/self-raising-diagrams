@@ -1306,6 +1306,9 @@ vtables.BoxGraphOM = {
   // notation: boxes (optionally named) as vertices, arrows (optionally named)
   // as edges. Named(_) is passed as a thunk designator so it decorates at the
   // region level (its name-search needs the region cursor, not a candidate focus).
+  // Root = BoxGraph, so a region titled `(:BoxGraphOM)` parses as one.
+  ['Root']: (self) => ⟦self BoxGraph⟧,
+
   // BoxGraph = Graph(Named(Box), Named(Arrow))
   ['BoxGraph']: (self) => ⟦self GraphWithVertices: (self) => ⟦self Named: 'Box'⟧
                                 andEdges: (self) => ⟦self Named: 'Arrow'⟧⟧,

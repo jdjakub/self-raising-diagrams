@@ -1,6 +1,6 @@
 ## names
 label = text "x"
-disc = circle @170,170 60x60 fill=rgb(255, 255, 255)
+disc = circle @150,180 60x60 fill=rgb(255, 255, 255)
 
 ## transitions (event: element / sequence: state -> state)
 click: disc / disc: start -> #1

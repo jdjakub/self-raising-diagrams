@@ -11,11 +11,10 @@ const textSnapshot = (lines) => scrub(lines.join('\n')) + '\n';
 
 // ── BoardGameNotation (checkers) ─────────────────────────────────────────────
 
-/** Opening runs init(); then fromDocument (until the diagram has a page title). Report every region in testCheckers' formats, then exportJSForApp. */
+/** Opening the diagram parses it (its page title names BoardGameNotation). Report every region in testCheckers' formats, then exportJSForApp. */
 async function checkersReport(page, file) {
   await openFixture(page, file);
   const report = await inPage(page, () => {
-    send({ vtable: 'BoardGameNotation' }, 'fromDocument');
     const sections = {};
     for (const [inst, sem] of Object.entries(semantics)) {
       const lines = [];
@@ -84,8 +83,7 @@ for (const file of ['TomasNotations/checkers.svg', 'TomasNotations/checkers-norm
 
 test('CarsNotation: TomasNotations/cars.svg', async ({ page }) => {
   await openFixture(page, 'TomasNotations/cars.svg');
-  const lines = await inPage(page, () => {
-    send({ vtable: 'CarsNotation' }, 'fromDocument');
+  const lines = await inPage(page, () => { // opening parsed it: its page title names CarsNotation
     const out = ['## cars'];
     semantics.cars.forEach((c) => out.push(__el(c.body) + ' wheels: ' + c.wheels.map(__el).join('; ')));
     out.push('', '## road paths');
@@ -103,15 +101,15 @@ test('CarsNotation: TomasNotations/cars.svg', async ({ page }) => {
 // ── AnimationNotation ────────────────────────────────────────────────────────
 
 /**
- * Launch: opening runs init(); fromDocument; start; then play `steps`
+ * Launch: opening parses the diagram (by its page title; `fromDocument` when it has none yet); start; then play `steps`
  * ('click', or a number of milliseconds to let timers run, on a fake clock).
  * Reports the compiled rule tables, then the named elements' state after each step.
  */
-async function animationReport(page, file, steps) {
+async function animationReport(page, file, steps, hasPageTitle) {
   await page.clock.install();
   await openFixture(page, file);
-  const lines = await inPage(page, () => {
-    send({ vtable: 'AnimationNotation' }, 'fromDocument');
+  const lines = await inPage(page, (hasPageTitle) => {
+    if (!hasPageTitle) send({ vtable: 'AnimationNotation' }, 'fromDocument');
     const s = semantics;
     const out = ['## names'];
     for (const [name, elt] of Object.entries(s.eltsByName)) out.push(name + ' = ' + __el(elt));
@@ -125,7 +123,7 @@ async function animationReport(page, file, steps) {
     for (const [state, cmds] of Object.entries(s.cmdsByState))
       out.push(__canon(state) + ': ' + JSON.stringify(cmds));
     return out;
-  });
+  }, hasPageTitle);
   const stateOf = () => inPage(page, () => Object.entries(semantics.eltsByName).map(([name, e]) =>
     '  ' + name + ': style=' + JSON.stringify(e.getAttribute('style') || '')
     + ' transform=' + JSON.stringify(e.getAttribute('transform') || '')
@@ -145,13 +143,13 @@ async function animationReport(page, file, steps) {
 
 test('AnimationNotation: CamilleNotations/Example — animating a stack.svg', async ({ page }) => {
   const lines = await animationReport(page, 'CamilleNotations/Example — animating a stack.svg',
-    ['click', 'click', 'click', 'click']);
+    ['click', 'click', 'click', 'click'], true);
   expect(textSnapshot(lines)).toMatchSnapshot('animating-a-stack.txt');
 });
 
 test('AnimationNotation: CamilleNotations/anim-test.svg', async ({ page }) => {
   const lines = await animationReport(page, 'CamilleNotations/anim-test.svg',
-    ['click', 2100, 'click', 2100]);
+    ['click', 2100, 'click', 2100], true);
   expect(textSnapshot(lines)).toMatchSnapshot('anim-test.txt');
 });
 
@@ -160,8 +158,8 @@ test('AnimationNotation: CamilleNotations/anim-test.svg', async ({ page }) => {
 test('BoxGraphOM: boxGraph-example.svg', async ({ page }) => {
   await openFixture(page, 'boxGraph-example.svg');
   const lines = await inPage(page, () => {
-    const g = match(vtables.BoxGraphOM, svg_parent, 'BoxGraph');
-    if (g === null) return ['BoxGraph rule failed'];
+    const g = semantics; // page title (:BoxGraphOM)
+    if (!g) return ['BoxGraphOM parse failed'];
     const name = (nt) => (nt.name === undefined ? '(unnamed)' : JSON.stringify(nt.name));
     const out = ['## boxes'];
     g.nodes.forEach((n) => out.push(name(n) + ': ' + __el(n.inner.dom)));

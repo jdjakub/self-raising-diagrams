@@ -29,13 +29,13 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 - **Question**: how does a diagram say which? For example a second magic colour, a marker in the box, or a per-diagram setting. Hard requirement 2 applies: a box that stays is part of the document, so whatever it did must still be reproducible on reload.
 - **Decision**: JOEL, later.
 
-### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, steps 1–4 done)
+### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, steps 1–5 done)
 - **Plan** (one commit per step, harness after each):
   1. Delete the classic blue `DefaultMetaNotation` (and its region vtable), `meta_boxgraph_init`, the blue-colour helpers, `ActiveButton` and `vtables.JS`. notational-dispatch stays known-broken until Joel re-exports it. **Done**; Joel has since re-exported notational-dispatch with titled boxes and no code box. It keeps titles naming notations that don't exist yet (`TextGraph`, `ActiveButton`) as reminders. `EdgeDrivenGraphNotation`, left unused, is deleted too.
   2. New OmniMeta `DefaultMetaNotation`, extracted from BoardGameNotation's region dispatch (replacing `RegionDispatchNotation`): titled regions in reading order, looking through untitled boxes (this retires BoardGameNotation's "first `<g>`" hack), rule-then-notation lookup, results keyed by title, and reported errors (nameless title, unknown name, two regions with one title). **Done**: tested by `specs/meta-notation.spec.js` on checkers.svg; `RegionDispatchNotation` goes in step 3 with its last user.
   3. BoardGameNotation rebuilt on it, keeping its legend-then-board-state order (fire 21). **Done**: its results are unchanged and `testCheckers` still passes; regions after those two now come in reading order rather than file order, which reorders the move rules in `exportJSForApp`'s output across labels only (the app looks rules up by label, so play is unaffected). `RegionDispatchNotation` is deleted, and with it the fire 15 `findIndex` bug.
   4. On open: `init()`, then the parse (page title, else `DefaultMetaNotation`) into `semantics`; two page titles are an error. `send(semantics, 'start')` runs the app: AnimationNotation begins its slideshow; `DefaultMetaNotation` starts each region that has a `start`. **Done**: the parse is `init()`'s last step (also on already normalised files), and omnimeta.js runs `init()` on load. `semantics` answers messages through a hidden results vtable that its notation names (`BoardGameResults` holds `exportJSForApp`, moved from BoardGameNotation). The harness no longer calls `init()`. Until step 5, checkers opens with eight region errors, and the demos still need an explicit `fromDocument`.
-  5. Page titles in the demos: the agent copies each editor's own text SVG into the PowerPoint and Affinity exports (checkers ×4 including `-normalized`, cars, animating-a-stack); Joel re-exports the Mathcha ones (anim-test, boxGraph-example, notational-dispatch).
+  5. Page titles in the demos: the agent copies each editor's own text SVG into the PowerPoint and Affinity exports (checkers ×4 including `-normalized`, cars, animating-a-stack); Joel re-exports the Mathcha ones (anim-test, boxGraph-example, notational-dispatch). **Done** for the hand-edited ones: each heading gained its `(:Name)` (cars got a new heading text), the checkers console instruction now says `send(semantics, 'exportJSForApp');`, and both checkers `-normalized` files were regenerated (which also brought them up to the current engine). BoxGraphOM gained a `Root`, so its notational-dispatch boxes parse. Joel re-exported anim-test `(:AnimationNotation)` and boxGraph-example `(:BoxGraphOM)` (its two-line "sample text" became the page title).
   6. Harness launch scripts reduced to "open, read `semantics`", with snapshot changes shown to Joel; ARCHITECTURE.md §4, §5, §7 and this fire updated.
 - **Decided** (PRINCIPLES.md Decision 5): drawn `(:Name)` titles. A box titled `TITLE (:Name)` is parsed by `Name`: (b) is extracted from BoardGameNotation as the new `DefaultMetaNotation`, assumed when there is no page title, and (a) is retired. A bare `(:Name)` text on the page names the whole diagram's notation. Opening the SVG runs `init()` automatically; starting the notation is a manual console command. `ActiveButton` goes with (a). Rejected: a red code box as the launcher (works today, but the notation is named in code and vanishes after running), and an SVG attribute written by `prepare` (invisible in the drawing).
 - **What**: there are five conflicting mechanisms:
@@ -79,6 +79,8 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - Retiring the classic layer silently changes which label names which thing.
   - `BoxGraphOM Label` still uses the classic constant `ALL_LABELS` (`.is-paragraph`), so OmniMeta BoxGraph names are never found **[confirmed]**: every box and arrow in boxGraph-example comes out unnamed.
   - Separately, asking BoxGraphOM which boxes an arrow connects crashes **[confirmed]**: the graph object passes the *named wrapper* to `epsilonFor:`, which expects a raw element. It works in notations whose vertices aren't `Named:` (checkers' combos graph, the animation sequences).
+  - Behind the `ALL_LABELS` bug is a second crash of the same kind **[confirmed]** (found during fire 2, 2026-11-18): with `Label` fixed, both BoxGraphOM regions of notational-dispatch fail with "TypeError: thing.matches is not a function". `isName:for:` expects a raw element, but BoxGraphOM's `Box`/`Arrow` return `GraphNode`/`GraphEdge` wrappers that only forward messages, against the "return raw elements" convention. With both patched in the page, bg2 reads as drawn (boxes A–D, arrows foo, bar, baz); in bg1 the arrow is foo and the boxes are unnamed. Unnamed things come out as `undefined`, though `Named:`'s comment promises `null`.
+  - Proposed fix (agent, once approved; independent of the ordering question below): drop BoxGraphOM's `Label` override; have `Box`/`Arrow` return raw elements; have the graph code look through the `NamedThing` wrapper where it needs geometry (fixes the `connectionsOf:` crash too); give unnamed things `null`.
 - **Prediction**: keep `Named:`'s structure but make the matching independent of document order (closest first among candidates). Document order is invisible in the picture, so depending on it breaks "no hidden state". Single-line vs multi-line becomes a per-notation `LabelSel`.
 - **Confidence**: medium.
 - **Decision**: JOEL.
@@ -221,6 +223,13 @@ One quick call per file:
 - **Prediction**: MathchaVocab's `init` misses this encoding of a closed polygon; teach it, and `#p1` names the pentagon.
 - **Confidence**: medium (cause not yet traced).
 
+### 22. PowerPoint clip rectangles become black boxes (checkers background turns black)
+- **What** **[confirmed]**: after `init()`, the checkers diagrams (raw and `-normalized`) show a black page, readable only where shapes are drawn. PowerPoint exports a clip rectangle inside `<defs><clipPath>`, which is never drawn. `PowerpointVocab init` wraps every `rect` as a boundary shape without skipping `<defs>`, `seedElements` then picks it up, and containment moves it out of the clip path into the page, just inside the white page rect (`#r2`). That stray box is `#r1`; it has no fill, so SVG's default black covers the page.
+- **History**: `init` used to delete `<defs>`; commit `6c19db2` ("Turkish Checkers, try cars") commented that out, almost certainly because `cars.svg` keeps its background picture (a `<pattern>`) in `<defs>`. Raw checkers has been black after `init()` since then. The committed `-normalized` files predated it until fire 2 step 5 regenerated them, which copied the bug in.
+- **Prediction**: anything inside `<defs>` is a resource, never a drawn shape: the vocabularies' `init` and `seedElements` skip it, `<defs>` stays (cars needs it), and the checkers `-normalized` files are regenerated. Filling `#r1` white would only hide a box that shouldn't exist. Only the PowerPoint files have such resources today.
+- **Confidence**: high.
+- **Decision**: *agent*, once approved.
+
 ---
 
 ## Order of work
@@ -245,7 +254,7 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 
 **Phase 2: your decisions, hottest first.** Fires 1–5, then 6–8, one per sitting. For each, I'd draft two or three concrete options with consequences, so you only have to choose. Each choice is recorded under "Decisions" in PRINCIPLES.md.
 
-**Phase 3: safe mechanical cleanup**, harness green after each step: fires 12 (done), 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17.
+**Phase 3: safe mechanical cleanup**, harness green after each step: fires 12 (done), 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17, 22.
 
 **Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1, done), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
 

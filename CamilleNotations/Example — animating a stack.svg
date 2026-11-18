@@ -11,7 +11,7 @@
     <rect id="Example---animating-a-stack" serif:id="Example — animating a stack" x="0" y="0" width="1064" height="795" style="fill:none;"/>
     <g transform="matrix(24,0,0,24,346.976,58.068)">
     </g>
-    <text x="32px" y="58.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">Example: animating a stack</text>
+    <text x="32px" y="58.068px" style="font-family:'HelveticaNeue-Bold', 'Helvetica Neue';font-weight:700;font-size:24px;">Example: animating a stack (:AnimationNotation)</text>
     <g transform="matrix(1,0,0,1,3.68564e-14,-355)">
         <text x="32px" y="453.136px" style="font-family:'HelveticaNeue', 'Helvetica Neue';font-size:24px;">This example describes a step-by-step</text>
         <g transform="matrix(24,0,0,24,411.224,477.808)">

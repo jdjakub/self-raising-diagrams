@@ -29,8 +29,8 @@
   "init": {
     "defined": true,
     "semantics": {
-      "vtable": "MetaNotationResults",
-      "keys": 0
+      "vtable": "GraphObject",
+      "keys": 4
     }
   },
   "events": []

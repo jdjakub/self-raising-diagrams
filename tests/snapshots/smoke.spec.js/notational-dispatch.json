@@ -30,21 +30,13 @@
     "defined": true,
     "semantics": {
       "vtable": "MetaNotationResults",
-      "keys": 0
+      "keys": 2
     }
   },
   "events": [
     {
       "kind": "console.error",
       "text": "Region title \"b2 (:ActiveButton)\" at 519,51 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
-    },
-    {
-      "kind": "console.error",
-      "text": "Region title \"bg1 (:BoxGraphOM)\" at 72,91 failed while parsing: BoxGraphOM didn't understand Root JSHandle@node"
-    },
-    {
-      "kind": "console.error",
-      "text": "Region title \"bg2 (:BoxGraphOM)\" at 322,191 failed while parsing: BoxGraphOM didn't understand Root JSHandle@node"
     },
     {
       "kind": "console.error",
