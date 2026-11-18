@@ -17,7 +17,7 @@ module.exports = [
   { file: 'magic-red-id-test.svg', note: 'magic-red boxes; #p1 sits in an un-normalised Mathcha pentagon; its SweetTalk box predates names on whole connectors' },
   { file: 'containment-stress-test.svg', note: 'magic-red boxes, including retired class boxes (reported as errors)' },
   { file: 'magic-red-errors.svg', note: 'magic-red error cases, one box each, plus code boxes drawn in reverse reading order' },
-  { file: 'notational-dispatch.svg', note: 'magic-red code box drives the blue meta-notation (fire 2)' },
+  { file: 'notational-dispatch.svg', note: 'magic-red code box calls the deleted blue meta-notation and fails; to be re-exported with (:Name) titles (fire 2)' },
   { file: 'solid-physics-test-2.svg', note: 'magic-red boxes; top code box fails reading arrows (fire 6)' },
   { file: 'solid-physics-test.svg', note: 'no omnimeta.js (fire 13)' },
   { file: 'hole-carving-test.svg', note: 'no omnimeta.js (fire 13)' },

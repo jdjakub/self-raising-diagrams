@@ -1084,58 +1084,6 @@ const labelGN = send(GraphNotation,
 
 */
 
-vtables['EdgeDrivenGraphNotation'] = {
-  _parent: vtables['GraphNotation'],
-
-  // scope:         DOM element delimiting the region (typically document.documentElement)
-  // defs: {
-  //   edgesFn:       (scope) -> [edge DOM elems],
-  //   fixedNodesFn:  (scope) -> [pre-known node DOM elems] (e.g. red boxes),
-  //   candidateNodesFn: (scope) -> [maybe node DOM elems, which if hit by edge, will become nodes]
-  //   endpointTolerance: pixel radius for `nodeFromPt:`
-  // }
-  ['fromRegion:withDefs:']: (self, scope, defs) => {
-      self.scope = scope;
-      self.edgesFn = defs.edgesFn;
-      self.fixedNodesFn = defs.fixedNodesFn;
-      self.candidateNodesFn = defs.candidateNodesFn;
-      self.defs = defs;
-      return self;
-    },
-
-  ['nodes']: (self) => {
-    if (self._nodes) return self._nodes;
-    const candidates = self.candidateNodesFn(self.scope);  // could use findIn: 
-                                                      // for don't-recurse 
-    const nodeElems = new Set(self.fixedNodesFn(self.scope));
-    for (const edgeElem of self.edgesFn(self.scope)) {
-      if (self.defs.endpointTolerance === 0) { // HACK! red ID box probe lines use isPointOnStroke
-        // Necessary for now if candidates includes open paths
-        for (const conn of send(edgeElem, 'connections')) { // WARN: document scope, ignores self.scope
-          if (!nodeElems.has(conn) && candidates.includes(conn))
-            nodeElems.add(conn);
-        }
-      } else {
-        for (const pt of send(edgeElem, 'endpoints')) {
-          // Find a candidate within endpointTolerance — same logic as 
-          // base GN's nodeAtPt:, but restricted to the candidate pool
-          const target = candidates.find(c => 
-            send(c, 'signedDistanceToPt:', pt) <= self.defs.endpointTolerance);
-          if (target) nodeElems.add(target);
-        }
-      }
-    }
-    self._nodes = [...nodeElems].map(e => send(self, 'wrapNode:', e));
-    return self._nodes;
-  },
-
-  ['edges']: (self) => {
-    if (self._edges) return self._edges;
-    self._edges = self.edgesFn(self.scope).map(e => send(self, 'wrapEdge:', e));
-    return self._edges;
-  },
-};
-
 // === Labeller ===
 //
 // Given a scope, a set of labels, and a set of labellables, draw Labelling
@@ -1245,7 +1193,7 @@ vtables['Labeller'] = {
   },
 };
 
-// LabelledGraph: the messages common to BoxGraph, LabelGraph, and DefaultMetaNotation
+// LabelledGraph: the messages common to BoxGraph and LabelGraph
 // So those concrete classes are subclasses of this
 vtables['LabelledGraph'] = {
   _parent: null,
@@ -1449,144 +1397,6 @@ vtables['TextGraph'] = {
   }
 };
 
-vtables['ActiveButton'] = {
-  ['fromRegion:']: (self, scope) => {
-    const rects = Array.from(scope.querySelectorAll('rect'));
-    const with_text = rects.filter(r => r.parentElement.querySelector('.is-paragraph'));
-    const on_click = e => {
-      const func = e.target.js_func;
-      if (func) log(func());
-    };
-    with_text.forEach(r => {
-      const func = send({ vtable: 'JS' }, 'compileRegion:', r.parentElement);
-      r.js_func = func;
-      r.onclick = on_click;
-    });
-    return self;
-  },
-};
-
-// Restructure a node's wrapper so its non-rect siblings are gathered into a
-// new inner-scope <g>. Returns the new inner-scope element, suitable for use
-// as an inner notation's scope.
-function makeInnerScope(node) {
-  const wrapper = send(node, 'localRoot');
-  const innerScope = svgel('g', { class: 'shape-interior' }, wrapper);
-  Array.from(wrapper.children)
-    .filter(c => c !== node && c !== innerScope)
-    .forEach(c => innerScope.appendChild(c));
-  return innerScope;
-}
-
-// === DefaultMetaNotation ===
-//
-// A meta-notation: interprets a region of the diagram as a set of
-// notation-instance regions. Each region is a labelled node whose outgoing
-// edge points to the name of the notation that should parse its contents.
-//
-// Built from: a Labeller (paragraphs attach to blue rects as names) and
-// a GraphNotation (blue rects + unclaimed paragraphs as nodes; blue arrows
-// as edges). The user-facing surface is `regions`, with each region
-// exposing `myName`, `notationName`, and `innerScope`.
-
-isBlueStroke = e => e.style && e.style.stroke === 'rgb(74, 144, 226)'; // Magic blue
-blueBoxes = scope => Array.from(scope.querySelectorAll('rect')).filter(isBlueStroke);
-isInsideBlueBox = (scope,e) => blueBoxes(scope).some(box => box.parentElement.contains(e));
-
-vtables['DefaultMetaNotation'] = {
-  _parent: vtables['LabelledGraph'],
-
-  ['fromRegion:']: (self, scope) => {
-    // Pass 1: identify which paragraphs are notation-name targets
-    // (those that blue arrows terminate on). These become nodes in the
-    // graph alongside the blue boxes.
-    const notationGraph = send({ vtable: 'EdgeDrivenGraphNotation' },
-      'fromRegion:', scope,
-      'withDefs:', {
-        edgesFn: s => Array.from(s.querySelectorAll('path,polyline,line'))
-                          .filter(e => isBlueStroke(e) && isMathchaConnector(e)),
-        fixedNodesFn: s => Array.from(s.querySelectorAll('rect')).filter(isBlueStroke),
-        candidateNodesFn: s => Array.from(s.querySelectorAll(ALL_LABELS))
-                                    .filter(l => !isInsideBlueBox(s, l)),
-        endpointTolerance: 15,
-    });
-    
-    // Pass 2: from the paragraphs not pulled into Pass 1 as notation-name
-    // targets, attach each to its closest blue box as that box's name.
-    const claimedAsNodes = new Set(send(notationGraph, 'nodes').map(n => n.dom));
-    const regionLabeller = send({ vtable: 'Labeller' },
-      'inScope:', scope,
-      'withLabels:', () => Array.from(scope.querySelectorAll(ALL_LABELS))
-                                .filter(l => !isInsideBlueBox(scope, l))
-                                .filter(l => !claimedAsNodes.has(l)),
-      'labellables:', () => Array.from(scope.querySelectorAll('rect')).filter(isBlueStroke),
-      'attractor:', box => box,
-      'attachAt:', (box, labelPt) => send(box, 'closestPtToPt:', labelPt),
-      'maxDistance:', 30
-    );
-    self.regionLabelAttachments = send(regionLabeller, 'run');
-
-    return send(self,
-      'fromGraph:', notationGraph,
-      'nodeNamer:', n => nameFromAttachments(self.regionLabelAttachments, n),
-      'edgeNamer:', e => null);
-  },
-  // Override wrapNode to add notation-specific accessors.
-  ['wrapNode:']: (self, gnNode) => ({ vtable: 'DefaultMetaNotation-Region', gnNode, lg: self }),
-  ['namedRegions']: (self) => send(self, 'namedNodes'),
-
-  ['instantiateAll']: (self) => {
-    const notationInstances = {};
-    for (const [myName, region] of Object.entries(send(self, 'namedRegions'))) {
-      const notationInstance = send(region, 'instantiate');
-      if (!notationInstance) continue;
-      notationInstance.name = myName;
-      notationInstances[myName] = notationInstance;
-    }
-    return notationInstances;
-  },
-};
-
-vtables['DefaultMetaNotation-Region'] = {
-  _parent: vtables['LabelledGraph-Node'],
-
-  ['notationName']: (self) => {
-    const out = send(self, 'outgoingEdges');
-    if (out.length === 0) return null;
-    const target = send(out[0], 'target');
-    // Expect a heavily wrapped g.is-paragraph
-    return target ? target.gnNode.dom.dataset.string : null;
-  },
-  ['innerScope']: (self) => {
-    if (self._innerScope) return self._innerScope;
-    self._innerScope = makeInnerScope(self.gnNode.dom);
-    return self._innerScope;
-  },
-  ['instantiate']: (self) => {
-    const notationName = send(self, 'notationName');
-    const vtable = vtables[notationName];
-    if (!vtable) {
-      console.warn('No vtable for notation "'+notationName+'"; skipping region.');
-      return null;
-    }
-    // Assume vtable instances understand fromRegion: ...!
-    const domRegion = send(self, 'innerScope');
-    // Construct!
-    return send({ vtable: notationName }, 'fromRegion:', domRegion);
-  },
-};
-
-// Code boxes need no classic vtable: MagicRedNotation (omnimeta.js) runs them.
-// vtables.JS remains for classic ActiveButton (DefaultMetaNotation; fire 2).
-vtables['JS'] = {
-  ['compileRegion:']: (self, scope) => {
-    const code_paras = Array.from(scope.querySelectorAll('.is-paragraph'));
-    const code_strings = code_paras.map(p => p.dataset.string);
-    const js_source = code_strings.join('\n\n');
-    return () => eval(js_source); // >:D
-  }
-};
-
 // ── Editor vocabulary ────────────────────────────────────────────────────────
 // EditorVocab is a placeholder in every notation's _parent chain; init() wires
 // its _parent to the concrete vocab once the editor is known. One mutation,
@@ -1698,18 +1508,6 @@ function init() {
 
   return elems.length;
 }
-
-// post-init entry point for diagrams in the default meta-notation
-// e.g. notational-dispatch.svg
-meta_boxgraph_init = function(scope) {
-  if (!scope) scope = document.documentElement;
-  metaNotation = send({ vtable: 'DefaultMetaNotation'}, 'fromRegion:', scope);
-
-  // Instantiate notations as globals
-  Object.entries(send(metaNotation, 'instantiateAll')).forEach(([name,inst]) => {
-    window[name] = inst;
-  });
-};
 
 // For minimal typing in the console. E.g:
 // e(`#btn3 onClick: {[ () => log('Hello World!') ]}`)

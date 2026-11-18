@@ -36,7 +36,7 @@ Augmented Diagrams / Vector Vision Engine (VVE): SVG diagrams drawn in ordinary 
 - Code meant for pasting into the browser console (examples in comments, debugging snippets) uses compiled JS (no JSTalk) and bare top-level assignments (no `const`/`let`/`var`), so it can be re-pasted.
 
 ## Repo map
-- `main-engine.jstalk.js`: dispatch (`send` etc.), DOM/geometry vtables, the `init()` pipeline, and the *classic* notation layer (GraphNotation, Labeller, BoxGraph, DefaultMetaNotation, ...). The classic layer is being retired in favour of OmniMeta: don't extend it. (Formerly `general-containment`; some old SVGs still load that name.)
+- `main-engine.jstalk.js`: dispatch (`send` etc.), DOM/geometry vtables, the `init()` pipeline, and the *classic* notation layer (GraphNotation, Labeller, BoxGraph, TextGraph, ...). The classic layer is being retired in favour of OmniMeta: don't extend it. (Formerly `general-containment`; some old SVGs still load that name.)
 - `omnimeta.jstalk.js`: OmniMeta, the substrate-neutral OMeta for DOM/vector matching, plus what `init()` needs from it: the editor vocabularies (MathchaVocab, AffinityVocab, PowerpointVocab) and MagicRedNotation (magic-red ID and code boxes). An SVG must load `omnimeta.js` for `init()` to work.
 - `utils.js`: geometry and DOM helpers; sets `svg_parent` at load.
 - `lang-sweettalk.js`, `lang-descartes.js`, `bracket-hole-carving.js`: the textual DSL stack. `sweettalk.ometa` and `descartes.ometa.txt` are reference grammars only; nothing loads them.

@@ -2,6 +2,6 @@
 ## diagram errors
 ## warnings
 ## code boxes, in run order
-  "//! {[ SweetTalk ]}" -> ok
+  "//! {[ SweetTalk ]}" -> TypeError: can't access property "fromRegion:", resolverParent is undefined
 ## red elements left
   connector 100,810 -> 140,850

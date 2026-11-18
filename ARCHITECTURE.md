@@ -32,13 +32,11 @@ geometric                              OmniMeta
 Polygon (computed, no DOM)                  ├─ RegionDispatchNotation, BoxGraphOM, MagicRedNotation
                                             ├─ BoardGameNotation, CarsNotation
 "Classic" notations (main-engine)           └─ AnimationNotation
-GraphNotation ─ EdgeDrivenGraphNotation  Runtime objects: GraphObject, GraphNode,
+GraphNotation                            Runtime objects: GraphObject, GraphNode,
 GraphNotation-Common ─ -Node, -Edge        GraphEdge, NamedThing, AnimationController, MagicRedSetup,
 Labeller                                   AbstractArrowShaft ─ MathchaArrowShaft,
-LabelledGraph ─ BoxGraph, TextGraph,       AbstractArrowhead ─ MathchaArrowhead
-   DefaultMetaNotation
-LabelledGraph-Node ─ DefaultMetaNotation-Region
-LabelledGraph-Edge; ActiveButton; compiler JS (for ActiveButton)
+LabelledGraph ─ BoxGraph, TextGraph        AbstractArrowhead ─ MathchaArrowhead
+LabelledGraph-Node, LabelledGraph-Edge
 EditorVocab ─ (set by learnEditor) MathchaVocab | AffinityVocab | PowerpointVocab
 ```
 The tag chain is the "maximal specialisation" ladder: each `specialize` returns a replacement element with a more specific tag, or null. Examples: straight `path` → `polygon`/`polyline`; 4-point `polygon` → `rect` (axis-aligned, corners TL,TR,BR,BL, with a horizontal-flip retry for PowerPoint); 2-point `polyline` → `line`; curved `path` → `ellipse` → `circle`. A path with several sub-polygons becomes a `<g>` of polygons. A curved `<path>` that stays a path measures distances against its curve cut into 16 straight pieces per segment (`flattenPathToSegs` in utils.js, cached per element and `d`), not against its bounding box; arcs still fall back to the bounding box.
@@ -69,11 +67,11 @@ The `EditorVocab` comment says it sits "in every notation's `_parent` chain". It
 
 Other PRINCIPLES.md entries: **connector attachment** = `path connections` (writes `data-connects`/`-connectors`), `GraphNotation-Edge connections`, OmniMeta `GraphObject connectionsOf:`/`elementAt:matching:`. **Arrowhead direction** = `HeadShaftArrow` + `AbstractArrowShaft orientWith:` (the shaft end nearer the head tip is the target). **Stringification** = vocab `init` (`data-string`). **Magic red** = step 6.
 
-**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). `BoxGraph`, `TextGraph`, `DefaultMetaNotation`, `ActiveButton` and the `JS` compiler still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. The classic `isDirected` is always false for the same reason. The OmniMeta notations, including the magic-red step, are unaffected by this.
+**[stale] The classic layer predates the canonical forms** (commit `2ef5577` "Towards canonical DOM"). `BoxGraph` and `TextGraph` still look for `.is-paragraph`, `.connection` and `.arrow-line`, which no vocabulary produces any more. The classic `isDirected` is always false for the same reason. The OmniMeta notations, including the magic-red step, are unaffected by this.
 
 ## 5. Two notation layers
 **Decision (Joel):** the classic layer is being retired in favour of OmniMeta, and canonical forms are to be used everywhere. Until it is gone, both exist:
-- **Classic** (main-engine), built via `send({vtable:'X'}, 'fromRegion:', scope)`: `GraphNotation` claims nodes and doesn't look inside them; `EdgeDrivenGraphNotation` adds a candidate as a node when an edge endpoint hits it; `Labeller` greedily pairs labels with the nearest labellable and draws magenta "LLL" lines into the DOM, from which `LabelledGraph` names things; `DefaultMetaNotation` reads blue boxes (box → text arrow = notation name) and `instantiateAll` creates globals named after the boxes.
+- **Classic** (main-engine), built via `send({vtable:'X'}, 'fromRegion:', scope)`: `GraphNotation` claims nodes and doesn't look inside them; `Labeller` greedily pairs labels with the nearest labellable and draws magenta "LLL" lines into the DOM, from which `LabelledGraph` names things. The blue box-and-arrow meta-notation (classic `DefaultMetaNotation`), `ActiveButton` and the `JS` compiler are deleted (PRINCIPLES.md Decision 5; an OmniMeta `DefaultMetaNotation` replaces it, CLEANUP.md fire 2).
 - **OmniMeta** (omnimeta.js + notation files): PEG-style grammars where each rule is a vtable method. Entry point: `match(grammar, input, rule)` (null on failure), or `NotationGrammar fromDocument` (sets `window.semantics`), which defaults to `match(..., 'Root')`.
 
 ## 6. OmniMeta substrates
@@ -133,7 +131,7 @@ All three are `NotationGrammar` subclasses, loaded as the last `<script>` of the
 | boxGraph-example | Mathcha | vocab, containment, BoxGraph / BoxGraphOM (`match(vtables.BoxGraphOM, svg_parent, 'BoxGraph')`) | no red boxes, so `init()` should succeed |
 | labelGraph-example | Mathcha | TextGraph | no omnimeta.js → `init()` fails |
 | containment-stress-test, magic-red-id-test | Mathcha | containment, magic-red ID boxes (container and probe), code boxes, retired class boxes, displaced ids | `#p1` errors: its pentagon isn't normalised (CLEANUP fire 19); demo code assumes names on shafts |
-| notational-dispatch | Mathcha | DefaultMetaNotation → BoxGraph/TextGraph, launched from a Sucrose code box, `asJSOG` | classic layer (§4 [stale]) |
+| notational-dispatch | Mathcha | blue boxes → BoxGraph/TextGraph, launched from a Sucrose code box, `asJSOG` | broken: its code box calls the deleted classic `DefaultMetaNotation`; to be re-exported with `(:Name)` titles (CLEANUP.md fire 2) |
 | hole-carving-test | Mathcha | SweetTalk holes, meta-dispatch, `asJS` | no omnimeta.js |
 | solid-physics-test(-2) | Mathcha | SweetTalk+Descartes, `Polygon intersectWith:`, `vupd` vector arrows, ID boxes naming connectors | -1 has no omnimeta.js; -2's top code box fails reading arrows (CLEANUP fire 6) |
 | id-vanilla | Mathcha | the ID object model (commented-out code at the end of main-engine) | no omnimeta.js |

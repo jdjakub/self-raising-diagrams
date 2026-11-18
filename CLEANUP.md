@@ -29,7 +29,15 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 - **Question**: how does a diagram say which? For example a second magic colour, a marker in the box, or a per-diagram setting. Hard requirement 2 applies: a box that stays is part of the document, so whatever it did must still be reproducible on reload.
 - **Decision**: JOEL, later.
 
-### 2. No single way for a diagram to name its notation and start itself
+### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, step 1 done)
+- **Plan** (one commit per step, harness after each):
+  1. Delete the classic blue `DefaultMetaNotation` (and its region vtable), `meta_boxgraph_init`, the blue-colour helpers, `ActiveButton` and `vtables.JS`. notational-dispatch stays known-broken until Joel re-exports it. **Done**: its code box now fails (`DefaultMetaNotation` is undefined), as the harness records. `EdgeDrivenGraphNotation`, left unused, is deleted too.
+  2. New OmniMeta `DefaultMetaNotation`, extracted from BoardGameNotation's region dispatch (replacing `RegionDispatchNotation`): titled regions in reading order, looking through untitled boxes (this retires BoardGameNotation's "first `<g>`" hack), rule-then-notation lookup, results keyed by title, and reported errors (nameless title, unknown name, two regions with one title).
+  3. BoardGameNotation rebuilt on it, keeping its legend-then-board-state order (fire 21).
+  4. On open: `init()`, then the parse (page title, else `DefaultMetaNotation`) into `semantics`; two page titles are an error. `send(semantics, 'start')` runs the app: AnimationNotation begins its slideshow; `DefaultMetaNotation` starts each region that has a `start`.
+  5. Page titles in the demos: the agent copies each editor's own text SVG into the PowerPoint and Affinity exports (checkers ×4 including `-normalized`, cars, animating-a-stack); Joel re-exports the Mathcha ones (anim-test, boxGraph-example, notational-dispatch).
+  6. Harness launch scripts reduced to "open, read `semantics`", with snapshot changes shown to Joel; ARCHITECTURE.md §4, §5, §7 and this fire updated.
+- **Decided** (PRINCIPLES.md Decision 5): drawn `(:Name)` titles. A box titled `TITLE (:Name)` is parsed by `Name`: (b) is extracted from BoardGameNotation as the new `DefaultMetaNotation`, assumed when there is no page title, and (a) is retired. A bare `(:Name)` text on the page names the whole diagram's notation. Opening the SVG runs `init()` automatically; starting the notation is a manual console command. `ActiveButton` goes with (a). Rejected: a red code box as the launcher (works today, but the notation is named in code and vanishes after running), and an SVG attribute written by `prepare` (invisible in the drawing).
 - **What**: there are five conflicting mechanisms:
   - (a) blue box + blue arrow to a name text (`DefaultMetaNotation`, classic, broken);
   - (b) `NAME (:Rule)` box titles (`BoardGameNotation` via `RegionDispatchNotation`);
@@ -43,6 +51,11 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - `init()` runs automatically on load, then dispatches.
 - **Confidence**: low-medium. (a) vs (b) is a taste call.
 - **Decision**: JOEL. **Blocks**: the uniform harness entry point. Until then, the harness uses per-fixture launch scripts.
+
+### 21. Regions that depend on each other have no explicit order
+- **What**: Decision 5 parses titled regions in reading order by default. Checkers has implicit dependencies: the legend must be parsed first (it defines the pieces), then the board state (it defines the zones), so BoardGameNotation reorders its regions in code. Nothing in the diagram says so.
+- **Question**: what explicit, drawn convention lets a diagram state such dependencies?
+- **Decision**: JOEL, later.
 
 ### 3. Hard requirement 2 has no convention, so caches and meaning are mixed
 - **What**:
@@ -178,7 +191,7 @@ One quick call per file:
 | `BoardGameNotation` `findIndex` guards never fire | fix (`i < 0`) | high |
 | `BoxGraphOM Box` "TEMP black only" | resolve with fire 4 | medium |
 | `VertexGrammar` (unused) | keep: issues.txt plans rect recognition with it | medium |
-| `ActiveButton`, `TextGraph asJS`, `BoxGraph asJSOG` (classic) | port or drop with the retirement | medium |
+| `TextGraph asJS`, `BoxGraph asJSOG` (classic; `ActiveButton` deleted in fire 2) | port or drop with the retirement | medium |
 | untracked, gitignored `svgEdit-old.js`, `geometry.js` | local only; you may delete | high |
 | `CarsNotation` finds no cars on cars.svg: each car's wheels are a circle *and* an ellipse (drawn slightly unequal), but the rule wants two circles. Roads now measure distance along the curve (not its bounding box), so they claim the markers along them, but where the two routes run within 2px the first road also claims the other road's markers **[confirmed]** | it's unfinished ("try cars"); ask Tomas before touching it | medium |
 | `g encloses:` uses `firstChild`, which can be a whitespace text node with no vtable; `init()` on tmp.svg throws `resolverParent is undefined` **[confirmed]** | use `firstElementChild` | high |
