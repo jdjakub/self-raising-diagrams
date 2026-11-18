@@ -78,22 +78,6 @@ WHITE KING AREA
 6,7,regular-1,white-king-area
 7,7,,white-king-area
 
-## MOVES - REGULAR (:MoveSpec)
-0,0,,1,1,regular-1 -> 0,0,regular-1,1,1,
-1,0,,0,1,regular-1 -> 1,0,regular-1,0,1,
-0,0,regular-2,1,1, -> 0,0,,1,1,regular-2
-1,0,regular-2,0,1, -> 1,0,,0,1,regular-2
-
-## MOVES - REGULAR_JUMP (:MoveSpec)
-2,0,,1,1,any-2,0,2,regular-1 -> 2,0,regular-1,1,1,,0,2,
-0,0,,1,1,any-2,2,2,regular-1 -> 0,0,regular-1,1,1,,2,2,
-2,0,regular-2,1,1,any-1,0,2, -> 2,0,,1,1,,0,2,regular-2
-0,0,regular-2,1,1,any-1,2,2, -> 0,0,,1,1,,2,2,regular-2
-
-## TRANSFORMS (:TransformSpec)
-regular-1 in black-king-area becomes king-1
-regular-2 in white-king-area becomes king-2
-
 ## MOVES - KING (:MoveSpec)
 0,0,,1,1,king-1 --LU--> 0,0,king-1,1,1,
 1,0,,0,1,king-1 --RU--> 1,0,king-1,0,1,
@@ -104,6 +88,12 @@ regular-2 in white-king-area becomes king-2
 0,0,king-2,1,1, --RD--> 0,0,,1,1,king-2
 1,0,king-2,0,1, --LD--> 1,0,,0,1,king-2
 
+## MOVES - REGULAR (:MoveSpec)
+0,0,,1,1,regular-1 -> 0,0,regular-1,1,1,
+1,0,,0,1,regular-1 -> 1,0,regular-1,0,1,
+0,0,regular-2,1,1, -> 0,0,,1,1,regular-2
+1,0,regular-2,0,1, -> 1,0,,0,1,regular-2
+
 ## MOVES - KING_JUMP (:MoveSpec)
 2,0,,1,1,any-2,0,2,king-1 --RU--> 2,0,king-1,1,1,,0,2,
 0,0,king-1,1,1,any-2,2,2, --RD--> 0,0,,1,1,,2,2,king-1
@@ -113,6 +103,16 @@ regular-2 in white-king-area becomes king-2
 0,0,,1,1,any-2,2,2,king-1 --LU--> 0,0,king-1,1,1,,2,2,
 2,0,king-2,1,1,any-1,0,2, --LD--> 2,0,,1,1,,0,2,king-2
 0,0,,1,1,any-1,2,2,king-2 --LU--> 0,0,king-2,1,1,,2,2,
+
+## MOVES - REGULAR_JUMP (:MoveSpec)
+2,0,,1,1,any-2,0,2,regular-1 -> 2,0,regular-1,1,1,,0,2,
+0,0,,1,1,any-2,2,2,regular-1 -> 0,0,regular-1,1,1,,2,2,
+2,0,regular-2,1,1,any-1,0,2, -> 2,0,,1,1,,0,2,regular-2
+0,0,regular-2,1,1,any-1,2,2, -> 0,0,,1,1,,2,2,regular-2
+
+## TRANSFORMS (:TransformSpec)
+regular-1 in black-king-area becomes king-1
+regular-2 in white-king-area becomes king-2
 
 ## COMBINATIONS stateClasses
 #1 is a Initial / final state
@@ -146,14 +146,6 @@ regular-2 in white-king-area becomes king-2
 
 ## exportJSForApp
 const rules = [
-{ piece: "regular-1", label: "REGULAR", before: [[0, 0, null], [1, 1, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null]] },
-{ piece: "regular-1", label: "REGULAR", before: [[1, 0, null], [0, 1, "regular-1"]], after: [[1, 0, "regular-1"], [0, 1, null]] },
-{ piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
-{ piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
-{ piece: "regular-1", label: "REGULAR_JUMP", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "regular-1"]], after: [[2, 0, "regular-1"], [1, 1, null], [0, 2, null]] },
-{ piece: "regular-1", label: "REGULAR_JUMP", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null], [2, 2, null]] },
-{ piece: "regular-2", label: "REGULAR_JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
-{ piece: "regular-2", label: "REGULAR_JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] },
 { piece: "king-1", label: "KING[LU]", before: [[0, 0, null], [1, 1, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null]] },
 { piece: "king-1", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-1"]], after: [[1, 0, "king-1"], [0, 1, null]] },
 { piece: "king-1", label: "KING[RD]", before: [[0, 0, "king-1"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-1"]] },
@@ -162,6 +154,10 @@ const rules = [
 { piece: "king-2", label: "KING[RU]", before: [[1, 0, null], [0, 1, "king-2"]], after: [[1, 0, "king-2"], [0, 1, null]] },
 { piece: "king-2", label: "KING[RD]", before: [[0, 0, "king-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "king-2"]] },
 { piece: "king-2", label: "KING[LD]", before: [[1, 0, "king-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "king-2"]] },
+{ piece: "regular-1", label: "REGULAR", before: [[0, 0, null], [1, 1, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null]] },
+{ piece: "regular-1", label: "REGULAR", before: [[1, 0, null], [0, 1, "regular-1"]], after: [[1, 0, "regular-1"], [0, 1, null]] },
+{ piece: "regular-2", label: "REGULAR", before: [[0, 0, "regular-2"], [1, 1, null]], after: [[0, 0, null], [1, 1, "regular-2"]] },
+{ piece: "regular-2", label: "REGULAR", before: [[1, 0, "regular-2"], [0, 1, null]], after: [[1, 0, null], [0, 1, "regular-2"]] },
 { piece: "king-1", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "king-1"]], after: [[2, 0, "king-1"], [1, 1, null], [0, 2, null]] },
 { piece: "king-1", label: "KING_JUMP[RD]", before: [[0, 0, "king-1"], [1, 1, "any-2"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "king-1"]] },
 { piece: "king-2", label: "KING_JUMP[RU]", before: [[2, 0, null], [1, 1, "any-1"], [0, 2, "king-2"]], after: [[2, 0, "king-2"], [1, 1, null], [0, 2, null]] },
@@ -169,7 +165,11 @@ const rules = [
 { piece: "king-1", label: "KING_JUMP[LD]", before: [[2, 0, "king-1"], [1, 1, "any-2"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-1"]] },
 { piece: "king-1", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "king-1"]], after: [[0, 0, "king-1"], [1, 1, null], [2, 2, null]] },
 { piece: "king-2", label: "KING_JUMP[LD]", before: [[2, 0, "king-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "king-2"]] },
-{ piece: "king-2", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-1"], [2, 2, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null], [2, 2, null]] }
+{ piece: "king-2", label: "KING_JUMP[LU]", before: [[0, 0, null], [1, 1, "any-1"], [2, 2, "king-2"]], after: [[0, 0, "king-2"], [1, 1, null], [2, 2, null]] },
+{ piece: "regular-1", label: "REGULAR_JUMP", before: [[2, 0, null], [1, 1, "any-2"], [0, 2, "regular-1"]], after: [[2, 0, "regular-1"], [1, 1, null], [0, 2, null]] },
+{ piece: "regular-1", label: "REGULAR_JUMP", before: [[0, 0, null], [1, 1, "any-2"], [2, 2, "regular-1"]], after: [[0, 0, "regular-1"], [1, 1, null], [2, 2, null]] },
+{ piece: "regular-2", label: "REGULAR_JUMP", before: [[2, 0, "regular-2"], [1, 1, "any-1"], [0, 2, null]], after: [[2, 0, null], [1, 1, null], [0, 2, "regular-2"]] },
+{ piece: "regular-2", label: "REGULAR_JUMP", before: [[0, 0, "regular-2"], [1, 1, "any-1"], [2, 2, null]], after: [[0, 0, null], [1, 1, null], [2, 2, "regular-2"]] }
 ];
 
 const combinations = {

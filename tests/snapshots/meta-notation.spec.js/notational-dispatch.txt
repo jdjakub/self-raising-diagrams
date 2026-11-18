@@ -1,0 +1,8 @@
+## results, in parse order
+## diagram errors
+  Region title "b2 (:ActiveButton)" at 519,51 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "bg1 (:BoxGraphOM)" at 72,91 failed while parsing: BoxGraphOM didn't understand Root
+  Region title "bg2 (:BoxGraphOM)" at 322,191 failed while parsing: BoxGraphOM didn't understand Root
+  Region title "b3 (:ActiveButton)" at 79,291 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "tg1 (:TextGraph)" at 100,391 names TextGraph, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "b1 (:ActiveButton)" at 452,560 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation

@@ -65,6 +65,17 @@ test('DefaultMetaNotation: rule, then notation; errors', async ({ page }) => {
   expect(textSnapshot(lines)).toMatchSnapshot('checkers-test-meta.txt');
 });
 
+// The demo drawn for it: boxes titled with notation names, some of which don't
+// exist yet (kept deliberately as reminders).
+test('DefaultMetaNotation: notational-dispatch.svg', async ({ page }) => {
+  await openFixture(page, 'notational-dispatch.svg');
+  const lines = await inPage(page, (src) => {
+    init();
+    return eval(src)('DefaultMetaNotation');
+  }, REPORT.toString());
+  expect(textSnapshot(lines)).toMatchSnapshot('notational-dispatch.txt');
+});
+
 test('DefaultMetaNotation: a diagram with no titles', async ({ page }) => {
   await openFixture(page, 'magic-red-id-test.svg');
   const lines = await inPage(page, (src) => {

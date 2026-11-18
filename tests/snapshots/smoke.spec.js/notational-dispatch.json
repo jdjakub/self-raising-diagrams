@@ -29,12 +29,7 @@
   "init": {
     "defined": true,
     "ok": true,
-    "returned": 72
+    "returned": 52
   },
-  "events": [
-    {
-      "kind": "console.error",
-      "text": "Magic-red code box \"//! {[ SweetTalk ]}\" at 40,610 failed: JSHandle@object"
-    }
-  ]
+  "events": []
 }

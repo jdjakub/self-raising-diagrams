@@ -1,7 +1,0 @@
-## names applied
-## diagram errors
-## warnings
-## code boxes, in run order
-  "//! {[ SweetTalk ]}" -> TypeError: can't access property "instantiateAll", resolverParent is undefined
-## red elements left
-  connector 100,810 -> 140,850

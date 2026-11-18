@@ -1096,24 +1096,6 @@ vtables['NamedThing'] = {
   ['doesNotUnderstand:']: (self, [sel, ...args]) => sendNoKw(self.inner, sel, ...args),
 };
 
-// ── RegionDispatchNotation ───────────────────────────────────────────────────
-// Top-level boxes only — the claim-descent prunes each claimed box's subtree.
-//   rd = match(vtables.RegionDispatchNotation, svg_root, 'Root')
-vtables.RegionDispatchNotation = {
-  _parent: vtables.NotationGrammar,
-
-  // Root = Named(Box)+
-  ['Root']: (self) => ⟦self many1: () => ⟦self Named: 'Box'⟧⟧,
-
-  // Box = a closed shape in Closed Canonical Form. TODO: redundant?
-  ['BoxSel']: (self) => 'rect.boundary-shape',
-  ['Box']: (self) => {
-    const elt = self.cursor.dict;
-    ⟦self pred: elt.matches(⟦self BoxSel⟧)⟧;
-    return elt;
-  },
-};
-
 // ── DefaultMetaNotation ──────────────────────────────────────────────────────
 // How a diagram says which notation reads which part of it (PRINCIPLES
 // Decision 5). A box titled `TITLE (:Name)` (the title text just outside the
@@ -1211,7 +1193,9 @@ vtables.DefaultMetaNotation = {
         return undefined;
       }
     } catch (e) {
-      ⟦self report: 'failed while parsing: ' + e region: r⟧;
+      const why = Array.isArray(e) && e[1] === " didn't understand: "
+        ? vtableName(e[0].vtable) + " didn't understand " + e[2] : String(e);
+      ⟦self report: 'failed while parsing: ' + why region: r⟧;
       return undefined;
     }
     if (result === null || result === MATCH_FAILED) {

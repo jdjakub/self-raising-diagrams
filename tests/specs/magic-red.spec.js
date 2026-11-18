@@ -10,7 +10,6 @@ const DEMOS = [
   'magic-red-id-test.svg',
   'containment-stress-test.svg',
   'solid-physics-test-2.svg',
-  'notational-dispatch.svg',
   'magic-red-errors.svg',
 ];
 

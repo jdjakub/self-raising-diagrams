@@ -1,48 +1,27 @@
 vtables.BoardGameNotation = {
-  _parent: vtables.NotationGrammar,
+  // Titled regions name this notation's rules, e.g. `BOARD (:BoardLegend)`
+  // (PRINCIPLES Decision 5); DefaultMetaNotation finds and dispatches them.
+  _parent: vtables.DefaultMetaNotation,
 
-  ['fromRegion:']: (self, scope) => {
-    scope = send(scope.querySelector('g'), 'interior');
-    let regions = match(vtables.RegionDispatchNotation, scope, 'Root'); // [NamedThing]
-    regions = regions.map(r => {
-      const name = send(r, 'name');
-      if (name === undefined) {
-        console.warn('Undefined region: '+send(r, 'id'), r.inner);
-        return null;
-      }
-      // name = "{instName} (:{ruleName})"
-      const [, instName, ruleName] = name.match(/^\s*(.*?)\s*\(:(\w+)\)$/);
-      return [instName, ruleName, r.inner];
-    }).filter(r => r !== null);
+  // The regions depend on each other (CLEANUP fire 21): the legend defines the
+  // pieces, then the board state defines the zones, then the rest, in reading order.
+  ['orderRegions:']: needsSuper((supr, self, regions) => {
+    const ordered = supr('orderRegions:', regions);
+    const withRule = (rule) => ordered.filter(r => r.name === rule);
+    return [...withRule('BoardLegend'), ...withRule('BoardState'),
+            ...ordered.filter(r => r.name !== 'BoardLegend' && r.name !== 'BoardState')];
+  }),
 
-    // Ensure BoardState gets parsed second, to define the board zones
-    const i = regions.findIndex(([,ruleName]) => ruleName === 'BoardState');
-    if (i >= regions.length) throw 'No BoardState region';
-    const [boardState] = regions.splice(i,1);
-    regions.unshift(boardState);
-
-    // Ensure BoardLegend gets parsed first, to define the BoardPiece rule
-    const j = regions.findIndex(([,ruleName]) => ruleName === 'BoardLegend');
-    if (j >= regions.length) throw 'No BoardLegend region';
-    const [legend] = regions.splice(j,1);
-    regions.unshift(legend);
-
-    const regionSemantics = {};
-    for (const [instName, ruleName, r] of regions) {
-      log('Parse '+send(r, 'id')+' as '+ruleName, r);
-      if (!hasRule({vtable: 'BoardGameNotation'}, ruleName)) {
-        console.warn('No such rule: BoardGameNotation>>'+ruleName); continue;
-      }
-      const result = match(vtables.BoardGameNotation, send(r, 'interior'), ruleName);
-      if (ruleName === 'BoardLegend')
-        vtables.BoardGameNotation['boardPieces'] = () => result;
-      else if (ruleName === 'BoardState')
-        vtables.BoardGameNotation['boardZones'] = () => result.zones;
-      result.fromRule = ruleName;
-      regionSemantics[instName] = result;
-    }
-    return regionSemantics;
-  },
+  ['parseRegion:']: needsSuper((supr, self, r) => {
+    const result = supr('parseRegion:', r);
+    if (result === undefined) return undefined;
+    if (r.name === 'BoardLegend')
+      vtables.BoardGameNotation['boardPieces'] = () => result;
+    else if (r.name === 'BoardState')
+      vtables.BoardGameNotation['boardZones'] = () => result.zones;
+    result.fromRule = r.name;
+    return result;
+  }),
 
   ['exportJSForApp']: (self, regionSemantics) => {
     if (!regionSemantics) regionSemantics = semantics;
