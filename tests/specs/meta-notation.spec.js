@@ -1,9 +1,10 @@
 // The default meta-notation (DefaultMetaNotation; PRINCIPLES Decision 5): which
 // titled regions it finds, in what order, what each title resolves to, and the
-// diagram errors it reports. No demo is drawn for it yet, so checkers.svg stands
-// in: its regions sit on a page-sized white box (which must be looked through),
-// and their titles name rules of BoardGameNotation, which plain
-// DefaultMetaNotation doesn't have.
+// diagram errors it reports. Each test runs it by hand over the whole document,
+// whatever the page title says. checkers.svg exercises it hardest: its regions
+// sit on a page-sized white box (which must be looked through), and their titles
+// name rules of BoardGameNotation, which plain DefaultMetaNotation doesn't have.
+// notational-dispatch.svg is the demo drawn for it.
 const { test, expect } = require('@playwright/test');
 const { openFixture, inPage, scrub } = require('../lib');
 

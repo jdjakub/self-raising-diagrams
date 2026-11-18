@@ -101,15 +101,14 @@ test('CarsNotation: TomasNotations/cars.svg', async ({ page }) => {
 // ── AnimationNotation ────────────────────────────────────────────────────────
 
 /**
- * Launch: opening parses the diagram (by its page title; `fromDocument` when it has none yet); start; then play `steps`
+ * Launch: opening parses the diagram (by its page title); start; then play `steps`
  * ('click', or a number of milliseconds to let timers run, on a fake clock).
  * Reports the compiled rule tables, then the named elements' state after each step.
  */
-async function animationReport(page, file, steps, hasPageTitle) {
+async function animationReport(page, file, steps) {
   await page.clock.install();
   await openFixture(page, file);
-  const lines = await inPage(page, (hasPageTitle) => {
-    if (!hasPageTitle) send({ vtable: 'AnimationNotation' }, 'fromDocument');
+  const lines = await inPage(page, () => {
     const s = semantics;
     const out = ['## names'];
     for (const [name, elt] of Object.entries(s.eltsByName)) out.push(name + ' = ' + __el(elt));
@@ -123,7 +122,7 @@ async function animationReport(page, file, steps, hasPageTitle) {
     for (const [state, cmds] of Object.entries(s.cmdsByState))
       out.push(__canon(state) + ': ' + JSON.stringify(cmds));
     return out;
-  }, hasPageTitle);
+  });
   const stateOf = () => inPage(page, () => Object.entries(semantics.eltsByName).map(([name, e]) =>
     '  ' + name + ': style=' + JSON.stringify(e.getAttribute('style') || '')
     + ' transform=' + JSON.stringify(e.getAttribute('transform') || '')
@@ -143,13 +142,13 @@ async function animationReport(page, file, steps, hasPageTitle) {
 
 test('AnimationNotation: CamilleNotations/Example — animating a stack.svg', async ({ page }) => {
   const lines = await animationReport(page, 'CamilleNotations/Example — animating a stack.svg',
-    ['click', 'click', 'click', 'click'], true);
+    ['click', 'click', 'click', 'click']);
   expect(textSnapshot(lines)).toMatchSnapshot('animating-a-stack.txt');
 });
 
 test('AnimationNotation: CamilleNotations/anim-test.svg', async ({ page }) => {
   const lines = await animationReport(page, 'CamilleNotations/anim-test.svg',
-    ['click', 2100, 'click', 2100], true);
+    ['click', 2100, 'click', 2100]);
   expect(textSnapshot(lines)).toMatchSnapshot('anim-test.txt');
 });
 

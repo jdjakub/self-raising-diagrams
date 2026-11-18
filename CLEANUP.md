@@ -29,14 +29,15 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 - **Question**: how does a diagram say which? For example a second magic colour, a marker in the box, or a per-diagram setting. Hard requirement 2 applies: a box that stays is part of the document, so whatever it did must still be reproducible on reload.
 - **Decision**: JOEL, later.
 
-### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, steps 1–5 done)
+### 2. No single way for a diagram to name its notation and start itself (**done**)
 - **Plan** (one commit per step, harness after each):
   1. Delete the classic blue `DefaultMetaNotation` (and its region vtable), `meta_boxgraph_init`, the blue-colour helpers, `ActiveButton` and `vtables.JS`. notational-dispatch stays known-broken until Joel re-exports it. **Done**; Joel has since re-exported notational-dispatch with titled boxes and no code box. It keeps titles naming notations that don't exist yet (`TextGraph`, `ActiveButton`) as reminders. `EdgeDrivenGraphNotation`, left unused, is deleted too.
   2. New OmniMeta `DefaultMetaNotation`, extracted from BoardGameNotation's region dispatch (replacing `RegionDispatchNotation`): titled regions in reading order, looking through untitled boxes (this retires BoardGameNotation's "first `<g>`" hack), rule-then-notation lookup, results keyed by title, and reported errors (nameless title, unknown name, two regions with one title). **Done**: tested by `specs/meta-notation.spec.js` on checkers.svg; `RegionDispatchNotation` goes in step 3 with its last user.
   3. BoardGameNotation rebuilt on it, keeping its legend-then-board-state order (fire 21). **Done**: its results are unchanged and `testCheckers` still passes; regions after those two now come in reading order rather than file order, which reorders the move rules in `exportJSForApp`'s output across labels only (the app looks rules up by label, so play is unaffected). `RegionDispatchNotation` is deleted, and with it the fire 15 `findIndex` bug.
   4. On open: `init()`, then the parse (page title, else `DefaultMetaNotation`) into `semantics`; two page titles are an error. `send(semantics, 'start')` runs the app: AnimationNotation begins its slideshow; `DefaultMetaNotation` starts each region that has a `start`. **Done**: the parse is `init()`'s last step (also on already normalised files), and omnimeta.js runs `init()` on load. `semantics` answers messages through a hidden results vtable that its notation names (`BoardGameResults` holds `exportJSForApp`, moved from BoardGameNotation). The harness no longer calls `init()`. Until step 5, checkers opens with eight region errors, and the demos still need an explicit `fromDocument`.
   5. Page titles in the demos: the agent copies each editor's own text SVG into the PowerPoint and Affinity exports (checkers ×4 including `-normalized`, cars, animating-a-stack); Joel re-exports the Mathcha ones (anim-test, boxGraph-example, notational-dispatch). **Done** for the hand-edited ones: each heading gained its `(:Name)` (cars got a new heading text), the checkers console instruction now says `send(semantics, 'exportJSForApp');`, and both checkers `-normalized` files were regenerated (which also brought them up to the current engine). BoxGraphOM gained a `Root`, so its notational-dispatch boxes parse. Joel re-exported anim-test `(:AnimationNotation)` and boxGraph-example `(:BoxGraphOM)` (its two-line "sample text" became the page title).
-  6. Harness launch scripts reduced to "open, read `semantics`", with snapshot changes shown to Joel; ARCHITECTURE.md §4, §5, §7 and this fire updated.
+  6. Harness launch scripts reduced to "open, read `semantics`", with snapshot changes shown to Joel; ARCHITECTURE.md §4, §5, §7 and this fire updated. **Done**: no spec launches a notation by hand any more (meta-notation.spec.js still runs `DefaultMetaNotation` directly, on purpose, to test it).
+- **Done**: every demo that loads a notation names it with a drawn page title and opens straight into `semantics`. Left for other fires: region ordering conventions (21), BoxGraphOM names (4), the black checkers background (22), and the notations notational-dispatch names that don't exist yet (`TextGraph`, `ActiveButton`).
 - **Decided** (PRINCIPLES.md Decision 5): drawn `(:Name)` titles. A box titled `TITLE (:Name)` is parsed by `Name`: (b) is extracted from BoardGameNotation as the new `DefaultMetaNotation`, assumed when there is no page title, and (a) is retired. A bare `(:Name)` text on the page names the whole diagram's notation. Opening the SVG runs `init()` automatically; starting the notation is a manual console command. `ActiveButton` goes with (a). Rejected: a red code box as the launcher (works today, but the notation is named in code and vanishes after running), and an SVG attribute written by `prepare` (invisible in the drawing).
 - **What**: there are five conflicting mechanisms:
   - (a) blue box + blue arrow to a name text (`DefaultMetaNotation`, classic, broken);
@@ -50,7 +51,7 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
   - The whole diagram declares its top notation the same way.
   - `init()` runs automatically on load, then dispatches.
 - **Confidence**: low-medium. (a) vs (b) is a taste call.
-- **Decision**: JOEL. **Blocks**: the uniform harness entry point. Until then, the harness uses per-fixture launch scripts.
+- **Decision**: JOEL (decided: Decision 5). It blocked the uniform harness entry point, which now exists: open the fixture, read `semantics`.
 
 ### 21. Regions that depend on each other have no explicit order
 - **What**: Decision 5 parses titled regions in reading order by default. Checkers has implicit dependencies: the legend must be parsed first (it defines the pieces), then the board state (it defines the zones), so BoardGameNotation reorders its regions in code. Nothing in the diagram says so.
@@ -256,13 +257,13 @@ Each step is one small commit (or a few) on its own branch. You read the summary
 
 **Phase 3: safe mechanical cleanup**, harness green after each step: fires 12 (done), 15, 16, 14 (after its plan), 13 (after fire 9's triage), 17, 22.
 
-**Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1, done), dispatch and launch (2), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
+**Phase 4: port classic capabilities to OmniMeta**, following phase 2: magic-red boxes (1, done), dispatch and launch (2, done), labelling (4), arrows (6). Each port adds harness tests for the Mathcha demos it revives.
 
 **Phase 5: delete.** Remove the classic layer from main-engine and archive the legacy demos (9). Update ARCHITECTURE.md.
 
 **Phase 6: agent-friendliness (low-hanging fruit)**:
 - The test command in AGENTS.md.
-- A uniform launch (falls out of fire 2), so "run this demo" becomes scriptable.
+- A uniform launch (fire 2, **done**): opening a demo runs it up to `semantics`, so "run this demo" is scriptable.
 - Possibly a hook that runs `compile-jstalk` and the harness before a commit.
 - Splitting `main-engine` by role (dispatch / geometry vtables / pipeline). That's an architectural change, so it gets a plan first.
 

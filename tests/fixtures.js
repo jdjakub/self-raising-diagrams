@@ -4,7 +4,7 @@
 module.exports = [
   // Collaborator notations (OmniMeta; expected to work)
   { file: 'TomasNotations/checkers.svg', note: 'PowerPoint; BoardGameNotation' },
-  { file: 'TomasNotations/checkers-normalized.svg', note: 'pre-normalised: init() stops early (fire 5)' },
+  { file: 'TomasNotations/checkers-normalized.svg', note: 'pre-normalised: init() skips straight to the parse (fire 5)' },
   { file: 'TomasNotations/checkers-turkish.svg', note: 'PowerPoint; BoardGameNotation' },
   { file: 'TomasNotations/checkers-turkish-normalized.svg', note: 'pre-normalised (fire 5)' },
   { file: 'TomasNotations/cars.svg', note: 'PowerPoint; CarsNotation (unfinished: finds no cars, fire 15)' },

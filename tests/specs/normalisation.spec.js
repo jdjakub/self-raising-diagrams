@@ -62,8 +62,8 @@ function summary(root) {
 }
 
 // magic-red-id-test exercises symmetric connectors (headless probe lines, a double-headed
-// arrow). Its init() still throws later, in the magic-red step (CLEANUP.md fire 1), so its
-// report records that error and the document as it stood when init() stopped.
+// arrow). If init() throws, the report records the error and the document as it stood
+// when init() stopped.
 for (const [editor, file, snap] of [
   ['Mathcha', 'boxGraph-example.svg', 'mathcha-boxGraph-example.txt'],
   ['Mathcha', 'magic-red-id-test.svg', 'mathcha-magic-red-id-test.txt'],

@@ -5,7 +5,7 @@ Implementation map of VVE. Read PRINCIPLES.md for the ideas. Mapped by static re
 ## 1. Load order and globals
 SVGs load plain scripts via `<script href>` in this order (see `prepare`): `utils.js` → `bracket-hole-carving.js` → `lang-sweettalk.js` → `lang-descartes.js` → `main-engine.js` → `omnimeta.js` → optional notation file (e.g. `TomasNotations/board-game-notation.js`). Everything is a bare global. `utils.js` sets `svg_parent` to the first `<svg>` at load time. Collaborator SVGs are wrapped in `<!DOCTYPE html><html><body>` so the Inspector highlights elements (issues.txt, "POST-PROCESSING").
 
-**Nothing runs automatically.** No SVG has inline script or `onload`. The user types `init()` in the console, then whatever the notation needs (§7). `main-engine.js` does install one live handler at load: `svg_parent.onmouseup`, which shows drag handles (`exposeGeometryControls`) when global `tool === 'select'`.
+**Opening runs `init()`, which ends by parsing the diagram (§4 step 7); nothing else runs automatically.** No SVG has inline script or `onload`: omnimeta.js adds a `load` listener. The parse leaves its result in the console global `semantics`, and the user starts the app by hand with `send(semantics, 'start')` or whatever the notation offers (§7). `main-engine.js` does install one live handler at load: `svg_parent.onmouseup`, which shows drag handles (`exposeGeometryControls`) when global `tool === 'select'`.
 
 `init()` lives in main-engine but needs the editor vocabularies, which live in **omnimeta.js**. SVGs that don't load omnimeta.js cannot run `init()` (§8).
 
