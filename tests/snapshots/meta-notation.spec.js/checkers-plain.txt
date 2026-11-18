@@ -1,0 +1,10 @@
+## results, in parse order
+## diagram errors
+  Region title "MOVES - KING (:MoveSpec)" at 1659,162 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "BOARD (:BoardLegend)" at 104,518 names BoardLegend, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "MOVES - REGULAR (:MoveSpec)" at 748,566 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "INITIAL (:BoardState)" at 103,692 names BoardState, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "MOVES - KING_JUMP (:MoveSpec)" at 1661,924 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "MOVES - REGULAR_JUMP (:MoveSpec)" at 750,1009 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "TRANSFORMS (:TransformSpec)" at 183,1309 names TransformSpec, which is neither a rule of DefaultMetaNotation nor a notation
+  Region title "COMBINATIONS (:CombosSpec)" at 749,1554 names CombosSpec, which is neither a rule of DefaultMetaNotation nor a notation

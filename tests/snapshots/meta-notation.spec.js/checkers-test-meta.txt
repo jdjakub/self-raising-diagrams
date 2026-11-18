@@ -1,0 +1,10 @@
+## results, in parse order
+  "BOARD" -> rule TestMetaNotation>>BoardLegend
+  "MOVES - REGULAR" -> notation MoveSpec
+## diagram errors
+  Region title "(:MoveSpec)" at 1659,162 has no title before (:MoveSpec); a whole-diagram title must not be next to a box
+  Region title "INITIAL (:BoardState)" at 103,692 names BoardState, which is neither a rule of TestMetaNotation nor a notation
+  Region title "TWIN (:MoveSpec)" at 1661,924 is used by 2 regions
+  Region title "TWIN (:MoveSpec)" at 750,1009 is used by 2 regions
+  Region title "TRANSFORMS (:TransformSpec)" at 183,1309 does not parse as TransformSpec
+  Region title "COMBINATIONS (:CombosSpec)" at 749,1554 failed while parsing: Error: crashed

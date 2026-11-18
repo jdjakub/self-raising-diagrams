@@ -1114,6 +1114,130 @@ vtables.RegionDispatchNotation = {
   },
 };
 
+// ── DefaultMetaNotation ──────────────────────────────────────────────────────
+// How a diagram says which notation reads which part of it (PRINCIPLES
+// Decision 5). A box titled `TITLE (:Name)` (the title text just outside the
+// box) has its interior parsed by Name, and the result is filed under TITLE:
+//   semantics = send({vtable: 'DefaultMetaNotation'}, 'fromRegion:', svg_parent)
+//   semantics['MOVES - REGULAR']        // that region's result
+// Name is a rule of this notation if it has one (so a notation built on this
+// one titles regions with its own rules), else a notation. Untitled boxes are
+// looked through, so titled boxes drawn on a page-sized background box are
+// still found; a titled box is opaque (its own notation reads inside it).
+// Regions are parsed in reading order (top to bottom, then left to right).
+// Diagram errors are reported in the console and the region is skipped: a
+// title with nothing before `(:Name)`, two regions with one title, a Name that
+// is neither a rule nor a notation, and a region its Name can't parse.
+vtables.DefaultMetaNotation = {
+  _parent: vtables.NotationGrammar,
+
+  ['fromRegion:']: (self, scope) => {
+    self.errors = [];
+    const regions = match(self.vtable, scope, 'TitledRegions') || [];
+    return ⟦self parseRegions: ⟦self orderRegions: regions⟧⟧;
+  },
+
+  // TitledRegions = TitledRegion*. Each is { box, text, title, name }; title is
+  // null when the text is just `(:Name)`.
+  ['TitledRegions']: (self) => ⟦self many: () => ⟦self TitledRegion⟧⟧,
+  ['TitledRegion']: (self) => {
+    const region = ⟦self claimMatching: 'TitledBox'⟧; // claims the box: its inside is pruned
+    ⟦self claimElement: region.text⟧;                 // and its title, so nothing reuses it
+    return region;
+  },
+
+  // Focus rule: a region shape with an unclaimed title text near it. A shape
+  // with no title fails here, so the search descends into it instead.
+  ['TitledBoxSel']: (self) => ⟦self BoxShapeSel⟧,
+  ['TitledBox']: (self) => {
+    const box = self.cursor.dict;
+    ⟦self pred: box.matches(⟦self TitledBoxSel⟧)⟧;
+    const text = ⟦self titleTextNear: box⟧;
+    ⟦self pred: text !== null⟧;
+    const [, title, name] = ⟦self parseTitle: text.dataset.string⟧;
+    return { box, text, title: title === '' ? null : title, name };
+  },
+
+  // `TITLE (:Name)` => [whole, TITLE, Name], TITLE possibly ''; null if not a title.
+  ['parseTitle:']: (self, s) => (s || '').match(/^\s*(.*?)\s*\(:(\w+)\)\s*$/),
+
+  // The first unclaimed title text (document order) near `box`, or null. Looks
+  // inside claimed boxes too, like Named:'s label search.
+  ['titleTextNear:']: (self, box) => {
+    const { scope, consumed } = self.cursor;
+    for (const t of scope.querySelectorAll(⟦self LabelSel⟧))
+      if (!consumed.has(t) && ⟦self parseTitle: t.dataset.string⟧ && ⟦self isName: t for: box⟧) return t;
+    return null;
+  },
+
+  // Consume one known element (and its wrapper), as a claim would.
+  ['claimElement:']: (self, elem) => ⟦self
+    claimFirst: (e) => (e === elem ? { value: e } : null)
+    onExhausted: () => { throw fail; }
+    piercing: true
+    quickTest: null⟧,
+
+  // Overridable: the order regions are parsed in (fire 21 will let a diagram say).
+  ['orderRegions:']: (self, regions) => inReadingOrder(regions, r => r.box),
+
+  ['parseRegions:']: (self, regions) => {
+    const count = {};
+    regions.forEach(r => { if (r.title !== null) count[r.title] = (count[r.title] || 0) + 1; });
+    const results = {};
+    for (const r of regions) {
+      if (r.title === null) {
+        ⟦self report: 'has no title before (:' + r.name + '); a whole-diagram title must not be next to a box' region: r⟧;
+        continue;
+      }
+      if (count[r.title] > 1) {
+        ⟦self report: 'is used by ' + count[r.title] + ' regions' region: r⟧;
+        continue;
+      }
+      const result = ⟦self parseRegion: r⟧;
+      if (result !== undefined) results[r.title] = result;
+    }
+    return results;
+  },
+
+  // Rule of this notation first, then a notation; undefined (reported) on failure.
+  ['parseRegion:']: (self, r) => {
+    const interior = ⟦r.box interior⟧;
+    let result;
+    try {
+      if (hasRule(self, r.name)) result = match(self.vtable, interior, r.name);
+      else if (isNotation(vtables[r.name])) result = send({ vtable: r.name }, 'fromRegion:', interior);
+      else {
+        ⟦self report: 'names ' + r.name + ', which is neither a rule of ' + vtableName(self.vtable) + ' nor a notation' region: r⟧;
+        return undefined;
+      }
+    } catch (e) {
+      ⟦self report: 'failed while parsing: ' + e region: r⟧;
+      return undefined;
+    }
+    if (result === null || result === MATCH_FAILED) {
+      ⟦self report: 'does not parse as ' + r.name region: r⟧;
+      return undefined;
+    }
+    return result;
+  },
+
+  ['report:region:']: (self, message, r) => {
+    const b = r.text.getBBox();
+    const full = 'Region title "' + r.text.dataset.string + '" at ' + Math.round(b.x) + ',' + Math.round(b.y) + ' ' + message;
+    self.errors.push({ message: full, region: r });
+    console.error(full, r.box);
+  },
+};
+
+// Is this vtable a notation, i.e. does its _parent chain reach NotationGrammar?
+isNotation = (vt) => {
+  for (; vt; vt = vt._parent) if (vt === vtables.NotationGrammar) return true;
+  return false;
+};
+
+// A vtable's name, given the name or the vtable itself.
+vtableName = (vt) => typeof vt === 'string' ? vt : Object.keys(vtables).find(k => vtables[k] === vt);
+
 // BoxGraph (OmniMeta version)
 //   bg = match(vtables.BoxGraphOM, regionElt, 'Root')
 vtables.BoxGraphOM = {

@@ -29,10 +29,10 @@ Mechanical fires with an obvious fix sink to the bottom, however many there are.
 - **Question**: how does a diagram say which? For example a second magic colour, a marker in the box, or a per-diagram setting. Hard requirement 2 applies: a box that stays is part of the document, so whatever it did must still be reproducible on reload.
 - **Decision**: JOEL, later.
 
-### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, step 1 done)
+### 2. No single way for a diagram to name its notation and start itself (**decided**; plan agreed, steps 1–2 done)
 - **Plan** (one commit per step, harness after each):
   1. Delete the classic blue `DefaultMetaNotation` (and its region vtable), `meta_boxgraph_init`, the blue-colour helpers, `ActiveButton` and `vtables.JS`. notational-dispatch stays known-broken until Joel re-exports it. **Done**: its code box now fails (`DefaultMetaNotation` is undefined), as the harness records. `EdgeDrivenGraphNotation`, left unused, is deleted too.
-  2. New OmniMeta `DefaultMetaNotation`, extracted from BoardGameNotation's region dispatch (replacing `RegionDispatchNotation`): titled regions in reading order, looking through untitled boxes (this retires BoardGameNotation's "first `<g>`" hack), rule-then-notation lookup, results keyed by title, and reported errors (nameless title, unknown name, two regions with one title).
+  2. New OmniMeta `DefaultMetaNotation`, extracted from BoardGameNotation's region dispatch (replacing `RegionDispatchNotation`): titled regions in reading order, looking through untitled boxes (this retires BoardGameNotation's "first `<g>`" hack), rule-then-notation lookup, results keyed by title, and reported errors (nameless title, unknown name, two regions with one title). **Done**: tested by `specs/meta-notation.spec.js` on checkers.svg; `RegionDispatchNotation` goes in step 3 with its last user.
   3. BoardGameNotation rebuilt on it, keeping its legend-then-board-state order (fire 21).
   4. On open: `init()`, then the parse (page title, else `DefaultMetaNotation`) into `semantics`; two page titles are an error. `send(semantics, 'start')` runs the app: AnimationNotation begins its slideshow; `DefaultMetaNotation` starts each region that has a `start`.
   5. Page titles in the demos: the agent copies each editor's own text SVG into the PowerPoint and Affinity exports (checkers ×4 including `-normalized`, cars, animating-a-stack); Joel re-exports the Mathcha ones (anim-test, boxGraph-example, notational-dispatch).
