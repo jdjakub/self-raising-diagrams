@@ -11,11 +11,10 @@ const textSnapshot = (lines) => scrub(lines.join('\n')) + '\n';
 
 // ── BoardGameNotation (checkers) ─────────────────────────────────────────────
 
-/** Launch: init(); fromDocument. Report every region in testCheckers' formats, then exportJSForApp. */
+/** Opening runs init(); then fromDocument (until the diagram has a page title). Report every region in testCheckers' formats, then exportJSForApp. */
 async function checkersReport(page, file) {
   await openFixture(page, file);
   const report = await inPage(page, () => {
-    init();
     send({ vtable: 'BoardGameNotation' }, 'fromDocument');
     const sections = {};
     for (const [inst, sem] of Object.entries(semantics)) {
@@ -42,7 +41,7 @@ async function checkersReport(page, file) {
       }
       sections[inst + ' (:' + sem.fromRule + ')'] = lines;
     }
-    sections['exportJSForApp'] = send({ vtable: 'BoardGameNotation' }, 'exportJSForApp').split('\n');
+    sections['exportJSForApp'] = send(semantics, 'exportJSForApp').split('\n');
     return sections;
   });
   // Ids appear in the combos graph and the exported JS; canonicalise across the whole report.
@@ -86,7 +85,6 @@ for (const file of ['TomasNotations/checkers.svg', 'TomasNotations/checkers-norm
 test('CarsNotation: TomasNotations/cars.svg', async ({ page }) => {
   await openFixture(page, 'TomasNotations/cars.svg');
   const lines = await inPage(page, () => {
-    init();
     send({ vtable: 'CarsNotation' }, 'fromDocument');
     const out = ['## cars'];
     semantics.cars.forEach((c) => out.push(__el(c.body) + ' wheels: ' + c.wheels.map(__el).join('; ')));
@@ -105,7 +103,7 @@ test('CarsNotation: TomasNotations/cars.svg', async ({ page }) => {
 // ── AnimationNotation ────────────────────────────────────────────────────────
 
 /**
- * Launch: init(); fromDocument; beginSlideshow; then play `steps`
+ * Launch: opening runs init(); fromDocument; start; then play `steps`
  * ('click', or a number of milliseconds to let timers run, on a fake clock).
  * Reports the compiled rule tables, then the named elements' state after each step.
  */
@@ -113,7 +111,6 @@ async function animationReport(page, file, steps) {
   await page.clock.install();
   await openFixture(page, file);
   const lines = await inPage(page, () => {
-    init();
     send({ vtable: 'AnimationNotation' }, 'fromDocument');
     const s = semantics;
     const out = ['## names'];
@@ -135,8 +132,8 @@ async function animationReport(page, file, steps) {
     + (e.hasAttribute('transform_origin') ? ' transform_origin=' + JSON.stringify(e.getAttribute('transform_origin')) : '')
     + (e.querySelector('text') ? ' text=' + JSON.stringify(e.querySelector('text').textContent) : '')));
 
-  await inPage(page, () => send(semantics, 'beginSlideshow'));
-  lines.push('', '## playback', 'after beginSlideshow:', ...(await stateOf()));
+  await inPage(page, () => send(semantics, 'start'));
+  lines.push('', '## playback', 'after start:', ...(await stateOf()));
   for (const step of steps) {
     if (step === 'click') await inPage(page, () => svg_parent.dispatchEvent(new MouseEvent('click')));
     else await page.clock.runFor(step);
@@ -163,7 +160,6 @@ test('AnimationNotation: CamilleNotations/anim-test.svg', async ({ page }) => {
 test('BoxGraphOM: boxGraph-example.svg', async ({ page }) => {
   await openFixture(page, 'boxGraph-example.svg');
   const lines = await inPage(page, () => {
-    init();
     const g = match(vtables.BoxGraphOM, svg_parent, 'BoxGraph');
     if (g === null) return ['BoxGraph rule failed'];
     const name = (nt) => (nt.name === undefined ? '(unnamed)' : JSON.stringify(nt.name));

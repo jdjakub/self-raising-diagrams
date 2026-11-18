@@ -41,7 +41,7 @@ click 4: s4 / Operation 4: #4 -> #10
 #10: [["opacity","1"]]
 
 ## playback
-after beginSlideshow:
+after start:
   e2: style="opacity: 0;" transform="" text="8"
   s1: style="opacity: 0;" transform="" text="push 5"
   s2: style="opacity: 0;" transform="" text="push 8"

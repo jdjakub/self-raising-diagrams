@@ -858,6 +858,13 @@ vtables.RegionSubstrate = {
   },
 };
 
+// What any notation's results understand. `start` runs the app the diagram
+// describes; by default there is nothing to run.
+//   send(semantics, 'start')
+vtables.NotationResults = {
+  ['start']: (self) => { console.log('Nothing to start.'); },
+};
+
 // ── NotationGrammar ──────────────────────────────────────────────────────────
 // Shared machinery for any notation parsed from a region: proximity naming,
 // tolerances, and the contract's vocabulary defaults. Sits between the
@@ -865,10 +872,24 @@ vtables.RegionSubstrate = {
 vtables.NotationGrammar = {
   _parent: vtables.RegionSubstrate,
 
+  // Read the whole diagram into the console global `semantics` (and answer it).
   ['fromDocument']: (self) => {
-    window.semantics = ⟦self fromRegion: svg_parent⟧;
+    window.semantics = ⟦self resultsFrom: ⟦self fromRegion: svg_parent⟧⟧;
+    return semantics;
   },
   ['fromRegion:']: (self, scope) => match(self.vtable, scope, 'Root'), // May override
+
+  // What a parse result understands (PRINCIPLES Decision 5): `start`, plus
+  // whatever the notation adds. A result that is already an object with its
+  // own vtable (AnimationNotation's controller) keeps it; a plain table or
+  // object gets this one, as a hidden property, so listing it shows only data.
+  ['resultsVtable']: () => 'NotationResults',
+  ['resultsFrom:']: (self, result) => {
+    if (result && typeof result === 'object' && !('vtable' in result))
+      Object.defineProperty(result, 'vtable', {
+        value: ⟦self resultsVtable⟧, enumerable: false, writable: true, configurable: true });
+    return result;
+  },
 
   // ---- Named: decorator combinator ----------------------------------------
   // Named(inner): claim the inner thing, then claim a name-text near it.
@@ -1187,7 +1208,10 @@ vtables.DefaultMetaNotation = {
     let result;
     try {
       if (hasRule(self, r.name)) result = match(self.vtable, interior, r.name);
-      else if (isNotation(vtables[r.name])) result = send({ vtable: r.name }, 'fromRegion:', interior);
+      else if (isNotation(vtables[r.name])) {
+        const notation = { vtable: r.name };
+        result = ⟦notation resultsFrom: ⟦notation fromRegion: interior⟧⟧;
+      }
       else {
         ⟦self report: 'names ' + r.name + ', which is neither a rule of ' + vtableName(self.vtable) + ' nor a notation' region: r⟧;
         return undefined;
@@ -1205,13 +1229,65 @@ vtables.DefaultMetaNotation = {
     return result;
   },
 
+  // Title texts that aren't the title of any region shape: the page titles,
+  // each naming the whole diagram's notation (there should be at most one).
+  ['pageTitlesIn:']: (self, scope) => {
+    const regions = [...scope.querySelectorAll(⟦self TitledBoxSel⟧)];
+    return [...scope.querySelectorAll(⟦self LabelSel⟧)]
+      .filter(t => ⟦self parseTitle: t.dataset.string⟧)
+      .filter(t => !regions.some(box => ⟦self isName: t for: box⟧));
+  },
+
+  ['resultsVtable']: () => 'MetaNotationResults',
+
   ['report:region:']: (self, message, r) => {
-    const b = r.text.getBBox();
-    const full = 'Region title "' + r.text.dataset.string + '" at ' + Math.round(b.x) + ',' + Math.round(b.y) + ' ' + message;
+    const full = 'Region title ' + describeTitle(r.text) + ' ' + message;
     self.errors.push({ message: full, region: r });
     console.error(full, r.box);
   },
 };
+
+// `send(semantics, 'start')` on a table of titled regions starts each region,
+// in the order they were parsed.
+vtables.MetaNotationResults = {
+  _parent: vtables.NotationResults,
+  ['start']: (self) => {
+    for (const result of Object.values(self))
+      if (result && hasRule(result, 'start')) ⟦result start⟧;
+  },
+};
+
+// `"TITLE (:Name)" at x,y`, for error messages.
+describeTitle = (text) => {
+  const b = text.getBBox();
+  return '"' + text.dataset.string + '" at ' + Math.round(b.x) + ',' + Math.round(b.y);
+};
+
+// init()'s last step (PRINCIPLES Decision 5): read the diagram with its
+// notation into `semantics`. The notation is the one named by the page title,
+// a `(:Name)` text that isn't the title of a region; with no page title it is
+// DefaultMetaNotation. Changes nothing visible. Two page titles, or one naming
+// no notation, are reported, and `semantics` is left null.
+parseDiagram = () => {
+  window.semantics = null;
+  const meta = { vtable: 'DefaultMetaNotation' };
+  const titles = ⟦meta pageTitlesIn: svg_parent⟧;
+  if (titles.length > 1) {
+    titles.forEach(t => console.error('Page title ' + describeTitle(t) + ' is one of '
+      + titles.length + ' page titles; the diagram is not parsed', t));
+    return null;
+  }
+  const name = titles.length ? ⟦meta parseTitle: titles[0].dataset.string⟧[2] : 'DefaultMetaNotation';
+  if (!isNotation(vtables[name])) {
+    console.error('Page title ' + describeTitle(titles[0]) + ' names ' + name
+      + ', which is not a notation; the diagram is not parsed', titles[0]);
+    return null;
+  }
+  return send({ vtable: name }, 'fromDocument');
+};
+
+// Opening the SVG runs init() once every script has loaded.
+addEventListener('load', () => init());
 
 // Is this vtable a notation, i.e. does its _parent chain reach NotationGrammar?
 isNotation = (vt) => {

@@ -32,8 +32,43 @@
   ],
   "init": {
     "defined": true,
-    "ok": true,
-    "returned": 506
+    "semantics": {
+      "vtable": "MetaNotationResults",
+      "keys": 0
+    }
   },
-  "events": []
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Region title \"MOVES - KING (:MoveSpec)\" at 1659,162 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"BOARD (:BoardLegend)\" at 104,515 names BoardLegend, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"MOVES - REGULAR (:MoveSpec)\" at 748,566 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"INITIAL (:BoardState)\" at 103,692 names BoardState, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"MOVES - KING_JUMP (:MoveSpec)\" at 1661,924 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"MOVES - REGULAR_JUMP (:MoveSpec)\" at 750,1009 names MoveSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"TRANSFORMS (:TransformSpec)\" at 183,1305 names TransformSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"COMBINATIONS (:CombosSpec)\" at 749,1554 names CombosSpec, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    }
+  ]
 }

@@ -23,92 +23,8 @@ vtables.BoardGameNotation = {
     return result;
   }),
 
-  ['exportJSForApp']: (self, regionSemantics) => {
-    if (!regionSemantics) regionSemantics = semantics;
-    const moveSpecRules = [];
-    const transformRules = [];
-    const zones = {};
-    const combosGraph = { terminal: new Set(), transitions: [] };
-    for (const [instName, sem] of Object.entries(regionSemantics)) {
-      // Add full move label and anchor piece to each MoveSpec rule
-      if (sem.fromRule === 'MoveSpec') {
-        const parts = instName.split(' '); // eg 'MOVES', '-', 'REGULAR'
-        const movePrefix = last(parts); // 'REGULAR'
-        moveSpecRules.push(...sem.map(({name,inner}) => {
-          // Move label = last part of inst name (+ [rule name])
-          if (name === undefined || name === null) name = '';
-          else name = '['+name+']'
-          const label = movePrefix+name;
-          // Anchor piece = the non-wildcard board piece in the rule
-          const {before, after} = inner;
-          const rulePieces = before.map(([,,piece]) => piece)
-            .filter(piece => piece !== null && !piece.startsWith('any-'));
-          // ^ Unfortunate harcoded exclusion of wildcard any-* but idk what else to do
-          const anchor = rulePieces.length > 0 ? rulePieces[0] : null;
-
-          return { piece: anchor, label, before, after };
-        }));
-      } else if (sem.fromRule === 'TransformSpec') {
-        transformRules.push(...sem.map(([zone,beforePiece,afterPiece]) => ({
-          piece: beforePiece, region: zone, transform: afterPiece
-        })));
-      } else if (sem.fromRule === 'BoardState') {
-        const cells = sem.pieces.map(([x,y,,zone]) => [x,y,zone]).filter(([,,zone]) => zone);
-        for (const [x,y,zone] of cells) {
-          let zoneCells = zones[zone];
-          if (!zoneCells) zoneCells = zones[zone] = [];
-          zoneCells.push([x,y]);
-        }
-      } else if (sem.fromRule === 'CombosSpec') {
-        // First, delete spaces caused by with weird PPT text-run breaks
-        sem.edges = sem.edges.map(([from,edge,to]) => [from,edge.replaceAll(' ',''),to]);
-        const outEdges = {};
-        for (const [from,edge,to] of sem.edges) {
-          if (!outEdges[from]) outEdges[from] = [];
-          outEdges[from].push([edge,to]);
-        }
-        const isInitial = state => sem.stateClasses[state].toLowerCase().includes('initial');
-        combosGraph.transitions = sem.edges.flatMap(([from,edge,to]) => {
-          log([from,edge,to]);
-          const starred = edge.endsWith('*');
-          const destarred = edge.substring(0, edge.length-1);
-          const fromm = isInitial(from) ? 'start' : from; // Only one initial node in output
-          if (isInitial(to)) {
-            if (isInitial(from)) {
-              combosGraph.terminal.add('end');
-              return [[fromm,edge,'end']];
-            }
-            if (starred) {
-              combosGraph.terminal.add(from); // Finality spreads back thru * edges
-              return [[from,destarred,from]] // `from` now a final state; compile star to loop
-            }
-          }
-          if (isInitial(from) && starred // Finality spreads forward thru * edges
-              || !outEdges[to]) // No out edges => final
-            combosGraph.terminal.add(to);
-          if (starred) {
-            return [[fromm,destarred,to], // Take one step to preserve direction memory
-                    [to,destarred,to]] // then consume any number
-              .concat(outEdges[to].map(([edge2,to2]) => [fromm,edge2,to2]));
-              // ^ if 0 iterations, act as if we are the `to` state
-          }
-          return [[fromm,edge,to]]; // Default
-        });
-      }
-    }
-    const rulesSpec = 'const rules = [\n' +
-      moveSpecRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
-    const combosSpec = 'const combinations = {\n' +
-      'initial: "start",\n' +
-      'terminal: ' + toJSish(Array.from(combosGraph.terminal)) + ',\n' +
-      'transitions: [\n' +
-        combosGraph.transitions.map(t => toJSish(t)).join(',\n') +
-      '\n]\n};';
-    const transformSpec = 'const transforms = [\n' +
-      transformRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
-    const zoneSpec = 'const areas = ' + toJSish(zones) + ';'
-    return [rulesSpec,combosSpec,transformSpec,zoneSpec].join('\n\n');
-  },
+  // semantics (the table of regions) understands BoardGameResults' messages.
+  ['resultsVtable']: () => 'BoardGameResults',
 
   // Legend entries: each shape (tile, piece glyph) with its name above it.
   // Same name-string on several shapes is fine — they're exemplars of one
@@ -453,5 +369,98 @@ e463 is a Initial / final state`
 regular-2 in white-king-area becomes king-2`
     );
     log('Great Success! Don\'t fret - there\'s still plenty of ways to break Checkers.' );
+  },
+};
+
+// What a parsed board game (the table of its regions) understands.
+vtables.BoardGameResults = {
+  _parent: vtables.MetaNotationResults,
+
+  // The rules as JS source for CheckersApp: send(semantics, 'exportJSForApp')
+  ['exportJSForApp']: (self) => {
+    const regionSemantics = self;
+    const moveSpecRules = [];
+    const transformRules = [];
+    const zones = {};
+    const combosGraph = { terminal: new Set(), transitions: [] };
+    for (const [instName, sem] of Object.entries(regionSemantics)) {
+      // Add full move label and anchor piece to each MoveSpec rule
+      if (sem.fromRule === 'MoveSpec') {
+        const parts = instName.split(' '); // eg 'MOVES', '-', 'REGULAR'
+        const movePrefix = last(parts); // 'REGULAR'
+        moveSpecRules.push(...sem.map(({name,inner}) => {
+          // Move label = last part of inst name (+ [rule name])
+          if (name === undefined || name === null) name = '';
+          else name = '['+name+']'
+          const label = movePrefix+name;
+          // Anchor piece = the non-wildcard board piece in the rule
+          const {before, after} = inner;
+          const rulePieces = before.map(([,,piece]) => piece)
+            .filter(piece => piece !== null && !piece.startsWith('any-'));
+          // ^ Unfortunate harcoded exclusion of wildcard any-* but idk what else to do
+          const anchor = rulePieces.length > 0 ? rulePieces[0] : null;
+
+          return { piece: anchor, label, before, after };
+        }));
+      } else if (sem.fromRule === 'TransformSpec') {
+        transformRules.push(...sem.map(([zone,beforePiece,afterPiece]) => ({
+          piece: beforePiece, region: zone, transform: afterPiece
+        })));
+      } else if (sem.fromRule === 'BoardState') {
+        const cells = sem.pieces.map(([x,y,,zone]) => [x,y,zone]).filter(([,,zone]) => zone);
+        for (const [x,y,zone] of cells) {
+          let zoneCells = zones[zone];
+          if (!zoneCells) zoneCells = zones[zone] = [];
+          zoneCells.push([x,y]);
+        }
+      } else if (sem.fromRule === 'CombosSpec') {
+        // First, delete spaces caused by with weird PPT text-run breaks
+        sem.edges = sem.edges.map(([from,edge,to]) => [from,edge.replaceAll(' ',''),to]);
+        const outEdges = {};
+        for (const [from,edge,to] of sem.edges) {
+          if (!outEdges[from]) outEdges[from] = [];
+          outEdges[from].push([edge,to]);
+        }
+        const isInitial = state => sem.stateClasses[state].toLowerCase().includes('initial');
+        combosGraph.transitions = sem.edges.flatMap(([from,edge,to]) => {
+          log([from,edge,to]);
+          const starred = edge.endsWith('*');
+          const destarred = edge.substring(0, edge.length-1);
+          const fromm = isInitial(from) ? 'start' : from; // Only one initial node in output
+          if (isInitial(to)) {
+            if (isInitial(from)) {
+              combosGraph.terminal.add('end');
+              return [[fromm,edge,'end']];
+            }
+            if (starred) {
+              combosGraph.terminal.add(from); // Finality spreads back thru * edges
+              return [[from,destarred,from]] // `from` now a final state; compile star to loop
+            }
+          }
+          if (isInitial(from) && starred // Finality spreads forward thru * edges
+              || !outEdges[to]) // No out edges => final
+            combosGraph.terminal.add(to);
+          if (starred) {
+            return [[fromm,destarred,to], // Take one step to preserve direction memory
+                    [to,destarred,to]] // then consume any number
+              .concat(outEdges[to].map(([edge2,to2]) => [fromm,edge2,to2]));
+              // ^ if 0 iterations, act as if we are the `to` state
+          }
+          return [[fromm,edge,to]]; // Default
+        });
+      }
+    }
+    const rulesSpec = 'const rules = [\n' +
+      moveSpecRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
+    const combosSpec = 'const combinations = {\n' +
+      'initial: "start",\n' +
+      'terminal: ' + toJSish(Array.from(combosGraph.terminal)) + ',\n' +
+      'transitions: [\n' +
+        combosGraph.transitions.map(t => toJSish(t)).join(',\n') +
+      '\n]\n};';
+    const transformSpec = 'const transforms = [\n' +
+      transformRules.map(rule => toJSish(rule)).join(',\n') + '\n];';
+    const zoneSpec = 'const areas = ' + toJSish(zones) + ';'
+    return [rulesSpec,combosSpec,transformSpec,zoneSpec].join('\n\n');
   },
 };

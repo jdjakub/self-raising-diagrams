@@ -28,11 +28,12 @@
   ],
   "init": {
     "defined": true,
-    "ok": false,
-    "threw": {
-      "error": "TypeError",
+    "semantics": "undefined"
+  },
+  "events": [
+    {
+      "kind": "pageerror",
       "message": "can't access property \"encloses:\", resolverParent is undefined"
     }
-  },
-  "events": []
+  ]
 }

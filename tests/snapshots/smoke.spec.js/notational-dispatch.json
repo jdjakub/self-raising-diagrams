@@ -28,8 +28,35 @@
   ],
   "init": {
     "defined": true,
-    "ok": true,
-    "returned": 52
+    "semantics": {
+      "vtable": "MetaNotationResults",
+      "keys": 0
+    }
   },
-  "events": []
+  "events": [
+    {
+      "kind": "console.error",
+      "text": "Region title \"b2 (:ActiveButton)\" at 519,51 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"bg1 (:BoxGraphOM)\" at 72,91 failed while parsing: BoxGraphOM didn't understand Root JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"bg2 (:BoxGraphOM)\" at 322,191 failed while parsing: BoxGraphOM didn't understand Root JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"b3 (:ActiveButton)\" at 79,291 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"tg1 (:TextGraph)\" at 100,391 names TextGraph, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    },
+    {
+      "kind": "console.error",
+      "text": "Region title \"b1 (:ActiveButton)\" at 452,560 names ActiveButton, which is neither a rule of DefaultMetaNotation nor a notation JSHandle@node"
+    }
+  ]
 }

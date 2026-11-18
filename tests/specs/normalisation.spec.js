@@ -1,5 +1,5 @@
 // Stage 3: the normalised document itself, one diagram per editor.
-// After init(), the whole <svg> tree is written out one element per line (indented by
+// After init() (run by opening the file), the whole <svg> tree is written out one element per line (indented by
 // depth), preceded by a summary counting the canonical forms. To keep diffs about
 // meaning rather than noise (until CLEANUP.md fire 3 settles caches vs meaning):
 //   - auto-generated ids (e12, t41, ...) are shown as id=auto; ids from the editor or
@@ -71,10 +71,9 @@ for (const [editor, file, snap] of [
   ['PowerPoint', 'TomasNotations/checkers.svg', 'powerpoint-checkers.txt'],
 ]) {
   test(`normalised DOM (${editor}): ${file}`, async ({ page }) => {
-    await openFixture(page, file);
-    const { root, error } = await inPage(page, () => {
-      let error = null;
-      try { init(); } catch (e) { error = (e instanceof Error) ? e.message : String(e); }
+    const events = await openFixture(page, file); // opening runs init()
+    const error = events.filter(e => e.kind === 'pageerror').map(e => e.message).join('\n  ') || null;
+    const { root } = await inPage(page, () => {
       const walk = (e) => ({
         tag: e.tagName,
         attrs: [...e.attributes].map((a) => [a.name, a.value]),
@@ -82,7 +81,7 @@ for (const [editor, file, snap] of [
           .map((n) => n.textContent).join('').trim(), // the element's own text, not its children's
         kids: [...e.children].map(walk),
       });
-      return { root: walk(svg_parent), error };
+      return { root: walk(svg_parent) };
     });
     const tree = [];
     formatTree(root, 0, tree);

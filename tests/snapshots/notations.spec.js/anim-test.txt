@@ -21,7 +21,7 @@ click 2: label / disc: #4 -> #6
 #6: [["scale","3"]]
 
 ## playback
-after beginSlideshow:
+after start:
   label: style="" transform="" text="x"
   disc: style="stroke-width: 1px; stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255); fill-opacity: 1;" transform=""
 after click:

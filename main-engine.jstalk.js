@@ -1424,7 +1424,20 @@ function learnEditor() {
 
 everything = {};
 // Universal entry point; mandatory for all diagrams
+// Bring the diagram up: normalise the document (unless it already is), apply
+// the magic-red setup boxes, then read the diagram with its notation into the
+// console global `semantics` (PRINCIPLES Decision 5). Opening the SVG runs this
+// automatically (omnimeta.js); running it again by hand does the same. Nothing
+// runs until you send `send(semantics, 'start')`.
 function init() {
+  const count = initDocument();
+  parseDiagram(); // last, even when the file was already normalised
+  return count;
+}
+
+// init() up to the parse. Returns the number of elements it normalised, or
+// null when the file was already normalised (then it does nothing else).
+function initDocument() {
   // First, ensure "nil" exists
   nilElem = svgel('g', {id: 'nil'});
 

@@ -16,19 +16,7 @@
   ],
   "init": {
     "defined": true,
-    "ok": false,
-    "threw": [
-      "[object]",
-      " didn't understand: ",
-      [
-        "init"
-      ],
-      [
-        [
-          "init"
-        ]
-      ]
-    ]
+    "semantics": "undefined"
   },
   "events": []
 }

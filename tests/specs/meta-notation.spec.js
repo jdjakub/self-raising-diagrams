@@ -25,7 +25,6 @@ const REPORT = (grammarName) => {
 test('DefaultMetaNotation: checkers titles name no notation', async ({ page }) => {
   await openFixture(page, 'TomasNotations/checkers.svg');
   const lines = await inPage(page, (src) => {
-    init();
     return eval(src)('DefaultMetaNotation');
   }, REPORT.toString());
   expect(textSnapshot(lines)).toMatchSnapshot('checkers-plain.txt');
@@ -38,7 +37,6 @@ test('DefaultMetaNotation: checkers titles name no notation', async ({ page }) =
 test('DefaultMetaNotation: rule, then notation; errors', async ({ page }) => {
   await openFixture(page, 'TomasNotations/checkers.svg');
   const lines = await inPage(page, (src) => {
-    init();
     vtables.TestMetaNotation = {
       _parent: vtables.DefaultMetaNotation,
       ['BoardLegend']: () => 'rule TestMetaNotation>>BoardLegend',
@@ -70,7 +68,6 @@ test('DefaultMetaNotation: rule, then notation; errors', async ({ page }) => {
 test('DefaultMetaNotation: notational-dispatch.svg', async ({ page }) => {
   await openFixture(page, 'notational-dispatch.svg');
   const lines = await inPage(page, (src) => {
-    init();
     return eval(src)('DefaultMetaNotation');
   }, REPORT.toString());
   expect(textSnapshot(lines)).toMatchSnapshot('notational-dispatch.txt');
@@ -79,7 +76,6 @@ test('DefaultMetaNotation: notational-dispatch.svg', async ({ page }) => {
 test('DefaultMetaNotation: a diagram with no titles', async ({ page }) => {
   await openFixture(page, 'magic-red-id-test.svg');
   const lines = await inPage(page, (src) => {
-    init();
     return eval(src)('DefaultMetaNotation');
   }, REPORT.toString());
   expect(textSnapshot(lines)).toMatchSnapshot('no-titles.txt');

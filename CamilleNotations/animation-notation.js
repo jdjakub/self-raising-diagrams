@@ -140,6 +140,9 @@ vtables.AnimationNotation = {
 };
 
 vtables.AnimationController = {
+  // send(semantics, 'start') runs the slideshow (PRINCIPLES Decision 5).
+  ['start']: (self) => send(self, 'beginSlideshow'),
+
   ['doEvent:']: (self, event) => {
     if (event === 'init') 
       for (const elt of self.namingElts) elt.remove();

@@ -15,10 +15,9 @@ const DEMOS = [
 
 for (const file of DEMOS) {
   test(`magic-red boxes: ${file}`, async ({ page }) => {
-    await openFixture(page, file);
+    const events = await openFixture(page, file); // opening runs init()
     const lines = await inPage(page, () => {
       const out = [];
-      try { init(); } catch (e) { out.push('## init() threw', '  ' + JSON.stringify(__describe(e))); }
       if (typeof magicRed === 'undefined') return out.concat('## no magicRed summary');
 
       const boxText = (box) => [...(send(box, 'interior') || box).querySelectorAll('g.text-wrapper')]
@@ -51,6 +50,8 @@ for (const file of DEMOS) {
       }
       return out;
     });
-    expect(scrub(lines.join('\n')) + '\n').toMatchSnapshot(file.replace('.svg', '.txt'));
+    const thrown = events.filter(e => e.kind === 'pageerror').map(e => '  ' + e.message);
+    const head = thrown.length ? ['## init() threw', ...thrown] : [];
+    expect(scrub([...head, ...lines].join('\n')) + '\n').toMatchSnapshot(file.replace('.svg', '.txt'));
   });
 }

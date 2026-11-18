@@ -32,8 +32,10 @@
   ],
   "init": {
     "defined": true,
-    "ok": true,
-    "returned": 76
+    "semantics": {
+      "vtable": "MetaNotationResults",
+      "keys": 0
+    }
   },
   "events": []
 }
